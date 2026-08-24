@@ -87,61 +87,59 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
     return (
         <header
             className={cn(
-                "fixed right-0 top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background px-6 transition-all duration-300",
-                sidebarCollapsed ? "left-16" : "left-64"
+                "fixed right-0 top-0 z-30 flex h-11 items-center justify-between border-b border-border bg-background px-3.5 transition-all duration-300",
+                sidebarCollapsed ? "left-14" : "left-52"
             )}
         >
             {/* Business Name / Page Title */}
-            <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                    <Building className="h-5 w-5 text-muted-foreground" />
-                    <h1 className="text-lg font-semibold text-foreground">
-                        {user?.business_name || t('common.vehicleManagement')}
-                    </h1>
-                </div>
+            <div className="flex items-center gap-2">
+                <Building className="h-4 w-4 text-muted-foreground" />
+                <h1 className="text-xs font-semibold text-foreground">
+                    {user?.business_name || t('common.vehicleManagement')}
+                </h1>
             </div>
 
             {/* Right side actions */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
                 {/* Notifications */}
                 <NotificationsDropdown />
 
                 {/* UI Scale Controls */}
-                <div className="flex items-center mx-1 border border-border rounded-lg overflow-hidden bg-background">
+                <div className="flex items-center mx-0.5 border border-border rounded-md overflow-hidden bg-background">
                     <button
                         onClick={handleZoomOut}
-                        className="flex h-9 w-9 items-center justify-center text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                        className="flex h-7 w-7 items-center justify-center text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                         title="Zoom Out"
                     >
-                        <ZoomOut className="h-4 w-4" />
+                        <ZoomOut className="h-3.5 w-3.5" />
                     </button>
-                    <div className="h-4 w-[1px] bg-border" />
+                    <div className="h-3.5 w-[1px] bg-border" />
                     <span
-                        className="px-2 text-xs font-semibold text-foreground select-none min-w-[42px] text-center"
+                        className="px-1.5 text-[11px] font-semibold text-foreground select-none min-w-[36px] text-center"
                         title={`Current Zoom: ${Math.round(uiScale * 100)}%`}
                     >
                         {Math.round(uiScale * 100)}%
                     </span>
-                    <div className="h-4 w-[1px] bg-border" />
+                    <div className="h-3.5 w-[1px] bg-border" />
                     <button
                         onClick={handleZoomIn}
-                        className="flex h-9 w-9 items-center justify-center text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                        className="flex h-7 w-7 items-center justify-center text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                         title="Zoom In"
                     >
-                        <ZoomIn className="h-4 w-4" />
+                        <ZoomIn className="h-3.5 w-3.5" />
                     </button>
                 </div>
 
                 {/* Theme Toggle */}
                 <button
                     onClick={toggleDarkMode}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                     title={darkMode ? t('common.switchToLight') : t('common.switchToDark')}
                 >
                     {darkMode ? (
-                        <Sun className="h-5 w-5" />
+                        <Sun className="h-4 w-4" />
                     ) : (
-                        <Moon className="h-5 w-5" />
+                        <Moon className="h-4 w-4" />
                     )}
                 </button>
 
@@ -152,20 +150,17 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
                 <div className="relative">
                     <button
                         onClick={() => setUserMenuOpen(!userMenuOpen)}
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-accent"
+                        className="flex h-7 items-center gap-1.5 rounded-md px-2 hover:bg-accent"
                     >
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                            <User className="h-4 w-4 text-primary" />
+                        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10">
+                            <User className="h-3 w-3 text-primary" />
                         </div>
                         <div className="hidden text-left md:block">
-                            <p className="text-sm font-medium text-foreground">
+                            <p className="text-xs font-medium leading-none text-foreground">
                                 {user?.username || "User"}
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                                {user?.is_manager ? t('user.manager') : t('user.employee')}
-                            </p>
                         </div>
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        <ChevronDown className="h-3 w-3 text-muted-foreground" />
                     </button>
 
                     {/* Dropdown Menu */}
@@ -177,24 +172,24 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
                             />
                             <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-border bg-popover p-1 shadow-lg">
                                 <div className="px-3 py-2 border-b border-border mb-1">
-                                    <p className="text-sm font-medium text-foreground">{user?.email}</p>
-                                    <p className="text-xs text-muted-foreground">{user?.business_name}</p>
+                                    <p className="text-xs font-medium text-foreground">{user?.email}</p>
+                                    <p className="text-[11px] text-muted-foreground">{user?.business_name}</p>
                                 </div>
 
                                 {user?.is_manager && (
                                     <div className="border-b border-border mb-1">
                                         <button
                                             onClick={() => handleNavigate("business-settings")}
-                                            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                                            className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
                                         >
-                                            <Settings className="h-4 w-4" />
+                                            <Settings className="h-3.5 w-3.5" />
                                             {t('user.businessSettings')}
                                         </button>
                                         <button
                                             onClick={() => handleNavigate("user-settings")}
-                                            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                                            className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
                                         >
-                                            <UserCog className="h-4 w-4" />
+                                            <UserCog className="h-3.5 w-3.5" />
                                             User Settings
                                         </button>
                                     </div>
@@ -202,9 +197,9 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
 
                                 <button
                                     onClick={handleLogout}
-                                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-red-500 hover:bg-red-50"
+                                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-destructive hover:bg-danger-bg"
                                 >
-                                    <LogOut className="h-4 w-4" />
+                                    <LogOut className="h-3.5 w-3.5" />
                                     {t('user.logout')}
                                 </button>
                             </div>

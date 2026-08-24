@@ -245,81 +245,80 @@ export function DynamicSelect({
                         role="combobox"
                         aria-expanded={open}
                         className={cn(
-                            "w-full justify-between text-foreground",
-                            hasError && "border-red-500 focus-visible:ring-red-500 dark:border-red-500/50"
+                            "w-full justify-between text-gray-800 dark:text-foreground font-normal text-xs h-8 px-2.5 bg-[#F3F3F3] dark:bg-secondary hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-200/60 dark:hover:bg-secondary/80 focus:bg-white dark:focus:bg-background focus:border-gray-400 border-gray-200 dark:border-border",
+                            hasError && "border-destructive focus-visible:ring-destructive"
                         )}
                         disabled={disabled}
                     >
-                        <span className="truncate text-left font-normal">
+                        <span className="truncate text-left">
                             {selectedOption ? selectedOption.name : placeholder}
                         </span>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        <ChevronsUpDown className="ml-1 size-3.5 shrink-0 opacity-50" />
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                    <div className="p-2 border-b border-border">
+                    <div className="p-1.5 border-b border-border">
                         <Input
                             placeholder={`Search ${createLabel || choiceType}...`}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="h-8 text-foreground placeholder:text-muted-foreground"
+                            className="h-7 text-xs text-foreground placeholder:text-muted-foreground"
                         />
                     </div>
-                    <div className="max-h-[300px] overflow-y-auto overflow-x-hidden">
-                        <div className="p-1">
-                            {filteredOptions.length === 0 ? (
-                                <div className="p-2 text-sm text-muted-foreground">
-                                    {allowCreate && searchQuery ? (
-                                        <button
-                                            onClick={() => {
-                                                setNewName(searchQuery)
-                                                setDialogOpen(true)
-                                            }}
-                                            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-foreground hover:bg-accent"
-                                        >
-                                            <Plus className="h-4 w-4" />
-                                            Create "{searchQuery}"
-                                        </button>
-                                    ) : (
-                                        "No results found"
+                    <div className="max-h-[260px] overflow-y-auto overflow-x-hidden p-1">
+                        {filteredOptions.length === 0 ? (
+                            <div className="p-2 text-xs text-muted-foreground">
+                                {allowCreate && searchQuery ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setNewName(searchQuery)
+                                            setDialogOpen(true)
+                                        }}
+                                        className="flex w-full items-center gap-1.5 rounded-sm px-2 py-1.5 text-xs md:text-sm text-foreground hover:bg-accent cursor-pointer transition-colors"
+                                    >
+                                        <Plus className="size-3.5 shrink-0" />
+                                        <span>Create "{searchQuery}"</span>
+                                    </button>
+                                ) : (
+                                    <span className="text-center block">No results found</span>
+                                )}
+                            </div>
+                        ) : (
+                            filteredOptions.map((option) => (
+                                <button
+                                    key={option.id}
+                                    type="button"
+                                    onClick={() => {
+                                        // Only deselect if allowDeselect is true AND clicking the already-selected option
+                                        if (allowDeselect && option.id === value) {
+                                            onChange(null)
+                                        } else {
+                                            onChange(option.id)
+                                        }
+                                        setOpen(false)
+                                        setSearchQuery("")
+                                    }}
+                                    className={cn(
+                                        "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs md:text-sm text-foreground hover:bg-accent cursor-pointer text-left transition-colors",
+                                        value === option.id && "bg-accent font-medium"
                                     )}
-                                </div>
-                            ) : (
-                                <>
-                                    {filteredOptions.map((option) => (
-                                        <button
-                                            key={option.id}
-                                            onClick={() => {
-                                                // Only deselect if allowDeselect is true AND clicking the already-selected option
-                                                if (allowDeselect && option.id === value) {
-                                                    onChange(null)
-                                                } else {
-                                                    onChange(option.id)
-                                                }
-                                                setOpen(false)
-                                                setSearchQuery("")
-                                            }}
-                                            className={cn(
-                                                "flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm text-foreground hover:bg-accent",
-                                                value === option.id && "bg-accent"
-                                            )}
-                                        >
-                                            <Check
-                                                className={cn(
-                                                    "h-4 w-4",
-                                                    value === option.id ? "opacity-100" : "opacity-0"
-                                                )}
-                                            />
-                                            {option.name}
-                                        </button>
-                                    ))}
-                                </>
-                            )}
-                        </div>
+                                >
+                                    <Check
+                                        className={cn(
+                                            "size-3.5 shrink-0",
+                                            value === option.id ? "opacity-100 text-primary" : "opacity-0"
+                                        )}
+                                    />
+                                    <span className="truncate">{option.name}</span>
+                                </button>
+                            ))
+                        )}
                     </div>
                     {allowCreate && (
                         <div className="border-t border-border p-1">
                             <button
+                                type="button"
                                 onClick={() => {
                                     if (onAddClick) {
                                         setOpen(false)
@@ -332,10 +331,10 @@ export function DynamicSelect({
                                         setDialogOpen(true)
                                     }
                                 }}
-                                className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm text-primary hover:bg-accent"
+                                className="flex w-full items-center gap-1.5 rounded-sm px-2 py-1.5 text-xs md:text-sm font-medium text-foreground hover:bg-accent cursor-pointer transition-colors"
                             >
-                                <Plus className="h-4 w-4" />
-                                Add new {createLabel || choiceType}
+                                <Plus className="size-3.5 shrink-0 text-muted-foreground" />
+                                <span>Add new {createLabel || choiceType}</span>
                             </button>
                         </div>
                     )}

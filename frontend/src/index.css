@@ -4,223 +4,11 @@
 @custom-variant dark (&:is(.dark *));
 
 /* =============================================================================
-   HSL Color System - Vehicle Management System
-   Primary Blue: hsl(220 90% 56%)
+   Design System — Frappe/ERPNext v15 ("Espresso")
    ============================================================================= */
-
-@theme {
-  /* Primary Blue Palette - Legacy Match */
-  --color-primary-50: #ecf3ff;
-  --color-primary-100: #dde9ff;
-  --color-primary-200: #c2d6ff;
-  --color-primary-300: #9cb9ff;
-  --color-primary-400: #7592ff;
-  --color-primary-500: #465fff;
-  --color-primary-600: #3641f5;
-  --color-primary-700: #2a31d8;
-  --color-primary-800: #252dae;
-  --color-primary-900: #262e89;
-  --color-primary-950: #161950;
-
-  /* Status Colors */
-  --color-status-purchased: #f59e0b;
-  /* Warning/Orange */
-  --color-status-ready-for-sale: #465fff;
-  /* Primary/Blue */
-  --color-status-reserved: #9333ea;
-  /* Purple */
-  --color-status-sold: #16a34a;
-  /* Success/Green */
-  --color-status-inactive: #6b7280;
-  /* Gray */
-}
-
-/* =============================================================================
-   CSS Variables for shadcn/ui components
-   ============================================================================= */
-
-:root {
-  /* Background & Foreground */
-  --background: #ffffff;
-  --foreground: #101828;
-
-  /* Card */
-  --card: #f7f9fc;
-  --card-foreground: #101828;
-
-  /* Popover */
-  --popover: #ffffff;
-  --popover-foreground: #101828;
-
-  /* Primary - Legacy Brand Blue */
-  --primary: #465fff;
-  --primary-foreground: #ffffff;
-
-  /* Secondary */
-  --secondary: #f2f7ff;
-  /* brand-25 */
-  --secondary-foreground: #101828;
-
-  /* Muted */
-  --muted: #f2f4f7;
-  /* gray-100 */
-  --muted-foreground: #667085;
-  /* gray-500 */
-
-  /* Accent */
-  --accent: #f2f7ff;
-  --accent-foreground: #101828;
-
-  /* Destructive */
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-
-  /* Border & Input */
-  --border: #b0bed2;
-  /* gray-300 tinted */
-  --input: #b0bed2;
-  --ring: #465fff;
-
-  /* Chart colors */
-  --chart-1: #465fff;
-  --chart-2: #3641f5;
-  --chart-3: #2a31d8;
-  --chart-4: #7592ff;
-  --chart-5: #9cb9ff;
-
-  /* Radius */
-  --radius: 0.625rem;
-
-  /* Sidebar */
-  --sidebar-background: #ffffff;
-  --sidebar-foreground: #101828;
-  --sidebar-primary: #465fff;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f2f7ff;
-  --sidebar-accent-foreground: #101828;
-  --sidebar-border: #e4e7ec;
-  --sidebar-ring: #465fff;
-  --sidebar: #ffffff;
-}
-
-/* Dark mode */
-.dark {
-  --background: #101828;
-  /* gray-900 */
-  --foreground: #ffffff;
-
-  --card: #1d2939;
-  /* gray-800 */
-  --card-foreground: #ffffff;
-
-  --popover: #1d2939;
-  --popover-foreground: #ffffff;
-
-  --primary: #465fff;
-  --primary-foreground: #ffffff;
-
-  --secondary: #1d2939;
-  --secondary-foreground: #ffffff;
-
-  --muted: #1d2939;
-  --muted-foreground: #98a2b3;
-  /* gray-400 */
-
-  --accent: #1d2939;
-  --accent-foreground: #ffffff;
-
-  --destructive: #7f1d1d;
-  --destructive-foreground: #ffffff;
-
-  --border: #344054;
-  /* gray-700 */
-  --input: #344054;
-  --ring: #465fff;
-
-  --sidebar-background: #101828;
-  --sidebar-foreground: #ffffff;
-  --sidebar-primary: #465fff;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1d2939;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #344054;
-  --sidebar-ring: #465fff;
-  --chart-1: #465fff;
-  --chart-2: #3641f5;
-  --chart-3: #2a31d8;
-  --chart-4: #7592ff;
-  --chart-5: #9cb9ff;
-  --sidebar: #101828;
-}
-
-/* =============================================================================
-   Base Styles
-   ============================================================================= */
-
-* {
-  border-color: var(--border);
-}
-
-body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-feature-settings: "rlig" 1, "calt" 1;
-  line-height: 1.625;
-}
-
-/* =============================================================================
-   Status Colors (Legacy Match)
-   ============================================================================= */
-
-.status-purchased {
-  --status-color: #f59e0b;
-}
-
-.status-ready-for-sale {
-  --status-color: #465fff;
-}
-
-.status-reserved {
-  --status-color: #9333ea;
-}
-
-.status-sold {
-  --status-color: #16a34a;
-}
-
-.status-inactive {
-  --status-color: #6b7280;
-}
-
-/* =============================================================================
-   Utility Classes
-   ============================================================================= */
-
-.text-success {
-  color: #16a34a;
-}
-
-.text-warning {
-  color: #f59e0b;
-}
-
-.text-error {
-  color: #ef4444;
-}
-
-.bg-success {
-  background-color: #16a34a;
-}
-
-.bg-warning {
-  background-color: #f59e0b;
-}
-
-.bg-error {
-  background-color: #ef4444;
-}
 
 @theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -228,7 +16,19 @@ body {
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+  --color-canvas: var(--canvas);
+  --color-heading: var(--heading);
+  --color-link: var(--link);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
   --color-background: var(--background);
+
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -243,9 +43,11 @@ body {
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -259,15 +61,112 @@ body {
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Vehicle Domain Status Color Tokens */
+  --color-status-purchased: var(--warning);
+  --color-status-ready-for-sale: var(--info);
+  --color-status-reserved: #9333ea;
+  --color-status-sold: var(--success);
+  --color-status-inactive: #6b7280;
 }
+
+:root {
+  --radius: 0.375rem; /* 6px base */
+  --background: oklch(1 0 0); /* #FFFFFF */
+  --canvas: oklch(0.985 0.002 247); /* #F8F9FA */
+  --foreground: oklch(0.341 0 0); /* #383838 */
+  --card: oklch(1 0 0); /* #FFFFFF */
+  --card-foreground: oklch(0.341 0 0); /* #383838 */
+  --popover: oklch(1 0 0); /* #FFFFFF */
+  --popover-foreground: oklch(0.341 0 0); /* #383838 */
+  --primary: oklch(0.205 0 0); /* #171717 */
+  --primary-foreground: oklch(1 0 0); /* #FFFFFF */
+  --secondary: oklch(0.964 0 0); /* #F3F3F3 */
+  --secondary-foreground: oklch(0.341 0 0); /* #383838 */
+  --muted: oklch(0.982 0.001 286); /* #F9F9FA */
+  --muted-foreground: oklch(0.586 0 0); /* #7C7C7C */
+  --accent: oklch(0.964 0 0); /* #F3F3F3 */
+  --accent-foreground: oklch(0.341 0 0); /* #383838 */
+  --destructive: oklch(0.597 0.206 26.1); /* #E03636 */
+  --destructive-foreground: oklch(1 0 0); /* #FFFFFF */
+  --border: oklch(0.929 0.004 247); /* #EDEDED */
+  --input: oklch(0.964 0 0); /* #F3F3F3 */
+  --ring: oklch(0.83 0 0); /* #C7C7C7 */
+  --heading: oklch(0.205 0 0); /* #171717 */
+  --link: oklch(0.643 0.17 250.6); /* #2490EF */
+  --success: oklch(0.578 0.109 160); /* #2E9E6B */
+  --success-bg: oklch(0.962 0.017 162.8); /* #E9F6EF */
+  --warning: oklch(0.62 0.14 62.2); /* #D97E06 */
+  --warning-bg: oklch(0.968 0.021 76.5); /* #FDF3E5 */
+  --info: oklch(0.643 0.17 250.6); /* #2490EF */
+  --info-bg: oklch(0.969 0.014 244.7); /* #EDF6FE */
+  --danger: oklch(0.577 0.19 26); /* #E03636 */
+  --danger-bg: oklch(0.965 0.017 20); /* #FDEBEB */
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0.002 247);
+  --sidebar-foreground: oklch(0.341 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.964 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.929 0.004 247);
+  --sidebar-ring: oklch(0.83 0 0);
+}
+
+.dark {
+  --background: oklch(0.129 0.042 264.695);
+  --foreground: oklch(0.984 0.003 247.858);
+  --card: oklch(0.208 0.042 265.755);
+  --card-foreground: oklch(0.984 0.003 247.858);
+  --popover: oklch(0.208 0.042 265.755);
+  --popover-foreground: oklch(0.984 0.003 247.858);
+  --primary: oklch(0.929 0.013 255.508);
+  --primary-foreground: oklch(0.208 0.042 265.755);
+  --secondary: oklch(0.279 0.041 260.031);
+  --secondary-foreground: oklch(0.984 0.003 247.858);
+  --muted: oklch(0.279 0.041 260.031);
+  --muted-foreground: oklch(0.704 0.04 256.788);
+  --accent: oklch(0.279 0.041 260.031);
+  --accent-foreground: oklch(0.984 0.003 247.858);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.551 0.027 264.364);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.208 0.042 265.755);
+  --sidebar-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-accent: oklch(0.279 0.041 260.031);
+  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.551 0.027 264.364);
+}
+
+/* =============================================================================
+   Base Styles
+   ============================================================================= */
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: var(--color-border);
   }
 
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "rlig" 1, "calt" 1;
+    line-height: 1.5;
   }
 }
 
@@ -278,7 +177,7 @@ body {
 
 /* =============================================================================
    Number Input Spinner Removal (UX Fix)
-   Hides ugly native up/down arrows on number inputs across all browsers
+   Hides native up/down arrows on number inputs across browsers
    ============================================================================= */
 
 /* WebKit (Chrome, Edge, Safari) - Hide spinners */
@@ -303,13 +202,13 @@ body[data-scroll-locked] {
 }
 
 /* =============================================================================
-   Global Custom Scrollbar Theme
+   Custom Scrollbar Theme
    ============================================================================= */
 
 /* Firefox Standard */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #888888 #f1f1f1;
+  scrollbar-color: #c7c7c7 #f9f9fa;
 }
 
 .dark * {
@@ -318,38 +217,61 @@ body[data-scroll-locked] {
 
 /* WebKit (Chrome, Edge, Safari) */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
-/* Track */
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--color-muted);
 }
 
 .dark ::-webkit-scrollbar-track {
   background: #2d2d2d;
 }
 
-/* Thumb */
 ::-webkit-scrollbar-thumb {
-  background-color: #888888;
+  background-color: #c7c7c7;
   border-radius: 9999px;
-  /* Pill shape */
-  border: 2px solid #f1f1f1;
-  /* Creates padding effect */
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 
 .dark ::-webkit-scrollbar-thumb {
   background-color: #555555;
-  border: 2px solid #2d2d2d;
 }
 
-/* Thumb Hover */
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #666666;
+  background-color: #999999;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
   background-color: #777777;
+}
+
+/* =============================================================================
+   HTML5 Date Input Icon Alignment
+   ============================================================================= */
+
+input[type="date"] {
+  position: relative;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0 !important;
+  padding: 0 !important;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+input[type="date"]::-webkit-datetime-edit {
+  display: inline-flex;
+  padding: 0;
 }

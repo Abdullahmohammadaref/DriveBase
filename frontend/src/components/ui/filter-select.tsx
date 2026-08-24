@@ -74,83 +74,86 @@ export function FilterSelect({
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className={cn("w-full justify-between text-foreground", className)}
+                    className={cn(
+                        "w-full justify-between text-foreground font-normal text-xs md:text-sm h-8 px-2.5",
+                        className
+                    )}
                     disabled={disabled}
                 >
-                    <span className="truncate text-left font-normal">
+                    <span className="truncate text-left">
                         {selectedOption ? selectedOption.label : placeholder}
                     </span>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <ChevronsUpDown className="ml-1 size-3.5 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                 {/* Search Input */}
-                <div className="p-2 border-b border-border">
+                <div className="p-1.5 border-b border-border">
                     <div className="relative">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
                         <Input
                             placeholder={searchPlaceholder}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="h-8 pl-8 text-foreground placeholder:text-muted-foreground"
+                            className="h-7 pl-7 text-xs text-foreground placeholder:text-muted-foreground"
                         />
                     </div>
                 </div>
 
                 {/* Options List with Scroll */}
                 <div
-                    className="max-h-[300px] overflow-y-auto overflow-x-hidden"
+                    className="max-h-[260px] overflow-y-auto overflow-x-hidden p-1"
                     onWheel={(e) => {
                         // Prevent the popover from closing when scrolling
                         e.stopPropagation()
                     }}
                 >
-                    <div className="p-1">
-                        {/* "All" option - always visible when no search or matches "all" */}
-                        {(!searchQuery || allLabel.toLowerCase().includes(searchQuery.toLowerCase())) && (
-                            <button
-                                onClick={() => handleSelect(undefined)}
+                    {/* "All" option - always visible when no search or matches "all" */}
+                    {(!searchQuery || allLabel.toLowerCase().includes(searchQuery.toLowerCase())) && (
+                        <button
+                            type="button"
+                            onClick={() => handleSelect(undefined)}
+                            className={cn(
+                                "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs md:text-sm text-foreground hover:bg-accent cursor-pointer text-left transition-colors",
+                                value === undefined && "bg-accent font-medium"
+                            )}
+                        >
+                            <Check
                                 className={cn(
-                                    "flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm text-foreground hover:bg-accent",
-                                    value === undefined && "bg-accent"
+                                    "size-3.5 shrink-0",
+                                    value === undefined ? "opacity-100 text-primary" : "opacity-0"
+                                )}
+                            />
+                            <span className="truncate">{allLabel}</span>
+                        </button>
+                    )}
+
+                    {/* Filtered Options */}
+                    {filteredOptions.length === 0 && searchQuery ? (
+                        <div className="p-2 text-xs text-muted-foreground text-center">
+                            No results found
+                        </div>
+                    ) : (
+                        filteredOptions.map((option) => (
+                            <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => handleSelect(option.value)}
+                                className={cn(
+                                    "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs md:text-sm text-foreground hover:bg-accent cursor-pointer text-left transition-colors",
+                                    value === option.value && "bg-accent font-medium"
                                 )}
                             >
                                 <Check
                                     className={cn(
-                                        "h-4 w-4",
-                                        value === undefined ? "opacity-100" : "opacity-0"
+                                        "size-3.5 shrink-0",
+                                        value === option.value ? "opacity-100 text-primary" : "opacity-0"
                                     )}
                                 />
-                                {allLabel}
+                                <span className="truncate">{option.label}</span>
                             </button>
-                        )}
-
-                        {/* Filtered Options */}
-                        {filteredOptions.length === 0 && searchQuery ? (
-                            <div className="p-2 text-sm text-muted-foreground text-center">
-                                No results found
-                            </div>
-                        ) : (
-                            filteredOptions.map((option) => (
-                                <button
-                                    key={option.value}
-                                    onClick={() => handleSelect(option.value)}
-                                    className={cn(
-                                        "flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm text-foreground hover:bg-accent",
-                                        value === option.value && "bg-accent"
-                                    )}
-                                >
-                                    <Check
-                                        className={cn(
-                                            "h-4 w-4",
-                                            value === option.value ? "opacity-100" : "opacity-0"
-                                        )}
-                                    />
-                                    {option.label}
-                                </button>
-                            ))
-                        )}
-                    </div>
+                        ))
+                    )}
                 </div>
             </PopoverContent>
         </Popover>

@@ -47,12 +47,12 @@ export function TransactionTable({
     highlightedRowId,
     showEmptyTable,
     maxHeight,
-    compactBadges,
+    compactBadges: _compactBadges,
 }: TransactionTableProps) {
     const { business_slug, locale } = useParams<{ business_slug: string; locale?: string }>()
     const { t, i18n } = useTranslation()
     const navigate = useNavigate()
-    const rowLinkClass = "block h-full px-2 py-2 text-inherit no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+    const rowLinkClass = "block h-full px-3 py-1 text-inherit no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
     const getTransactionHref = (internalId: number | null) =>
         locale
             ? `/${business_slug}/${locale}/transactions/${internalId}/edit`
@@ -70,11 +70,14 @@ export function TransactionTable({
         )
 
         return (
-            <TableHead className={cn("font-semibold cursor-pointer select-none hover:bg-muted/70", className)}>
+            <TableHead className={cn("sticky top-0 z-20 bg-gray-50 dark:bg-secondary font-semibold cursor-pointer select-none hover:bg-muted/70 px-3 py-0.5", className)}>
                 <button
                     type="button"
                     onClick={() => onSort?.(field)}
-                    className="flex items-center gap-1 w-full"
+                    className={cn(
+                        "flex items-center gap-1 w-full",
+                        className?.includes("text-right") ? "justify-end" : ""
+                    )}
                 >
                     {children}
                     {icon}
@@ -122,41 +125,34 @@ export function TransactionTable({
     const getStatusBadge = (status: string | null, statusDisplay: string | null) => {
         if (!status) return null
 
-        const variants: Record<string, { class: string }> = {
-            confirmed: {
-                class: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800",
-            },
-            review_required: {
-                class: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
-            },
-            inactive: {
-                class: "bg-muted text-muted-foreground",
-            },
+        if (status === "confirmed") {
+            return (
+                <Badge variant="success">
+                    <span className="size-1.5 shrink-0 rounded-full bg-current mr-1" />
+                    {t(`status.${status}`) || statusDisplay || "Bestätigt"}
+                </Badge>
+            )
         }
 
-        if (compactBadges && (status === "review_required" || status === "under_review")) {
+        if (status === "review_required" || status === "under_review") {
             return (
-                <Badge
-                    variant="outline"
-                    className={cn(
-                        "flex flex-col items-center gap-0 leading-tight text-[10px] px-1.5 py-0.5 font-medium border-0",
-                        variants[status]?.class || "bg-muted text-muted-foreground"
-                    )}
-                >
-                    <span>Review</span>
-                    <span>Required</span>
+                <Badge variant="warning">
+                    <span className="size-1.5 shrink-0 rounded-full bg-current mr-1" />
+                    {t(`status.${status}`) || statusDisplay || "Ausstehend"}
+                </Badge>
+            )
+        }
+
+        if (status === "inactive") {
+            return (
+                <Badge variant="secondary">
+                    {t(`status.${status}`) || statusDisplay || "Inaktiv"}
                 </Badge>
             )
         }
 
         return (
-            <Badge
-                variant="outline"
-                className={cn(
-                    "font-medium border-0",
-                    variants[status]?.class || "bg-muted text-muted-foreground"
-                )}
-            >
+            <Badge variant="outline">
                 {t(`status.${status}`) || statusDisplay || status}
             </Badge>
         )
@@ -164,68 +160,58 @@ export function TransactionTable({
 
     if (isLoading) {
         return (
-            <div className="rounded-xl border border-border bg-card">
-                <div className="h-64 animate-pulse bg-muted rounded" />
+            <div className="rounded-md border border-border bg-card">
+                <div className="h-48 animate-pulse bg-muted rounded" />
             </div>
         )
     }
 
     if (!transactions.length) {
-        // If showEmptyTable is true, show table with headers and empty state message
         if (showEmptyTable) {
             return (
-                <div className="rounded-xl border border-border bg-card overflow-hidden">
-                    <div
-                        className="overflow-x-auto"
-                        style={maxHeight ? { maxHeight, overflowY: 'auto' } : undefined}
-                    >
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="bg-muted/50 hover:bg-muted/50">
-                                    <TableHead className="font-semibold">{t('transactions.table.transaction')}</TableHead>
-                                    <TableHead className="font-semibold text-right">{t('transactions.table.amount')}</TableHead>
-                                    <TableHead className="font-semibold">{t('transactions.table.date')}</TableHead>
-                                    <TableHead className="font-semibold">{t('transactions.table.method')}</TableHead>
-                                    <TableHead className="font-semibold">{t('transactions.table.status')}</TableHead>
-                                    <TableHead className="font-semibold w-24 text-center">{t('transactions.table.actions')}</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                                        {t('transactions.noTransactionsForVehicle') || 'No transactions yet for this vehicle.'}
-                                    </TableCell>
-                                </TableRow>
-                            </TableBody>
-                        </Table>
-                    </div>
+                <div className="rounded-md border border-gray-200 dark:border-border bg-white dark:bg-card overflow-hidden shadow-xs">
+                    <Table containerClassName={maxHeight ? "overflow-y-auto max-h-[180px]" : undefined}>
+                        <TableHeader className="sticky top-0 z-20 bg-gray-50/95 dark:bg-secondary/95 backdrop-blur-xs border-b border-gray-200 dark:border-border">
+                            <TableRow className="h-7 bg-gray-50/95 dark:bg-secondary/95 hover:bg-gray-50/95 border-b border-gray-200 dark:border-border">
+                                <TableHead className="sticky top-0 z-20 bg-gray-50 dark:bg-secondary h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">{t("transactions.table.transaction")}</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-gray-50 dark:bg-secondary h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-right">{t("transactions.table.amount")}</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-gray-50 dark:bg-secondary h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">{t("transactions.table.date")}</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-gray-50 dark:bg-secondary h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">{t("transactions.table.method")}</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-gray-50 dark:bg-secondary h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">{t("transactions.table.status")}</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-gray-50 dark:bg-secondary h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-20 text-right">{t("transactions.table.actions")}</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            <TableRow>
+                                <TableCell colSpan={6} className="text-center py-6 text-xs text-muted-foreground">
+                                    {t("transactions.noTransactionsForVehicle") || "No transactions yet for this vehicle."}
+                                </TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
                 </div>
             )
         }
         return (
-            <div className="rounded-xl border border-dashed border-border p-12 text-center">
-                <p className="text-muted-foreground">{t('transactions.noTransactions')}</p>
+            <div className="rounded-md border border-dashed border-border p-8 text-center">
+                <p className="text-xs text-muted-foreground">{t("transactions.noTransactions")}</p>
             </div>
         )
     }
 
     return (
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
-            <div
-                className="overflow-x-auto"
-                style={maxHeight ? { maxHeight, overflowY: 'auto' } : undefined}
-            >
-                <Table>
-                    <TableHeader>
-                        <TableRow className="bg-muted/50 hover:bg-muted/50">
-                            <TableHead className="font-semibold">{t('transactions.table.transaction')}</TableHead>
-                            {renderSortableHeader("amount", t('transactions.table.amount'), "text-right")}
-                            {renderSortableHeader("date", t('transactions.table.date'))}
-                            <TableHead className="font-semibold">{t('transactions.table.method')}</TableHead>
-                            {renderSortableHeader("status", t('transactions.table.status'))}
-                            <TableHead className="font-semibold w-24 text-center">{t('transactions.table.actions')}</TableHead>
-                        </TableRow>
-                    </TableHeader>
+        <div className="rounded-md border border-gray-200 dark:border-border bg-white dark:bg-card overflow-hidden shadow-xs">
+            <Table containerClassName={maxHeight ? "overflow-y-auto max-h-[180px]" : undefined}>
+                <TableHeader className="sticky top-0 z-20 bg-gray-50/95 dark:bg-secondary/95 backdrop-blur-xs border-b border-gray-200 dark:border-border">
+                    <TableRow className="h-7 bg-gray-50/95 dark:bg-secondary/95 hover:bg-gray-50/95 border-b border-gray-200 dark:border-border">
+                        <TableHead className="sticky top-0 z-20 bg-gray-50 dark:bg-secondary h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">{t("transactions.table.transaction")}</TableHead>
+                        {renderSortableHeader("amount", t("transactions.table.amount"), "h-7 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-right w-28 md:w-32 px-3 py-0.5")}
+                        {renderSortableHeader("date", t("transactions.table.date"), "h-7 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider px-3 py-0.5")}
+                        <TableHead className="sticky top-0 z-20 bg-gray-50 dark:bg-secondary h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">{t("transactions.table.method")}</TableHead>
+                        {renderSortableHeader("status", t("transactions.table.status"), "h-7 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider px-3 py-0.5")}
+                        <TableHead className="sticky top-0 z-20 bg-gray-50 dark:bg-secondary h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-20 text-right">{t("transactions.table.actions")}</TableHead>
+                    </TableRow>
+                </TableHeader>
                     <TableBody>
                         {transactions.map((tx) => {
                             const transactionHref = getTransactionHref(tx.internal_id)
@@ -234,13 +220,13 @@ export function TransactionTable({
                                 <TableRow
                                     key={tx.id}
                                     className={cn(
-                                        "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150",
+                                        "h-8 cursor-pointer hover:bg-gray-50/60 dark:hover:bg-muted/40 transition-colors border-b border-gray-100 dark:border-border last:border-b-0 text-xs",
                                         tx.status === "inactive" && "opacity-50",
                                         highlightedRowId === tx.internal_id && "bg-primary/10 ring-1 ring-primary ring-inset"
                                     )}
                                     onClick={(e) => {
                                         const target = e.target as HTMLElement
-                                        if (target.closest('button') || target.closest('a')) {
+                                        if (target.closest("button") || target.closest("a")) {
                                             return
                                         }
                                         navigate(transactionHref)
@@ -250,20 +236,15 @@ export function TransactionTable({
                                 <TableCell className="p-0">
                                     <Link
                                         to={transactionHref}
-                                        className={rowLinkClass}
+                                        className="block h-full px-3 py-1 text-inherit no-underline"
                                     >
-                                        <div className="flex flex-col">
-                                            <span className="font-medium text-foreground">
+                                        <div className="flex items-center gap-1.5 truncate">
+                                            <span className="font-medium text-foreground text-xs truncate">
                                                 #{tx.internal_id} - {tx.category_display || tx.category || t('transactions.table.uncategorized')}
                                             </span>
                                             {tx.subcategory && (
-                                                <span className="text-sm text-muted-foreground">
-                                                    {tx.subcategory}
-                                                </span>
-                                            )}
-                                            {tx.vehicle_display && (
-                                                <span className="text-xs text-muted-foreground mt-1">
-                                                    {t('transactions.table.vehicleLabel')}: {tx.vehicle_display}
+                                                <span className="text-[11px] text-muted-foreground truncate">
+                                                    · {tx.subcategory}
                                                 </span>
                                             )}
                                         </div>
@@ -271,17 +252,17 @@ export function TransactionTable({
                                 </TableCell>
 
                                 {/* Amount */}
-                                <TableCell className="p-0 text-right">
+                                <TableCell className="p-0 text-right w-28 md:w-32">
                                     <Link
                                         to={transactionHref}
-                                        className={cn(rowLinkClass, "text-right")}
+                                        className="block h-full px-3 py-1 text-right text-inherit no-underline"
                                     >
                                         <span
                                             className={cn(
-                                                "font-mono font-semibold",
+                                                "font-mono font-bold text-xs",
                                                 parseFloat(String(tx.amount ?? 0)) >= 0
-                                                    ? "text-success-600 dark:text-success-400"
-                                                    : "text-red-500"
+                                                    ? "text-[#318d6c]"
+                                                    : "text-[#d23a69]"
                                             )}
                                         >
                                             {formatCurrency(tx.amount, tx.currency)}
@@ -320,54 +301,50 @@ export function TransactionTable({
                                 </TableCell>
 
                                 {/* Actions */}
-                                <TableCell>
-                                    <div className="grid grid-cols-2 gap-2 w-16">
+                                <TableCell className="py-0 px-2">
+                                    <div className="flex items-center justify-end gap-1">
                                         {/* Create Document / PDF */}
-                                        <div className="flex justify-center">
-                                            {tx.can_generate_pdf && (
-                                                <a
-                                                    href={`/api/transactions/${tx.internal_id}/pdf`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-muted transition-colors"
-                                                    title={t('common.generatePdf', 'Generate PDF')}
-                                                >
-                                                    <FileText className="h-4 w-4 text-muted-foreground" />
-                                                </a>
-                                            )}
-                                        </div>
+                                        {tx.can_generate_pdf && (
+                                            <a
+                                                href={`/api/transactions/${tx.internal_id}/pdf`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="inline-flex items-center justify-center size-6 rounded-md hover:bg-muted transition-colors"
+                                                title={t('common.generatePdf', 'Generate PDF')}
+                                            >
+                                                <FileText className="size-3 text-muted-foreground" />
+                                            </a>
+                                        )}
 
                                         {/* Delete/Activate */}
-                                        <div className="flex justify-center">
-                                            {tx.status === "inactive" ? (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        onActivate(tx)
-                                                    }}
-                                                    title={t('common.activate', 'Activate')}
-                                                >
-                                                    <RotateCcw className="h-4 w-4 text-success-600" />
-                                                </Button>
-                                            ) : (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8 text-red-500 hover:bg-red-100 hover:text-red-700 dark:hover:bg-red-900/40 dark:hover:text-red-400"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        onDelete(tx)
-                                                    }}
-                                                    title={t('common.delete', 'Delete')}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            )}
-                                        </div>
+                                        {tx.status === "inactive" ? (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="size-6"
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    onActivate(tx)
+                                                }}
+                                                title={t('common.activate', 'Activate')}
+                                            >
+                                                <RotateCcw className="size-3 text-success-600" />
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="size-6 text-red-500 hover:bg-red-100 hover:text-red-700 dark:hover:bg-red-900/40 dark:hover:text-red-400"
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    onDelete(tx)
+                                                }}
+                                                title={t('common.delete', 'Delete')}
+                                            >
+                                                <Trash2 className="size-3" />
+                                            </Button>
+                                        )}
                                     </div>
                                 </TableCell>
                                 </TableRow>
@@ -375,7 +352,6 @@ export function TransactionTable({
                         })}
                     </TableBody>
                 </Table>
-            </div>
         </div>
     )
 }

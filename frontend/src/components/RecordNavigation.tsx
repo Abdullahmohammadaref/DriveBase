@@ -44,16 +44,16 @@ export function RecordNavigation({
     }
 
     return (
-        <div className={cn("flex items-center gap-2", className)}>
+        <div className={cn("flex items-center gap-1", className)}>
             <Button
                 variant="outline"
                 size="sm"
                 onClick={handlePrev}
                 disabled={prevId === null || prevId === undefined}
                 title={`Previous ${label}`}
-                className="h-10 w-10 p-0"
+                className="size-6.5 p-0 rounded border border-gray-200 dark:border-border text-gray-500 hover:bg-gray-50 dark:hover:bg-muted"
             >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="size-3.5" />
                 <span className="sr-only">Previous {label}</span>
             </Button>
 
@@ -63,9 +63,9 @@ export function RecordNavigation({
                 onClick={handleNext}
                 disabled={nextId === null || nextId === undefined}
                 title={`Next ${label}`}
-                className="h-10 w-10 p-0"
+                className="size-6.5 p-0 rounded border border-gray-200 dark:border-border text-gray-500 hover:bg-gray-50 dark:hover:bg-muted"
             >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="size-3.5" />
                 <span className="sr-only">Next {label}</span>
             </Button>
         </div>
@@ -111,16 +111,16 @@ export function ReviewQueueNavigation({
     }
 
     return (
-        <div className={cn("flex items-center gap-2", className)}>
+        <div className={cn("flex items-center gap-1", className)}>
             <Button
                 variant="outline"
                 size="sm"
                 onClick={handlePrev}
                 disabled={prevReviewId === null || prevReviewId === undefined}
                 title="Previous review item"
-                className="h-10 w-10 p-0 border-amber-500/50 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
+                className="size-6.5 p-0 rounded border border-amber-500/50 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
             >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="size-3.5" />
                 <span className="sr-only">Previous review item</span>
             </Button>
 
@@ -130,9 +130,9 @@ export function ReviewQueueNavigation({
                 onClick={handleNext}
                 disabled={nextReviewId === null || nextReviewId === undefined}
                 title="Next review item"
-                className="h-10 w-10 p-0 border-amber-500/50 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
+                className="size-6.5 p-0 rounded border border-amber-500/50 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
             >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="size-3.5" />
                 <span className="sr-only">Next review item</span>
             </Button>
         </div>

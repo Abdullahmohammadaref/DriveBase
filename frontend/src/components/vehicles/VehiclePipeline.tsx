@@ -1,4 +1,4 @@
-import { CheckCircle, Clock, CheckSquare, HelpCircle, ChevronRight, ArrowDown } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 
@@ -24,68 +24,29 @@ export function VehiclePipeline({
     className,
 }: VehiclePipelineProps) {
     const { t } = useTranslation()
-
-    // Base colors based on colors.md
-    const statusConfig: Record<VehicleStatus, { icon: any, baseColor: string, bgColor: string, textColor: string }> = {
-        purchased: {
-            icon: CheckSquare,
-            baseColor: "bg-amber-500",
-            bgColor: "bg-amber-500/15",
-            textColor: "text-amber-600 dark:text-amber-500",
-        },
-        ready_for_sale: {
-            icon: Clock,
-            baseColor: "bg-blue-600",
-            bgColor: "bg-blue-600/15",
-            textColor: "text-blue-600 dark:text-blue-500",
-        },
-        reserved: {
-            icon: Clock,
-            baseColor: "bg-purple-600",
-            bgColor: "bg-purple-600/15",
-            textColor: "text-purple-600 dark:text-purple-500",
-        },
-        sold: {
-            icon: CheckCircle,
-            baseColor: "bg-green-600",
-            bgColor: "bg-green-600/15",
-            textColor: "text-green-600 dark:text-green-500",
-        },
-        inactive: {
-            icon: HelpCircle,
-            baseColor: "bg-gray-500",
-            bgColor: "bg-gray-500/15",
-            textColor: "text-gray-600 dark:text-gray-400",
-        },
-    }
-
-    const currentIndex = PIPELINE_ORDER.indexOf(currentStatus as any)
+    const currentIndex = PIPELINE_ORDER.indexOf(currentStatus)
 
     return (
-        <div className={cn(
-            "flex",
-            orientation === "horizontal" ? "flex-row items-center space-x-2" : "flex-col items-center space-y-2 w-full",
-            className
-        )}>
+        <div
+            className={cn(
+                "flex items-center gap-1 overflow-x-auto",
+                orientation === "vertical" ? "flex-col items-start" : "flex-row",
+                className
+            )}
+        >
             {PIPELINE_ORDER.map((status, index) => {
                 const isCurrent = currentStatus === status
-                const isClickable = !disabled && canMoveTo.includes(status) && onStatusChange
-                const isPast = currentIndex > -1 && index < currentIndex && !isCurrent
-                const config = statusConfig[status]
-                const Icon = config.icon
+                const isPast = currentIndex > -1 && index < currentIndex
+                const isClickable = !disabled && canMoveTo.includes(status) && Boolean(onStatusChange)
+                const isDoneOrActive = isCurrent || isPast
 
-                // Base style: default or grayed out if neither current nor reachable
-                let buttonStyle = "bg-muted text-muted-foreground ring-1 ring-inset ring-border opacity-60"
-                if (isCurrent) {
-                    buttonStyle = `${config.bgColor} ${config.textColor} ring-2 ring-inset ring-${config.baseColor.replace('bg-', '')}/30 opacity-100 shadow-sm font-semibold`
-                } else if (isClickable) {
-                    buttonStyle = `bg-background text-foreground ring-1 ring-inset ring-border hover:ring-${config.baseColor.replace('bg-', '')}/50 hover:bg-muted/50 cursor-pointer opacity-100`
-                } else if (isPast) {
-                    buttonStyle = `bg-background text-muted-foreground ring-1 ring-inset ring-border opacity-70`
+                let pillStyle = "border-border bg-secondary text-muted-foreground"
+                if (isDoneOrActive) {
+                    pillStyle = "border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800"
                 }
 
                 return (
-                    <div key={status} className={cn("flex", orientation === "horizontal" ? "items-center flex-row" : "flex-col items-center w-full")}>
+                    <div key={status} className="flex items-center gap-1 shrink-0">
                         <button
                             type="button"
                             disabled={!isClickable || disabled}
@@ -95,24 +56,19 @@ export function VehiclePipeline({
                                 }
                             }}
                             className={cn(
-                                "flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition-all",
-                                orientation === "vertical" && "w-full justify-start",
-                                buttonStyle,
-                                (!isClickable && !isCurrent) && "cursor-not-allowed"
+                                "inline-flex h-5 shrink-0 items-center gap-1 rounded-md border px-2 text-[11px] font-medium leading-none transition-all",
+                                pillStyle,
+                                isClickable && "cursor-pointer hover:ring-1 hover:ring-emerald-500/30",
+                                !isClickable && !isCurrent && "cursor-default"
                             )}
-                            title={!isClickable && !isCurrent ? "Not allowed from current status" : undefined}
+                            title={!isClickable && !isCurrent ? "Status change not available" : undefined}
                         >
-                            <Icon className="h-3.5 w-3.5" />
-                            <span>{t(`status.${status}`) || status.replace(/_/g, ' ')}</span>
+                            <span className="size-1.5 shrink-0 rounded-full bg-current" />
+                            <span>{t(`status.${status}`) || status.replace(/_/g, " ")}</span>
                         </button>
-                        
-                        {/* Connector arrow */}
+
                         {index < PIPELINE_ORDER.length - 1 && (
-                            orientation === "horizontal" ? (
-                                <ChevronRight className="h-4 w-4 text-muted-foreground/40 mx-1 flex-shrink-0" />
-                            ) : (
-                                <ArrowDown className="h-4 w-4 text-muted-foreground/40 my-1 flex-shrink-0" />
-                            )
+                            <ChevronRight className="size-3 shrink-0 text-muted-foreground/60" />
                         )}
                     </div>
                 )

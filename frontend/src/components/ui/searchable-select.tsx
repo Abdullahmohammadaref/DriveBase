@@ -62,55 +62,54 @@ export function SearchableSelect({
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-full justify-between text-foreground"
+                    className="w-full justify-between text-gray-800 dark:text-foreground font-normal text-xs h-8 px-2.5 bg-[#F3F3F3] dark:bg-secondary hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-200/60 dark:hover:bg-secondary/80 focus:bg-white dark:focus:bg-background focus:border-gray-400 border-gray-200 dark:border-border"
                     disabled={disabled}
                 >
-                    <span className="truncate text-left font-normal">
+                    <span className="truncate text-left">
                         {selectedOption ? selectedOption.label : placeholder}
                     </span>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <ChevronsUpDown className="ml-1 size-3.5 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                <div className="p-2 border-b border-border">
+                <div className="p-1.5 border-b border-border">
                     <Input
                         placeholder={searchPlaceholder}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="h-8 text-foreground placeholder:text-muted-foreground"
+                        className="h-7 text-xs text-foreground placeholder:text-muted-foreground"
                     />
                 </div>
-                <div className="max-h-[300px] overflow-y-auto overflow-x-hidden">
-                    <div className="p-1">
-                        {filteredOptions.length === 0 ? (
-                            <div className="p-2 text-sm text-muted-foreground">
-                                No results found
-                            </div>
-                        ) : (
-                            filteredOptions.map((option) => (
-                                <button
-                                    key={option.value}
-                                    onClick={() => {
-                                        onChange(option.value)
-                                        setOpen(false)
-                                        setSearchQuery("")
-                                    }}
+                <div className="max-h-[260px] overflow-y-auto overflow-x-hidden p-1">
+                    {filteredOptions.length === 0 ? (
+                        <div className="p-2 text-xs text-muted-foreground text-center">
+                            No results found
+                        </div>
+                    ) : (
+                        filteredOptions.map((option) => (
+                            <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => {
+                                    onChange(option.value)
+                                    setOpen(false)
+                                    setSearchQuery("")
+                                }}
+                                className={cn(
+                                    "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs md:text-sm text-foreground hover:bg-accent cursor-pointer text-left transition-colors",
+                                    value === option.value && "bg-accent font-medium"
+                                )}
+                            >
+                                <Check
                                     className={cn(
-                                        "flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm text-foreground hover:bg-accent",
-                                        value === option.value && "bg-accent"
+                                        "size-3.5 shrink-0",
+                                        value === option.value ? "opacity-100 text-primary" : "opacity-0"
                                     )}
-                                >
-                                    <Check
-                                        className={cn(
-                                            "h-4 w-4",
-                                            value === option.value ? "opacity-100" : "opacity-0"
-                                        )}
-                                    />
-                                    {option.label}
-                                </button>
-                            ))
-                        )}
-                    </div>
+                                />
+                                <span className="truncate">{option.label}</span>
+                            </button>
+                        ))
+                    )}
                 </div>
             </PopoverContent>
         </Popover>

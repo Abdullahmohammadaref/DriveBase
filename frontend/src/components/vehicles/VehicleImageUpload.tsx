@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Image as ImageIcon, Loader2, Upload, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
+import { Image as ImageIcon, Loader2, UploadCloud, X } from "lucide-react"
 import { cn, withMediaCacheKey } from "@/lib/utils"
 
 interface VehicleImageUploadProps {
@@ -95,28 +93,26 @@ export function VehicleImageUpload({
         if (disabled) {
             return
         }
-
         inputRef.current?.click()
     }
 
     return (
-        <div className={cn("space-y-3", className)}>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <Label className="text-foreground">{label}</Label>
+        <div className={cn("min-w-0 flex flex-col", className)}>
+            <div className="mb-0.5 flex items-center justify-between">
+                <span className="text-[11px] font-medium leading-[14px] text-muted-foreground truncate">
+                    {label}
+                </span>
                 {selectedFile && (
-                    <Button
+                    <button
                         type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-auto px-2 py-1 text-xs text-muted-foreground"
+                        className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground"
                         onClick={() => {
                             setLocalError(null)
                             void onFileChange(null)
                         }}
                     >
-                        <X className="mr-1 h-3.5 w-3.5" />
-                        Clear Selection
-                    </Button>
+                        <X className="size-3" /> Clear
+                    </button>
                 )}
             </div>
 
@@ -132,15 +128,11 @@ export function VehicleImageUpload({
                 }}
                 onDragEnter={(event) => {
                     event.preventDefault()
-                    if (!disabled) {
-                        setIsDragActive(true)
-                    }
+                    if (!disabled) setIsDragActive(true)
                 }}
                 onDragOver={(event) => {
                     event.preventDefault()
-                    if (!disabled) {
-                        setIsDragActive(true)
-                    }
+                    if (!disabled) setIsDragActive(true)
                 }}
                 onDragLeave={(event) => {
                     event.preventDefault()
@@ -151,60 +143,53 @@ export function VehicleImageUpload({
                 onDrop={(event) => {
                     event.preventDefault()
                     setIsDragActive(false)
-                    if (disabled) {
-                        return
-                    }
+                    if (disabled) return
                     handleCandidateFile(event.dataTransfer.files?.[0] ?? null)
                 }}
                 className={cn(
-                    "rounded-xl border-2 border-dashed border-border bg-muted/20 p-3.5 transition-colors",
-                    !disabled && "cursor-pointer hover:border-primary/50 hover:bg-muted/40",
+                    "flex h-[115px] min-h-[110px] items-center gap-3 rounded-md border border-gray-200 dark:border-border bg-[#F3F3F3] dark:bg-secondary/40 p-2 transition-colors",
+                    !disabled && "cursor-pointer hover:bg-gray-200/60 dark:hover:bg-accent/40",
                     isDragActive && "border-primary bg-primary/5",
                     disabled && "cursor-not-allowed opacity-70"
                 )}
             >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                    <div className="flex h-20 w-full items-center justify-center overflow-hidden rounded-lg border border-border bg-background sm:w-36">
-                        {currentPreviewUrl ? (
-                            <img
-                                src={currentPreviewUrl}
-                                alt={`${label} preview`}
-                                className="h-full w-full object-contain"
-                            />
-                        ) : (
-                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                                <ImageIcon className="h-10 w-10" />
-                                <span className="text-xs">No photo selected</span>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="flex-1 space-y-1.5">
-                        <div className="flex items-center gap-2 text-foreground">
-                            {isUploading ? (
-                                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                            ) : (
-                                <Upload className="h-4 w-4 text-primary" />
-                            )}
-                            <span className="text-xs font-medium">
-                                {isUploading
-                                    ? "Uploading and processing image..."
-                                    : "Click or drag"}
-                            </span>
+                {/* Left Thumbnail Box */}
+                <div className="grid h-[96px] w-[96px] shrink-0 place-items-center overflow-hidden rounded-md border border-gray-200 dark:border-border bg-white dark:bg-background">
+                    {currentPreviewUrl ? (
+                        <img
+                            src={currentPreviewUrl}
+                            alt={`${label} preview`}
+                            className="h-full w-full object-contain p-0.5"
+                        />
+                    ) : (
+                        <div className="flex flex-col items-center justify-center text-muted-foreground">
+                            <ImageIcon className="size-4 text-muted-foreground/40" />
+                            <span className="text-[8px] text-muted-foreground/60 leading-tight mt-0.5">No photo</span>
                         </div>
+                    )}
+                </div>
 
-                        <p className="text-xs text-muted-foreground">
-                            Allowed formats: JPG, JPEG, PNG, GIF, WebP, BMP, TIFF, AVIF. Maximum size: 10MB.
-                        </p>
-                        {/*<p className="text-xs text-muted-foreground">*/}
-                        {/*    Selecting a new image replaces the current photo. Non-image files such as PDF are blocked.*/}
-                        {/*</p>*/}
-                        {selectedFile && (
-                            <p className="text-xs text-foreground">
-                                Selected file: <span className="font-medium">{selectedFile.name}</span>
-                            </p>
+                {/* Right Upload Instructions */}
+                <div className="flex min-w-0 flex-1 flex-col justify-center">
+                    <button
+                        type="button"
+                        className="inline-flex h-5 shrink-0 items-center gap-1 self-start rounded-md border border-border bg-background px-1.5 text-[10px] font-medium text-foreground hover:bg-accent"
+                    >
+                        {isUploading ? (
+                            <Loader2 className="size-2.5 animate-spin text-primary" />
+                        ) : (
+                            <UploadCloud className="size-2.5 text-muted-foreground" />
                         )}
-                    </div>
+                        <span>{isUploading ? "Uploading..." : "Click or drag"}</span>
+                    </button>
+                    <p className="mt-0.5 text-[9px] leading-[11px] text-muted-foreground line-clamp-1">
+                        JPG, PNG, WebP, GIF, AVIF (Max 10MB)
+                    </p>
+                    {selectedFile && (
+                        <p className="truncate text-[9px] text-foreground font-medium">
+                            {selectedFile.name}
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -221,7 +206,7 @@ export function VehicleImageUpload({
             />
 
             {displayError && (
-                <p className="text-sm text-red-500">{displayError}</p>
+                <p className="mt-1 text-xs text-destructive">{displayError}</p>
             )}
         </div>
     )

@@ -7,14 +7,14 @@ interface StickyFooterProps {
 
 export function StickyFooter({ children, className }: StickyFooterProps) {
     return (
-        <div
+        <footer
             className={cn(
-                "fixed bottom-0 right-0 z-40 flex items-center justify-between border-t border-gray-200 bg-white p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] dark:border-gray-700 dark:bg-gray-900",
-                "left-0 md:left-64", // Respect sidebar width
+                "fixed bottom-0 right-0 z-40 flex h-10 items-center justify-between border-t border-border bg-background px-4 py-1.5 transition-all duration-300",
+                "left-0 md:left-52",
                 className
             )}
         >
             {children}
-        </div>
+        </footer>
     )
 }
