@@ -298,12 +298,12 @@ export function TransactionFiltersSidebar({
                 </div>
             </div>
 
-            <div className="p-3 border-t border-gray-200 dark:border-border bg-gray-50/50 dark:bg-muted/30 flex gap-2">
-                <Button variant="outline" size="sm" onClick={handleReset} className="flex-1 h-7.5 text-xs text-foreground">
-                    <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+            <div className="p-2.5 border-t border-gray-200 dark:border-border bg-gray-50/50 dark:bg-muted/30 flex gap-2">
+                <Button variant="outline" size="sm" onClick={handleReset} className="flex-1 h-7.5 px-2 text-[11px] font-medium text-foreground whitespace-nowrap">
+                    <RotateCcw className="mr-1 h-3 w-3 shrink-0" />
                     {t('transactions.reset')}
                 </Button>
-                <Button size="sm" onClick={handleApply} className="flex-1 h-7.5 text-xs">
+                <Button size="sm" onClick={handleApply} className="flex-1 h-7.5 px-2 text-[11px] font-medium whitespace-nowrap">
                     {t('transactions.applyFilters')}
                 </Button>
             </div>

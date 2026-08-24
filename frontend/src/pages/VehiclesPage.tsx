@@ -20,8 +20,9 @@ import { ContractModal } from "@/components/vehicles/ContractModal"
 import { StickyFooter } from "@/components/StickyFooter"
 import { PerPageInput } from "@/components/PerPageInput"
 import { PageInput } from "@/components/PageInput"
-import { getPagePref, savePagePref, getSplitWidth, saveSplitWidth } from "@/lib/paginationPrefs"
-import { SplitViewDivider } from "@/components/SplitViewDivider"
+import { getPagePref, savePagePref } from "@/lib/paginationPrefs"
+// import { getSplitWidth, saveSplitWidth } from "@/lib/paginationPrefs" // DEACTIVATED: SplitViewDivider
+// import { SplitViewDivider } from "@/components/SplitViewDivider" // DEACTIVATED: SplitViewDivider
 import type { VehicleFilters, VehicleListItem } from "@/types/vehicle"
 
 const VEHICLE_SORT_OPTIONS = [
@@ -82,7 +83,16 @@ export function VehiclesPage() {
     // Fetch vehicles
     const { data, isLoading, isFetching } = useVehicles(filters)
 
-    // Split view preferences
+    /*
+     * =========================================================================
+     * DEACTIVATED FEATURE: Draggable SplitViewDivider on Vehicles Page
+     * To reactivate:
+     * 1. Uncomment the panelWidth/handleDrag code below.
+     * 2. Re-enable <SplitViewDivider /> in the JSX.
+     * See docs/DEACTIVATED_FEATURES.md for full details.
+     * =========================================================================
+     */
+    /*
     const [panelWidth, setPanelWidth] = useState(() => 
         getSplitWidth("acar_vehicles_filter_width", 260, 200, 500)
     )
@@ -90,8 +100,7 @@ export function VehiclesPage() {
 
     const handleDrag = (deltaX: number) => {
         setPanelWidth(prev => {
-            const next = prev + deltaX // Positive deltaX increases left panel width
-            // Clamping between 200px and 500px
+            const next = prev + deltaX
             return Math.min(500, Math.max(200, next))
         })
     }
@@ -100,6 +109,7 @@ export function VehiclesPage() {
         setIsDragging(false)
         saveSplitWidth("acar_vehicles_filter_width", panelWidth, 200, 500)
     }
+    */
 
     // Mutations
     const deleteMutation = useDeleteVehicle()
@@ -201,7 +211,7 @@ export function VehiclesPage() {
             />
 
             {/* Main Layout */}
-            <div className="flex flex-col lg:flex-row relative lg:items-start">
+            <div className="flex flex-col lg:flex-row relative lg:items-start gap-3.5">
                 {/* Left Sidebar (Mobile) */}
                 <div className="w-full lg:hidden shrink-0 order-2 mb-4">
                     <VehicleFiltersSidebar
@@ -210,28 +220,25 @@ export function VehiclesPage() {
                     />
                 </div>
 
-                {/* Left Sidebar (Desktop) */}
-                <div 
-                    className={`hidden lg:block shrink-0 order-1 ${isDragging ? 'pointer-events-none' : ''}`}
-                    style={{ width: `${panelWidth}px` }}
-                >
+                {/* Left Sidebar (Desktop) - Fixed comfortable width */}
+                <div className="hidden lg:block shrink-0 order-1 w-[295px]">
                     <VehicleFiltersSidebar
                         filters={filters}
                         onApplyFilters={handleApplyFilters}
                     />
                 </div>
 
-                {/* Draggable Divider */}
-                <SplitViewDivider 
+                {/* Draggable Divider - Deactivated for now (see docs/DEACTIVATED_FEATURES.md) */}
+                {/* <SplitViewDivider 
                     onDrag={handleDrag}
                     onDragStart={() => setIsDragging(true)}
                     onDragEnd={handleDragEnd}
                     className="hidden lg:flex order-2"
                     handlePosition="top"
-                />
+                /> */}
 
                 {/* Right Content */}
-                <div className={`flex-1 min-w-0 order-1 lg:order-3 flex flex-col gap-3 mb-4 lg:mb-0 ${isDragging ? 'pointer-events-none' : ''}`}>
+                <div className="flex-1 min-w-0 order-1 lg:order-2 flex flex-col gap-3 mb-4 lg:mb-0">
                     {/* Toolbar */}
                     <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
                         {/* Search */}

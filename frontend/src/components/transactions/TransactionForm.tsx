@@ -115,8 +115,8 @@ export function TransactionForm({
     onAutoSaveDebounced,
     autoSaveStatus = "idle",
     autoSaveErrorMessage,
-    isSplitView,
-    splitViewToggle,
+    isSplitView: _isSplitView,
+    splitViewToggle: _splitViewToggle,
     splitViewWidth,
     onSplitViewWidthChange,
     onSplitViewWidthStart,
@@ -196,7 +196,10 @@ export function TransactionForm({
     const { data: subcategoriesData } = useSubcategories(categoryId ?? undefined)
 
     // Layout logic
-    const showSplitView = mode === "edit" && isSplitView;
+    // DEACTIVATED: Split view in TransactionForm.
+    // To reactivate, change showSplitView to: mode === "edit" && isSplitView
+    // See docs/DEACTIVATED_FEATURES.md
+    const showSplitView = false // mode === "edit" && isSplitView;
 
     // Track last loaded transaction ID to prevent re-initializing on auto-save response
     const lastLoadedIdRef = useRef<number | null>(null)
@@ -1112,11 +1115,9 @@ export function TransactionForm({
                     ) : (
                         // Edit mode: Show autosave indicator, PDF button, and navigation
                         <div className="flex items-center gap-3">
-                            {/* Layout Toggle */}
-                            {splitViewToggle}
-
-                            {/* Separator */}
-                            {splitViewToggle && <div className="h-6 w-px bg-border" />}
+                            {/* Layout Toggle - DEACTIVATED (see docs/DEACTIVATED_FEATURES.md) */}
+                            {/* {_splitViewToggle}
+                            {_splitViewToggle && <div className="h-6 w-px bg-border" />} */}
 
                             {/* Auto-save status indicator */}
                             <AutoSaveIndicator status={autoSaveStatus} errorMessage={autoSaveErrorMessage} />

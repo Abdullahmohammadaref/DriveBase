@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { ArrowLeft, Loader2, Columns2, Rows2 } from "lucide-react"
+import { ArrowLeft, Loader2 } from "lucide-react"
+// import { Columns2, Rows2 } from "lucide-react" // DEACTIVATED: Split view toggle icons
 import { Button } from "@/components/ui/button"
 import { TransactionForm } from "@/components/transactions/TransactionForm"
 import { useTransaction, transactionKeys } from "@/hooks/useTransactions"
 import { useAutoSave } from "@/hooks/useAutoSave"
-import { getSplitWidth, saveSplitWidth } from "@/lib/paginationPrefs"
+// import { getSplitWidth, saveSplitWidth } from "@/lib/paginationPrefs" // DEACTIVATED: Split view width
 import type { TransactionFormData, TransactionUpdateData } from "@/types/transaction"
 import { RecordNavigation, ReviewQueueNavigation } from "@/components/RecordNavigation"
 
@@ -28,10 +28,18 @@ export function EditTransactionPage() {
     // Use isFetching to distinguish between initial load and navigation refetch
     const { data: transaction, isLoading, isFetching, error } = useTransaction(transactionId)
 
-    // Layout Toggle State (persisted)
+    /* 
+     * =========================================================================
+     * DEACTIVATED FEATURE: Split View in Edit Transaction Page
+     * To reactivate:
+     * 1. Uncomment the splitViewToggle block below.
+     * 2. Pass isSplitView, splitViewToggle, splitViewWidth, etc. to <TransactionForm />.
+     * See docs/DEACTIVATED_FEATURES.md for full details.
+     * =========================================================================
+     */
+    /*
     const [isSplitView, setIsSplitView] = useState<boolean>(() => {
         const stored = localStorage.getItem("acar_transaction_split_view")
-        // Default to split view if not set
         return stored === null ? true : stored === "true"
     })
 
@@ -70,6 +78,7 @@ export function EditTransactionPage() {
             </Button>
         </div>
     )
+    */
     // Auto-save hook with cache invalidation
     // - updateQueryKey: Instantly updates the detail cache with response data
     // - invalidateQueryKeys: Marks list queries as stale so navigation shows fresh data
@@ -164,7 +173,7 @@ export function EditTransactionPage() {
     )
 
     return (
-        <div className={isDragging ? 'pointer-events-none' : ''}>
+        <div>
             {/* Transaction Form (includes Related Transactions Table) */}
             <TransactionForm
                 mode="edit"
@@ -176,12 +185,7 @@ export function EditTransactionPage() {
                 onAutoSaveDebounced={saveDebounced}
                 autoSaveStatus={autoSaveStatus}
                 autoSaveErrorMessage={errorMessage}
-                isSplitView={isSplitView}
-                splitViewToggle={splitViewToggle}
-                splitViewWidth={panelWidth}
-                onSplitViewWidthChange={setPanelWidth}
-                onSplitViewWidthSave={handleWidthSave}
-                onSplitViewWidthStart={() => setIsDragging(true)}
+                isSplitView={false}
                 header={headerNode}
             />
         </div>
