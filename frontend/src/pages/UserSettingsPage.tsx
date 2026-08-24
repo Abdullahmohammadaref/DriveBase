@@ -121,33 +121,35 @@ function UsernameSection({ currentUsername }: { currentUsername: string }) {
     }
 
     return (
-        <div className="rounded-xl border border-border bg-card p-6 space-y-4">
-            <div className="flex items-center gap-3 mb-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                    <User className="h-5 w-5 text-primary" />
+        <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-3.5 space-y-3 shadow-xs">
+            <div className="flex items-center gap-2.5 mb-1">
+                <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10">
+                    <User className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                    <h3 className="text-lg font-semibold text-foreground">Username</h3>
-                    <p className="text-sm text-muted-foreground">Change your display username</p>
+                    <h3 className="text-sm font-semibold text-foreground">Username</h3>
+                    <p className="text-[11px] text-muted-foreground">Change your display username</p>
                 </div>
             </div>
 
-            <div className="space-y-2">
-                <Label htmlFor="settings-username" className="text-foreground">Username</Label>
+            <div className="space-y-1.5">
+                <Label htmlFor="settings-username" className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">Username</Label>
                 <div className="flex gap-2">
                     <Input
                         id="settings-username"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         placeholder="Enter new username"
-                        className="flex-1 text-foreground"
+                        disabled={isLoading}
+                        className="h-8 text-xs"
                     />
                     <Button
                         onClick={handleSave}
                         disabled={isLoading || username === currentUsername}
-                        className="shrink-0"
+                        size="sm"
+                        className="h-8 px-3 text-xs shrink-0"
                     >
-                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+                        {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save"}
                     </Button>
                 </div>
             </div>
@@ -734,16 +736,18 @@ export default function UserSettingsPage() {
     }
 
     return (
-        <div className="max-w-5xl mx-auto space-y-6 pb-8">
+        <div className="p-3 md:p-4 max-w-5xl mx-auto space-y-3 pb-8">
             {/* Page Header */}
-            <div>
-                <h1 className="text-2xl font-bold text-foreground">User Settings</h1>
-                <p className="text-muted-foreground mt-1">
-                    Manage your account credentials and security settings
-                </p>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 dark:border-border pb-2">
+                <div>
+                    <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground">User Settings</h1>
+                    <p className="text-xs text-muted-foreground">
+                        Manage your account credentials and security settings
+                    </p>
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {/* Username */}
                 <UsernameSection currentUsername={user.username} />
 

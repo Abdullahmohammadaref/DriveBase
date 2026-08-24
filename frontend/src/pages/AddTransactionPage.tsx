@@ -1,5 +1,5 @@
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
-import { ArrowLeft, Plus, Loader2 } from "lucide-react"
+import { ArrowLeft, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TransactionForm } from "@/components/transactions/TransactionForm"
 import { useCreateTransaction, useNextTransactionId } from "@/hooks/useTransactions"
@@ -44,29 +44,24 @@ export function AddTransactionPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-3">
             {/* Page Header */}
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={handleBack}>
-                    <ArrowLeft className="h-5 w-5" />
-                </Button>
-                <div>
-                    <div className="flex items-center gap-3">
-                        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                            <Plus className="h-6 w-6" />
+            <div className="flex items-center justify-between gap-2 border-b border-gray-200 dark:border-border pb-1.5">
+                <div className="flex min-w-0 items-center gap-2">
+                    <Button variant="outline" size="icon" className="size-7 shrink-0" onClick={handleBack}>
+                        <ArrowLeft className="size-3.5" />
+                    </Button>
+                    <div className="flex items-center gap-2 min-w-0">
+                        <h1 className="text-sm font-semibold tracking-tight text-heading">
                             Add New Transaction
                         </h1>
-                        {/* Next ID Badge */}
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                        <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-medium bg-[#F9FAFB] dark:bg-secondary text-muted-foreground border border-gray-200 dark:border-border">
                             {nextIdLoading ? (
-                                <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                <Loader2 className="size-2.5 animate-spin mr-1" />
                             ) : null}
-                            Next ID: #{nextId ?? '...'}
+                            Next ID: #{nextId ?? "..."}
                         </span>
                     </div>
-                    <p className="text-muted-foreground mt-1">
-                        Create a new financial transaction record
-                    </p>
                 </div>
             </div>
 

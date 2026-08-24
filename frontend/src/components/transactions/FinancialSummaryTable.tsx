@@ -7,7 +7,7 @@ interface FinancialSummaryTableProps {
 }
 
 /**
- * Financial summary showing 9 cards in a single line:
+ * Financial summary showing 9 cards in a single continuous ribbon:
  * Net Revenue, Net Expenses, Net Profit,
  * Tax Revenue, Tax Expenses, Total Tax,
  * Gross Revenue, Gross Expenses, Gross Difference.
@@ -18,10 +18,12 @@ export function FinancialSummaryTable({
 }: FinancialSummaryTableProps) {
     if (isLoading) {
         return (
-            <div className="flex gap-2 overflow-x-auto pb-2">
-                {[...Array(9)].map((_, i) => (
-                    <div key={i} className="h-20 w-32 animate-pulse bg-muted rounded-lg flex-shrink-0" />
-                ))}
+            <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-2 shadow-xs">
+                <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-2">
+                    {[...Array(9)].map((_, i) => (
+                        <div key={i} className="h-10 animate-pulse bg-muted rounded" />
+                    ))}
+                </div>
             </div>
         )
     }
@@ -41,43 +43,34 @@ export function FinancialSummaryTable({
         }).format(numValue)
     }
 
-    const MiniCard = ({ label, value, colorClass }: { label: string, value: string, colorClass: string }) => (
-        <div className="flex-1 min-w-[120px] p-3 rounded-xl border border-border bg-card shadow-sm transition-all hover:shadow-md">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1 whitespace-nowrap">
-                {label}
-            </p>
-            <p className={cn("text-sm font-mono font-bold truncate", colorClass)}>
-                {value}
-            </p>
-        </div>
-    )
-
     const cards = [
-        { label: "Net Revenue", value: summary?.net_total_revenue, color: "text-emerald-600 dark:text-emerald-400" },
-        { label: "Net Expenses", value: summary?.net_total_expenses, color: "text-red-500" },
-        { label: "Net Profit", value: summary?.net_difference, color: parseValue(summary?.net_difference) >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500" },
+        { label: "Net Revenue", value: summary?.net_total_revenue, color: "text-[#318d6c]" },
+        { label: "Net Expenses", value: summary?.net_total_expenses, color: "text-[#d23a69]" },
+        { label: "Net Profit", value: summary?.net_difference, color: parseValue(summary?.net_difference) >= 0 ? "text-[#318d6c]" : "text-[#d23a69]" },
         
-        { label: "Tax Revenue", value: summary?.tax_total_revenue, color: "text-emerald-600 dark:text-emerald-400" },
-        { label: "Tax Expenses", value: summary?.tax_total_expenses, color: "text-red-500" },
-        { label: "Total Tax", value: summary?.tax_difference, color: parseValue(summary?.tax_difference) >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500" },
+        { label: "Tax Revenue", value: summary?.tax_total_revenue, color: "text-[#318d6c]" },
+        { label: "Tax Expenses", value: summary?.tax_total_expenses, color: "text-[#d23a69]" },
+        { label: "Total Tax", value: summary?.tax_difference, color: parseValue(summary?.tax_difference) >= 0 ? "text-[#318d6c]" : "text-[#d23a69]" },
         
-        { label: "Gross Revenue", value: summary?.gross_total_revenue, color: "text-emerald-600 dark:text-emerald-400" },
-        { label: "Gross Expenses", value: summary?.gross_total_expenses, color: "text-red-500" },
-        { label: "Gross Difference", value: summary?.gross_difference, color: parseValue(summary?.gross_difference) >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500" },
+        { label: "Gross Revenue", value: summary?.gross_total_revenue, color: "text-[#318d6c]" },
+        { label: "Gross Expenses", value: summary?.gross_total_expenses, color: "text-[#d23a69]" },
+        { label: "Gross Difference", value: summary?.gross_difference, color: parseValue(summary?.gross_difference) >= 0 ? "text-[#318d6c]" : "text-[#d23a69]" },
     ]
 
     return (
-        <div className="w-full overflow-x-auto pb-2 scrollbar-hide">
-            <div className="flex flex-row gap-2 w-full">
+        <section className="overflow-hidden rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card shadow-xs">
+            <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 lg:divide-x lg:divide-gray-100 dark:divide-border">
                 {cards.map((card, i) => (
-                    <MiniCard 
-                        key={i}
-                        label={card.label}
-                        value={formatCurrency(card.value)}
-                        colorClass={card.color}
-                    />
+                    <div key={i} className="min-w-0 border-b border-gray-100 dark:border-border px-3 py-1.5 lg:border-b-0">
+                        <div className="truncate text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-muted-foreground">
+                            {card.label}
+                        </div>
+                        <div className={cn("truncate text-[13px] font-bold font-mono", card.color)}>
+                            {formatCurrency(card.value)}
+                        </div>
+                    </div>
                 ))}
             </div>
-        </div>
+        </section>
     )
 }

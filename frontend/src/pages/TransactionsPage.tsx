@@ -227,42 +227,44 @@ export function TransactionsPage() {
     }, [])
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-3">
             {/* Page Header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 dark:border-border pb-2">
                 <div>
-                    <h1 className="text-2xl font-bold text-foreground tracking-tight">Transactions</h1>
-                    <p className="text-muted-foreground">
+                    <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground">Transactions</h1>
+                    <p className="text-xs text-muted-foreground">
                         Manage your financial transactions and summaries
                     </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex items-center gap-1.5">
                     <Button
                         variant="outline"
-                        className="gap-2 shadow-sm"
+                        size="sm"
+                        className="h-7.5 px-2.5 text-xs gap-1.5"
                         onClick={() => setImportModalOpen(true)}
                     >
-                        <Upload className="h-4 w-4 text-muted-foreground" />
+                        <Upload className="h-3.5 w-3.5 text-muted-foreground" />
                         Import CSV
                     </Button>
                     <Button
                         variant="outline"
-                        className="gap-2 shadow-sm"
+                        size="sm"
+                        className="h-7.5 px-2.5 text-xs gap-1.5"
                         onClick={handleDownloadPDF}
                         disabled={pdfLoading}
                     >
                         {pdfLoading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
                         ) : (
-                            <Download className="h-4 w-4 text-muted-foreground" />
+                            <Download className="h-3.5 w-3.5 text-muted-foreground" />
                         )}
                         {pdfLoading ? "Generating..." : "Export PDF"}
                     </Button>
                     <Link
                         to={`/${business_slug}/transactions/new`}
-                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/95 transition-all"
+                        className="inline-flex items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-xs hover:bg-primary/90"
                     >
-                        <Plus className="h-4 w-4" />
+                        <Plus className="h-3.5 w-3.5" />
                         Add Transaction
                     </Link>
                 </div>
@@ -270,14 +272,14 @@ export function TransactionsPage() {
 
             {/* Success Message Banner */}
             {successMessage && (
-                <div className="flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/30 px-4 py-3 text-emerald-800 dark:text-emerald-400 animate-in slide-in-from-top-2">
-                    <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
-                    <span className="text-sm font-medium">{successMessage}</span>
+                <div className="flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/30 px-3 py-2 text-emerald-800 dark:text-emerald-400 animate-in slide-in-from-top-2">
+                    <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+                    <span className="text-xs font-medium">{successMessage}</span>
                     <button
                         onClick={() => setSuccessMessage(null)}
                         className="ml-auto text-emerald-600 hover:text-emerald-800 dark:hover:text-emerald-300"
                     >
-                        <X className="h-4 w-4" />
+                        <X className="h-3.5 w-3.5" />
                     </button>
                 </div>
             )}
@@ -291,7 +293,7 @@ export function TransactionsPage() {
             {/* Main Layout */}
             <div className="flex flex-col lg:flex-row relative lg:items-start">
                 {/* Left Sidebar (Mobile) */}
-                <div className="w-full lg:hidden shrink-0 order-2 mb-6">
+                <div className="w-full lg:hidden shrink-0 order-2 mb-4">
                     <TransactionFiltersSidebar
                         filters={filters}
                         onApplyFilters={handleApplyFilters}
@@ -319,73 +321,67 @@ export function TransactionsPage() {
                 />
 
                 {/* Right Content */}
-                <div className={`flex-1 min-w-0 order-1 lg:order-3 flex flex-col gap-6 mb-6 lg:mb-0 ${isDragging ? 'pointer-events-none' : ''}`}>
+                <div className={`flex-1 min-w-0 order-1 lg:order-3 flex flex-col gap-3 mb-4 lg:mb-0 ${isDragging ? 'pointer-events-none' : ''}`}>
                     {/* Toolbar */}
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                {/* Search */}
-                <div className="relative flex-1 group">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                    <Input
-                        type="text"
-                        placeholder="Search across ID, vehicle, category, amount, partner..."
-                        className="pl-10 pr-10 h-11 hover:border-primary/50 focus:border-primary transition-all shadow-sm"
-                        value={searchValue}
-                        onChange={(e) => setSearchValue(e.target.value)}
+                    <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+                        {/* Search */}
+                        <div className="relative flex-1">
+                            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                                type="text"
+                                placeholder="Search across ID, vehicle, category, amount, partner..."
+                                className="pl-8 pr-8 h-8 text-xs"
+                                value={searchValue}
+                                onChange={(e) => setSearchValue(e.target.value)}
+                            />
+                            {searchValue && (
+                                <button
+                                    onClick={handleClearSearch}
+                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                >
+                                    <X className="h-3.5 w-3.5" />
+                                </button>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {searchValue && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 text-xs text-muted-foreground hover:text-foreground"
+                                    onClick={() => {
+                                        setSearchValue("")
+                                        setFilters(prev => ({
+                                            ...prev,
+                                            search: undefined,
+                                            page: 1,
+                                            status: undefined,
+                                            type: undefined,
+                                            category: undefined,
+                                            vehicle: undefined,
+                                            start_date: undefined,
+                                            end_date: undefined,
+                                        }))
+                                    }}
+                                >
+                                    <RefreshCw className="mr-1.5 h-3 w-3" />
+                                    Reset
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Transaction Table */}
+                    <TransactionTable
+                        transactions={data?.transactions?.items || []}
+                        isLoading={isLoading}
+                        onDelete={handleDeleteClick}
+                        onActivate={handleActivate}
+                        sortField={filters.sort}
+                        sortOrder={filters.order}
+                        onSort={handleSort}
                     />
-                    {searchValue && (
-                        <button
-                            onClick={handleClearSearch}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                            <X className="h-4 w-4" />
-                        </button>
-                    )}
                 </div>
-                <div className="flex items-center gap-2">
-
-                    {(searchValue) && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-11 text-muted-foreground hover:text-foreground"
-                            onClick={() => {
-                                setSearchValue("")
-                                setFilters(prev => ({
-                                    ...prev,
-                                    search: undefined,
-                                    page: 1,
-                                    // Keep pagination/sort preference but reset functional filters
-                                    status: undefined,
-                                    type: undefined,
-                                    category: undefined,
-                                    vehicle: undefined,
-                                    start_date: undefined,
-                                    end_date: undefined,
-                                }))
-                            }}
-                        >
-                            <RefreshCw className="mr-2 h-4 w-4" />
-                            Reset
-                        </Button>
-                    )}
-                </div>
-            </div>
-
-            {/* Results Count moved to sticky footer */}
-
-            {/* Transaction Table */}
-            <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
-                <TransactionTable
-                    transactions={data?.transactions?.items || []}
-                    isLoading={isLoading}
-                    onDelete={handleDeleteClick}
-                    onActivate={handleActivate}
-                    sortField={filters.sort}
-                    sortOrder={filters.order}
-                    onSort={handleSort}
-                />
-            </div>
-            </div>
             </div>
 
             {/* Padding to prevent sticky footer overlap */}

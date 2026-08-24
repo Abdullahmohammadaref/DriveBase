@@ -74,9 +74,9 @@ const TAB_ORDER = [
 type SortValue = "name" | "status" | "tax_amount"
 
 const ACTIVE_ITEM_CLASS =
-    "flex items-center justify-between rounded-lg border border-border bg-card/60 px-4 py-2.5 shadow-sm transition-all hover:border-primary/30 hover:bg-muted/50 group"
+    "flex h-[34px] items-center justify-between rounded-md border border-gray-200 dark:border-border bg-white dark:bg-card px-3 text-xs shadow-2xs transition-all hover:border-gray-300 dark:hover:border-border hover:bg-gray-50/50 dark:hover:bg-muted/30 group"
 const INACTIVE_ITEM_CLASS =
-    "flex items-center justify-between rounded-lg border border-zinc-200/50 dark:border-zinc-800/50 bg-zinc-50/50 dark:bg-zinc-900/20 px-4 py-2.5 opacity-70 transition-all hover:opacity-100 group shadow-sm"
+    "flex h-[34px] items-center justify-between rounded-md border border-gray-200/60 dark:border-border/60 bg-gray-50/60 dark:bg-zinc-900/30 px-3 text-xs opacity-75 transition-all hover:opacity-100 group"
 
 function matchesSearch(name: string | undefined | null, searchValue: string) {
     if (!name) return false
@@ -1017,29 +1017,31 @@ export default function ChoicesManagementPage() {
     }
 
     return (
-        <div className="mx-auto max-w-9xl p-4 md:p-6">
-            <div className="mb-6">
-                <h2 className="text-xl font-semibold text-foreground">
-                    {t("choices.title", "Manage Choices")}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                    {t("choices.subtitle", "Add, deactivate, or reactivate dropdown options for vehicles and transactions")}
-                </p>
+        <div className="p-3 md:p-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 dark:border-border pb-2">
+                <div>
+                    <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground">
+                        {t("choices.title", "Manage Choices")}
+                    </h1>
+                    <p className="text-xs text-muted-foreground">
+                        {t("choices.subtitle", "Add, deactivate, or reactivate dropdown options for vehicles and transactions")}
+                    </p>
+                </div>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-6 h-[calc(100vh-12rem)] min-h-[500px]">
+            <div className="flex flex-col md:flex-row gap-3 h-[calc(100vh-10rem)] min-h-[500px]">
                 {/* Left Sidebar (Tabs) */}
-                <div className="w-full md:w-64 flex-shrink-0 flex flex-col rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
-                    <div className="p-4 border-b border-border bg-muted/20">
-                        <h3 className="font-semibold text-foreground">Categories</h3>
+                <div className="w-full md:w-56 flex-shrink-0 flex flex-col rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card overflow-hidden shadow-xs">
+                    <div className="px-3 py-2 border-b border-gray-200 dark:border-border bg-gray-50/50 dark:bg-muted/30">
+                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-700 dark:text-foreground">Categories</h3>
                     </div>
-                    <nav className="flex-1 overflow-y-auto p-2 space-y-1" aria-label="Tabs">
+                    <nav className="flex-1 overflow-y-auto p-1.5 space-y-0.5" aria-label="Tabs">
                         {visibleTabKeys.map((key) => (
                             <button
                                 key={key}
                                 onClick={() => handleTabChange(key)}
-                                className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${activeTab === key
-                                    ? "bg-primary/10 text-primary"
+                                className={`w-full text-left px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${activeTab === key
+                                    ? "bg-secondary font-semibold text-heading"
                                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                                     }`}
                             >
@@ -1050,30 +1052,30 @@ export default function ChoicesManagementPage() {
                 </div>
 
                 {/* Right Content Area */}
-                <div className="flex-1 flex flex-col min-w-0 rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
+                <div className="flex-1 flex flex-col min-w-0 rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card overflow-hidden shadow-xs">
                     {/* Sticky Header with Search and Filters */}
-                    <div className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur p-4">
-                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                    <div className="sticky top-0 z-10 border-b border-gray-200 dark:border-border bg-white/95 dark:bg-card/95 backdrop-blur-xs p-2.5">
+                        <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center">
                             <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                                 <Input
                                     value={searchValue}
                                     onChange={(event) => setSearchValue(event.target.value)}
                                     placeholder={t("choices.searchPlaceholder", "Search choices in this tab...")}
-                                    className="pl-10 pr-10"
+                                    className="pl-8 pr-8 h-8 text-xs"
                                 />
                                 {searchValue && (
                                     <button
                                         type="button"
                                         onClick={() => setSearchValue("")}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                     >
-                                        <X className="h-4 w-4" />
+                                        <X className="h-3.5 w-3.5" />
                                     </button>
                                 )}
                             </div>
 
-                            <div className="w-full lg:w-56">
+                            <div className="w-full lg:w-48">
                                 <FilterSelect
                                     options={[
                                         { value: "active", label: t("choices.active", "Active") },
@@ -1098,7 +1100,7 @@ export default function ChoicesManagementPage() {
                     </div>
 
                     {/* Scrollable Content */}
-                    <div className="flex-1 overflow-y-auto p-5">
+                    <div className="flex-1 overflow-y-auto p-4">
                         {activeTab === "vehicle_model"
                             ? renderVehicleModelContent()
                             : activeTab === "subcategory"

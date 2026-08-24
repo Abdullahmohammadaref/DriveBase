@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { ArrowLeft, Edit, Loader2, Columns2, Rows2 } from "lucide-react"
+import { ArrowLeft, Loader2, Columns2, Rows2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TransactionForm } from "@/components/transactions/TransactionForm"
 import { useTransaction, transactionKeys } from "@/hooks/useTransactions"
@@ -130,20 +130,22 @@ export function EditTransactionPage() {
 
 
     const headerNode = (
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={handleBack} type="button">
-                    <ArrowLeft className="h-5 w-5" />
+        <div className="flex items-center justify-between gap-2 border-b border-gray-200 dark:border-border pb-1.5 mb-2.5">
+            <div className="flex min-w-0 items-center gap-2">
+                <Button variant="outline" size="icon" className="size-7 shrink-0" onClick={handleBack} type="button">
+                    <ArrowLeft className="size-3.5" />
                 </Button>
-                <div>
-                    <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                        <Edit className="h-6 w-6" />
-                        Edit Transaction #{transaction.internal_id}
+                <div className="flex items-baseline gap-2 min-w-0">
+                    <h1 className="text-sm font-semibold tracking-tight text-heading">
+                        Edit Transaction <span className="text-muted-foreground font-normal">#{transaction.internal_id}</span>
                     </h1>
+                    <span className="hidden sm:inline text-[11px] text-muted-foreground truncate">
+                        Transactions / #{transaction.internal_id}
+                    </span>
                 </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-1.5">
                 <RecordNavigation
                     basePath={`/${business_slug}/transactions`}
                     prevId={transaction.prev_transaction_internal_id}

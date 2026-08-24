@@ -26,20 +26,27 @@ export function LegalEntityFiltersSidebar({
     const { data: choicesData } = useChoices()
 
     return (
-        <div className="flex flex-col bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-border bg-muted/20">
-                <h2 className="text-lg font-semibold text-foreground">{t("common.filters", "Filters")}</h2>
+        <div className="flex flex-col bg-white dark:bg-card rounded-lg border border-gray-200 dark:border-border shadow-xs overflow-hidden">
+            <div className="px-3 py-2 border-b border-gray-200 dark:border-border bg-gray-50/50 dark:bg-muted/30 flex items-center justify-between">
+                <h2 className="text-[12px] font-semibold uppercase tracking-wider text-gray-700 dark:text-foreground">{t("common.filters", "Filters")}</h2>
+                <button
+                    type="button"
+                    onClick={onResetFilters}
+                    className="text-[11px] font-medium text-muted-foreground hover:text-foreground flex items-center gap-1"
+                >
+                    <RotateCcw className="size-3" /> {t("common.reset", "Reset")}
+                </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
-                <div className="space-y-4">
-                    <h3 className="text-sm font-medium text-foreground">
+            <div className="flex-1 overflow-y-auto p-3 space-y-3.5">
+                <div className="space-y-2.5">
+                    <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-muted-foreground">
                         {t("legalEntities.details", "Details")}
                     </h3>
 
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground">
+                    <div className="space-y-2.5">
+                        <div className="space-y-1">
+                            <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
                                 {t("legalEntities.type", "Type")}
                             </label>
                             <FilterSelect
@@ -55,8 +62,8 @@ export function LegalEntityFiltersSidebar({
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground">
+                        <div className="space-y-1">
+                            <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
                                 {t("legalEntities.status", "Status")}
                             </label>
                             <FilterSelect
@@ -72,8 +79,8 @@ export function LegalEntityFiltersSidebar({
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground">
+                        <div className="space-y-1">
+                            <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
                                 {t("legalEntities.country", "Country")}
                             </label>
                             <FilterSelect
@@ -86,8 +93,8 @@ export function LegalEntityFiltersSidebar({
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground">
+                        <div className="space-y-1">
+                            <label className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">
                                 {t("legalEntities.city", "City")}
                             </label>
                             <FilterSelect
@@ -105,9 +112,9 @@ export function LegalEntityFiltersSidebar({
             </div>
 
             {(filters.type || filters.status || filters.country_id || filters.city_id) && (
-                <div className="p-4 border-t border-border bg-muted/20 flex flex-wrap gap-2">
-                    <Button variant="outline" onClick={onResetFilters} className="w-full text-foreground">
-                        <RotateCcw className="mr-2 h-4 w-4" />
+                <div className="p-3 border-t border-gray-200 dark:border-border bg-gray-50/50 dark:bg-muted/30 flex gap-2">
+                    <Button variant="outline" size="sm" onClick={onResetFilters} className="w-full h-7.5 text-xs text-foreground">
+                        <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
                         {t("common.reset", "Reset")}
                     </Button>
                 </div>

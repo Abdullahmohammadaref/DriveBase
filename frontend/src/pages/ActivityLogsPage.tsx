@@ -138,33 +138,33 @@ export function ActivityLogsPage() {
     return (
         <div className="flex flex-col h-[calc(100vh-4rem)]">
             {/* Main Content Area - Scrollable */}
-            <div className="flex-1 overflow-auto p-6 space-y-6">
+            <div className="flex-1 overflow-auto p-3 pb-24 space-y-3">
                 {/* Page Header */}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 dark:border-border pb-2">
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                            <History className="h-6 w-6" />
+                        <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground flex items-center gap-1.5">
+                            <History className="h-4 w-4" />
                             {t("activityLogs.title", "Activity Logs")}
                         </h1>
-                        <p className="text-muted-foreground">
+                        <p className="text-xs text-muted-foreground">
                             {data?.total || 0} {t("activityLogs.totalEntries", "total entries")}
                         </p>
                     </div>
                 </div>
 
                 {/* Filters */}
-                <div className="rounded-xl border border-border bg-card p-4">
-                    <div className="flex flex-wrap items-end gap-4">
+                <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-2.5 shadow-xs">
+                    <div className="flex flex-wrap items-center gap-2">
                         {/* User Filter */}
-                        <div className="w-[160px]">
+                        <div className="w-[150px]">
                             <Select value={filters.user_id?.toString() || "all"} onValueChange={handleUserFilter}>
-                                <SelectTrigger>
+                                <SelectTrigger className="h-8 text-xs">
                                     <SelectValue placeholder={t("activityLogs.allUsers", "All Users")} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">{t("activityLogs.allUsers", "All Users")}</SelectItem>
+                                    <SelectItem value="all" className="text-xs">{t("activityLogs.allUsers", "All Users")}</SelectItem>
                                     {usersData?.users.map((user) => (
-                                        <SelectItem key={user.id} value={user.id.toString()}>
+                                        <SelectItem key={user.id} value={user.id.toString()} className="text-xs">
                                             {user.name}
                                         </SelectItem>
                                     ))}
@@ -173,33 +173,33 @@ export function ActivityLogsPage() {
                         </div>
 
                         {/* Action Filter */}
-                        <div className="w-[160px]">
+                        <div className="w-[150px]">
                             <Select value={filters.action || "all"} onValueChange={handleActionFilter}>
-                                <SelectTrigger>
+                                <SelectTrigger className="h-8 text-xs">
                                     <SelectValue placeholder={t("activityLogs.allActions", "All Actions")} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">{t("activityLogs.allActions", "All Actions")}</SelectItem>
-                                    <SelectItem value="create">{t("activityLogs.create", "Create")}</SelectItem>
-                                    <SelectItem value="update">{t("activityLogs.update", "Update")}</SelectItem>
-                                    <SelectItem value="delete">{t("activityLogs.delete", "Delete")}</SelectItem>
-                                    <SelectItem value="status_change">{t("activityLogs.statusChange", "Status Change")}</SelectItem>
+                                    <SelectItem value="all" className="text-xs">{t("activityLogs.allActions", "All Actions")}</SelectItem>
+                                    <SelectItem value="create" className="text-xs">{t("activityLogs.create", "Create")}</SelectItem>
+                                    <SelectItem value="update" className="text-xs">{t("activityLogs.update", "Update")}</SelectItem>
+                                    <SelectItem value="delete" className="text-xs">{t("activityLogs.delete", "Delete")}</SelectItem>
+                                    <SelectItem value="status_change" className="text-xs">{t("activityLogs.statusChange", "Status Change")}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
 
                         {/* Entity Filter */}
-                        <div className="w-[180px]">
+                        <div className="w-[160px]">
                             <Select value={filters.entity_type || "all"} onValueChange={handleEntityFilter}>
-                                <SelectTrigger>
+                                <SelectTrigger className="h-8 text-xs">
                                     <SelectValue placeholder={t("activityLogs.allEntities", "All Entities")} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">{t("activityLogs.allEntities", "All Entities")}</SelectItem>
-                                    <SelectItem value="vehicle">{t("activityLogs.vehicle", "Vehicle")}</SelectItem>
-                                    <SelectItem value="transaction">{t("activityLogs.transaction", "Transaction")}</SelectItem>
-                                    <SelectItem value="legal_entity">{t("activityLogs.legalEntity", "Legal Entity")}</SelectItem>
-                                    <SelectItem value="user">{t("activityLogs.user", "User")}</SelectItem>
+                                    <SelectItem value="all" className="text-xs">{t("activityLogs.allEntities", "All Entities")}</SelectItem>
+                                    <SelectItem value="vehicle" className="text-xs">{t("activityLogs.vehicle", "Vehicle")}</SelectItem>
+                                    <SelectItem value="transaction" className="text-xs">{t("activityLogs.transaction", "Transaction")}</SelectItem>
+                                    <SelectItem value="legal_entity" className="text-xs">{t("activityLogs.legalEntity", "Legal Entity")}</SelectItem>
+                                    <SelectItem value="user" className="text-xs">{t("activityLogs.user", "User")}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -208,6 +208,8 @@ export function ActivityLogsPage() {
                         {hasActiveFilters && (
                             <Button
                                 variant="outline"
+                                size="sm"
+                                className="h-8 text-xs"
                                 onClick={() => setFilters({ page: 1, per_page: 20, sort: "timestamp", order: "desc" })}
                             >
                                 {t("common.clear", "Clear")}
@@ -217,24 +219,24 @@ export function ActivityLogsPage() {
                 </div>
 
                 {/* Table */}
-                <div className="rounded-xl border border-border bg-card overflow-hidden">
+                <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card overflow-hidden shadow-xs">
                     <Table>
                         <TableHeader>
-                            <TableRow className="hover:bg-transparent">
-                                <TableHead className="w-[150px]">
+                            <TableRow className="h-7 bg-gray-50/80 dark:bg-secondary hover:bg-gray-50/80 border-b border-gray-200 dark:border-border">
+                                <TableHead className="w-[150px] h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                                     {t("activityLogs.user", "User")}
                                 </TableHead>
-                                <TableHead className="w-[120px]">
+                                <TableHead className="w-[120px] h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                                     {t("activityLogs.action", "Action")}
                                 </TableHead>
-                                <TableHead className="w-[140px]">
+                                <TableHead className="w-[140px] h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                                     {t("activityLogs.entity", "Entity")}
                                 </TableHead>
-                                <TableHead>
+                                <TableHead className="h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                                     {t("activityLogs.details", "Details")}
                                 </TableHead>
                                 <TableHead
-                                    className="w-[180px] cursor-pointer hover:text-foreground"
+                                    className="w-[180px] h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:text-foreground"
                                     onClick={() => handleSort("timestamp")}
                                 >
                                     <span className="flex items-center">
@@ -253,31 +255,31 @@ export function ActivityLogsPage() {
                                 </TableRow>
                             ) : data?.items && data.items.length > 0 ? (
                                 data.items.map((log) => (
-                                    <TableRow key={log.id} className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150">
-                                        <TableCell>
+                                    <TableRow key={log.id} className="h-8 hover:bg-gray-50/60 dark:hover:bg-muted/40 transition-colors border-b border-gray-100 dark:border-border last:border-b-0 text-xs">
+                                        <TableCell className="px-3 py-1">
                                             <div className="flex items-center gap-2">
-                                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                                                    <User className="h-4 w-4 text-primary" />
+                                                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
+                                                    <User className="h-3 w-3 text-primary" />
                                                 </div>
-                                                <span className="font-medium text-foreground">
+                                                <span className="font-medium text-foreground text-xs">
                                                     {log.user_name}
                                                 </span>
                                             </div>
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="px-3 py-1">
                                             <ActionBadge action={log.action} display={log.action_display} />
                                         </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
+                                        <TableCell className="px-3 py-1">
+                                            <div className="flex items-center gap-1.5 text-xs">
                                                 <EntityIcon type={log.entity_type} />
                                                 <span className="font-medium">{log.entity_name || log.entity_type_display}</span>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="text-muted-foreground">
+                                        <TableCell className="px-3 py-1 text-muted-foreground text-xs">
                                             {log.details || "-"}
                                         </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-1 text-muted-foreground text-sm">
+                                        <TableCell className="px-3 py-1">
+                                            <div className="flex items-center gap-1 text-muted-foreground text-xs font-mono">
                                                 <Clock className="h-3 w-3" />
                                                 {formatTimestamp(log.timestamp)}
                                             </div>
@@ -286,8 +288,8 @@ export function ActivityLogsPage() {
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                        <History className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-xs">
+                                        <History className="h-6 w-6 mx-auto mb-1.5 opacity-50" />
                                         {t("activityLogs.noLogs", "No activity logs found.")}
                                     </TableCell>
                                 </TableRow>

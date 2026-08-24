@@ -305,17 +305,17 @@ export function LegalEntitiesPage() {
     return (
         <div className="flex flex-col h-[calc(100vh-4rem)]">
             {/* Main Content Area - Scrollable */}
-            <div className="flex-1 overflow-auto p-6 pb-24 space-y-6">
+            <div className="flex-1 overflow-auto p-3 pb-24 space-y-3">
                 {/* Page Header */}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 dark:border-border pb-2">
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground tracking-tight">{getPageTitle()}</h1>
-                        <p className="text-muted-foreground">
+                        <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground">{getPageTitle()}</h1>
+                        <p className="text-xs text-muted-foreground">
                             {data?.total || 0} {t("legalEntities.totalEntries", "total entries")}
                         </p>
                     </div>
-                    <Button onClick={handleAddClick} className="gap-2 shadow-sm hover:shadow-md transition-all">
-                        <Plus className="h-4 w-4" />
+                    <Button onClick={handleAddClick} size="sm" className="h-7.5 px-3 text-xs gap-1.5 rounded-md shadow-xs">
+                        <Plus className="h-3.5 w-3.5" />
                         {t("legalEntities.addNew", "Add New Legal Entity")}
                     </Button>
                 </div>
@@ -323,7 +323,7 @@ export function LegalEntitiesPage() {
                 {/* Main Layout */}
                 <div className="flex flex-col lg:flex-row relative lg:items-start">
                     {/* Left Sidebar (Mobile) */}
-                    <div className="w-full lg:hidden shrink-0 order-2 mb-6">
+                    <div className="w-full lg:hidden shrink-0 order-2 mb-4">
                         <LegalEntityFiltersSidebar
                             filters={filters}
                             onTypeFilterChange={handleTypeFilter}
@@ -373,85 +373,83 @@ export function LegalEntitiesPage() {
                     />
 
                     {/* Right Content */}
-                    <div className={`flex-1 min-w-0 order-1 lg:order-3 flex flex-col gap-6 mb-6 lg:mb-0 ${isDragging ? 'pointer-events-none' : ''}`}>
+                    <div className={`flex-1 min-w-0 order-1 lg:order-3 flex flex-col gap-3 mb-4 lg:mb-0 ${isDragging ? 'pointer-events-none' : ''}`}>
                         {/* Toolbar */}
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                    {/* Search bar */}
-                    <div className="relative flex-1 group">
-                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                        <Input
-                            placeholder={t("legalEntities.searchPlaceholder", "Search across ID, name, address, email, phone, tax ID...")}
-                            className="pl-10 pr-10 hover:border-primary/50 focus:border-primary transition-all shadow-sm h-11"
-                            value={searchValue}
-                            onChange={(e) => setSearchValue(e.target.value)}
-                        />
-                        {searchValue && (
-                            <button
-                                onClick={handleClearSearch}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                            >
-                                <X className="h-4 w-4" />
-                            </button>
-                        )}
-                    </div>
+                        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+                            {/* Search bar */}
+                            <div className="relative flex-1">
+                                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    placeholder={t("legalEntities.searchPlaceholder", "Search across ID, name, address, email, phone, tax ID...")}
+                                    className="pl-8 pr-8 h-8 text-xs"
+                                    value={searchValue}
+                                    onChange={(e) => setSearchValue(e.target.value)}
+                                />
+                                {searchValue && (
+                                    <button
+                                        onClick={handleClearSearch}
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                    >
+                                        <X className="h-3.5 w-3.5" />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
 
-
-                </div>
-
-                {/* Table */}
-                <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="hover:bg-transparent bg-muted/30">
-                                <TableHead
-                                    className="w-[80px] cursor-pointer hover:text-foreground transition-colors"
-                                    onClick={() => handleSort('internal_id')}
-                                >
-                                    <span className="flex items-center">
-                                        {t("legalEntities.id", "ID")}
-                                        {getSortIndicator("internal_id")}
-                                    </span>
-                                </TableHead>
-                                <TableHead
-                                    className="cursor-pointer hover:text-foreground transition-colors"
-                                    onClick={() => handleSort('name')}
-                                >
-                                    <span className="flex items-center">
-                                        {t("legalEntities.name", "Name")}
-                                        {getSortIndicator("name")}
-                                    </span>
-                                </TableHead>
-                                <TableHead
-                                    className="w-[120px] cursor-pointer hover:text-foreground transition-colors"
-                                    onClick={() => handleSort('type')}
-                                >
-                                    <span className="flex items-center">
-                                        {t("legalEntities.type", "Type")}
-                                        {getSortIndicator("type")}
-                                    </span>
-                                </TableHead>
-                                <TableHead
-                                    className="cursor-pointer hover:text-foreground transition-colors"
-                                    onClick={() => handleSort('address_city_id')}
-                                >
-                                    <span className="flex items-center">
-                                        {t("legalEntities.city", "City")}
-                                        {getSortIndicator("address_city_id")}
-                                    </span>
-                                </TableHead>
-                                <TableHead
-                                    className="w-[100px] cursor-pointer hover:text-foreground transition-colors"
-                                    onClick={() => handleSort('status')}
-                                >
-                                    <span className="flex items-center">
-                                        {t("legalEntities.status", "Status")}
-                                        {getSortIndicator("status")}
-                                    </span>
-                                </TableHead>
-                                <TableHead className="w-[100px] text-right">{t("legalEntities.actions", "Actions")}</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
+                        {/* Table */}
+                        <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card overflow-hidden shadow-xs">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="h-7 bg-gray-50/80 dark:bg-secondary hover:bg-gray-50/80 border-b border-gray-200 dark:border-border">
+                                        <TableHead
+                                            className="w-[80px] h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:text-foreground transition-colors"
+                                            onClick={() => handleSort('internal_id')}
+                                        >
+                                            <span className="flex items-center">
+                                                {t("legalEntities.id", "ID")}
+                                                {getSortIndicator("internal_id")}
+                                            </span>
+                                        </TableHead>
+                                        <TableHead
+                                            className="h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:text-foreground transition-colors"
+                                            onClick={() => handleSort('name')}
+                                        >
+                                            <span className="flex items-center">
+                                                {t("legalEntities.name", "Name")}
+                                                {getSortIndicator("name")}
+                                            </span>
+                                        </TableHead>
+                                        <TableHead
+                                            className="w-[120px] h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:text-foreground transition-colors"
+                                            onClick={() => handleSort('type')}
+                                        >
+                                            <span className="flex items-center">
+                                                {t("legalEntities.type", "Type")}
+                                                {getSortIndicator("type")}
+                                            </span>
+                                        </TableHead>
+                                        <TableHead
+                                            className="h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:text-foreground transition-colors"
+                                            onClick={() => handleSort('address_city_id')}
+                                        >
+                                            <span className="flex items-center">
+                                                {t("legalEntities.city", "City")}
+                                                {getSortIndicator("address_city_id")}
+                                            </span>
+                                        </TableHead>
+                                        <TableHead
+                                            className="w-[100px] h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:text-foreground transition-colors"
+                                            onClick={() => handleSort('status')}
+                                        >
+                                            <span className="flex items-center">
+                                                {t("legalEntities.status", "Status")}
+                                                {getSortIndicator("status")}
+                                            </span>
+                                        </TableHead>
+                                        <TableHead className="w-[80px] h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-right">{t("legalEntities.actions", "Actions")}</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
                             {isLoading ? (
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">

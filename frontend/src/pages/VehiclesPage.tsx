@@ -176,20 +176,20 @@ export function VehiclesPage() {
     }, [vehicleToDelete, deleteMutation])
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-3">
             {/* Page Header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 dark:border-border pb-2">
                 <div>
-                    <h1 className="text-2xl font-bold text-foreground">Vehicles</h1>
-                    <p className="text-muted-foreground">
-                        Manage your vehicle inventory
+                    <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground">Vehicles</h1>
+                    <p className="text-xs text-muted-foreground">
+                        Manage your vehicle inventory and performance metrics
                     </p>
                 </div>
                 <Link
                     to="new"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-xs hover:bg-primary/90"
                 >
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-3.5 w-3.5" />
                     Add Vehicle
                 </Link>
             </div>
@@ -203,7 +203,7 @@ export function VehiclesPage() {
             {/* Main Layout */}
             <div className="flex flex-col lg:flex-row relative lg:items-start">
                 {/* Left Sidebar (Mobile) */}
-                <div className="w-full lg:hidden shrink-0 order-2 mb-6">
+                <div className="w-full lg:hidden shrink-0 order-2 mb-4">
                     <VehicleFiltersSidebar
                         filters={filters}
                         onApplyFilters={handleApplyFilters}
@@ -231,25 +231,25 @@ export function VehiclesPage() {
                 />
 
                 {/* Right Content */}
-                <div className={`flex-1 min-w-0 order-1 lg:order-3 flex flex-col gap-6 mb-6 lg:mb-0 ${isDragging ? 'pointer-events-none' : ''}`}>
+                <div className={`flex-1 min-w-0 order-1 lg:order-3 flex flex-col gap-3 mb-4 lg:mb-0 ${isDragging ? 'pointer-events-none' : ''}`}>
                     {/* Toolbar */}
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                    <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
                         {/* Search */}
                         <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 type="text"
                                 placeholder="Search by Make, Model, ID, VIN..."
-                                className="pl-10 pr-10"
+                                className="pl-8 pr-8 h-8 text-xs"
                                 value={searchValue}
                                 onChange={(e) => setSearchValue(e.target.value)}
                             />
                             {searchValue && (
                                 <button
                                     onClick={handleClearSearch}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                 >
-                                    <X className="h-4 w-4" />
+                                    <X className="h-3.5 w-3.5" />
                                 </button>
                             )}
                         </div>
@@ -266,13 +266,13 @@ export function VehiclesPage() {
                     </div>
 
                     {/* Vehicle Cards Grid */}
-                    <div className="space-y-4">
+                    <div className="space-y-2.5">
                 {isLoading ? (
                     // Loading skeleton
                     Array.from({ length: 5 }).map((_, i) => (
                         <div
                             key={i}
-                            className="h-48 animate-pulse rounded-xl bg-muted"
+                            className="h-36 animate-pulse rounded-lg bg-muted"
                         />
                     ))
                 ) : data?.vehicles?.items?.length === 0 ? (

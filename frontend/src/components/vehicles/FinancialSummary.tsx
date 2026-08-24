@@ -1,7 +1,6 @@
 import { TrendingUp, TrendingDown, DollarSign, BarChart3, Target, Clock, Scale } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import {
-    getProfitColor,
     formatPercent,
 } from "@/lib/vehicleFinancials"
 import type { FinancialSummary } from "@/types/vehicle"
@@ -17,14 +16,14 @@ export function FinancialSummaryCard({
 }: FinancialSummaryCardProps) {
     if (isLoading || !summary) {
         return (
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+            <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
                 {[1, 2, 3, 4, 5].map((i) => (
                     <div
                         key={i}
-                        className="animate-pulse rounded-xl border border-border bg-card p-4"
+                        className="animate-pulse rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-2.5 shadow-xs"
                     >
-                        <div className="h-4 w-20 rounded bg-muted" />
-                        <div className="mt-2 h-6 w-24 rounded bg-muted" />
+                        <div className="h-3 w-16 rounded bg-muted" />
+                        <div className="mt-1.5 h-5 w-20 rounded bg-muted" />
                     </div>
                 ))}
             </div>
@@ -54,8 +53,8 @@ export function FinancialSummaryCard({
             subLabel: "Net",
             subValue: summary.net_total_revenue,
             icon: TrendingUp,
-            color: "text-green-500",
-            bgColor: "bg-green-500/10",
+            color: "text-[#318d6c]",
+            bgColor: "bg-emerald-500/10",
         },
         {
             label: "Gross Expenses",
@@ -63,8 +62,8 @@ export function FinancialSummaryCard({
             subLabel: "Net",
             subValue: summary.net_total_expenses,
             icon: TrendingDown,
-            color: "text-red-500",
-            bgColor: "bg-red-500/10",
+            color: "text-[#d23a69]",
+            bgColor: "bg-rose-500/10",
         },
         {
             label: "Gross Profit",
@@ -72,55 +71,55 @@ export function FinancialSummaryCard({
             subLabel: "Net",
             subValue: summary.net_difference,
             icon: DollarSign,
-            color: summary.gross_difference >= 0 ? "text-green-500" : "text-red-500",
-            bgColor: summary.gross_difference >= 0 ? "bg-green-500/10" : "bg-red-500/10",
+            color: summary.gross_difference >= 0 ? "text-[#318d6c]" : "text-[#d23a69]",
+            bgColor: summary.gross_difference >= 0 ? "bg-emerald-500/10" : "bg-rose-500/10",
         },
         {
             label: "Total Profit",
             value: totalProfit,
             subText: "Net Profit − VAT Liability",
             icon: DollarSign,
-            color: totalProfit >= 0 ? "text-green-500" : "text-red-500",
-            bgColor: totalProfit >= 0 ? "bg-green-500/10" : "bg-red-500/10",
+            color: totalProfit >= 0 ? "text-[#318d6c]" : "text-[#d23a69]",
+            bgColor: totalProfit >= 0 ? "bg-emerald-500/10" : "bg-rose-500/10",
         },
         {
             label: "VAT Liability",
             value: vatLiability,
             subText: "|Sale VAT − Buy VAT|",
             icon: Scale,
-            color: "text-orange-500",
-            bgColor: "bg-orange-500/10",
+            color: "text-[#d97706]",
+            bgColor: "bg-amber-500/10",
         },
     ]
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-2">
             {/* Primary financial cards — 5 card grid */}
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+            <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
                 {cards.map((card) => {
                     const Icon = card.icon
                     return (
                         <div
                             key={card.label}
-                            className="rounded-xl border border-border bg-card p-4"
+                            className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-2.5 shadow-xs"
                         >
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2.5">
                                 <div
-                                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${card.bgColor}`}
+                                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${card.bgColor}`}
                                 >
-                                    <Icon className={`h-5 w-5 ${card.color}`} />
+                                    <Icon className={`h-4 w-4 ${card.color}`} />
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="text-sm text-muted-foreground truncate">{card.label}</p>
-                                    <p className={`text-xl font-bold ${card.color} truncate`}>
+                                    <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-muted-foreground truncate">{card.label}</p>
+                                    <p className={`text-[15px] font-bold font-mono ${card.color} truncate`}>
                                         {formatCurrency(card.value)}
                                     </p>
                                     {card.subLabel !== undefined ? (
-                                        <p className="text-xs text-muted-foreground truncate">
+                                        <p className="text-[10px] text-gray-400 dark:text-muted-foreground truncate font-mono">
                                             {card.subLabel}: {formatCurrency(card.subValue ?? 0)}
                                         </p>
                                     ) : (
-                                        <p className="text-xs text-muted-foreground truncate font-mono">
+                                        <p className="text-[10px] text-gray-400 dark:text-muted-foreground truncate font-mono">
                                             {card.subText}
                                         </p>
                                     )}
@@ -131,38 +130,32 @@ export function FinancialSummaryCard({
                 })}
             </div>
 
-            {/* Secondary metrics strip — margin, ROI */}
-            {(profitMargin !== null || roi !== null) && (
-                <div className="flex flex-wrap items-center gap-4 px-1">
+            {/* Secondary metrics strip — margin, ROI, Days on Stock */}
+            {(profitMargin !== null || roi !== null || summary.avg_days_on_stock !== undefined) && (
+                <div className="flex flex-wrap items-center gap-3 rounded-md border border-gray-200 dark:border-border bg-white dark:bg-card px-3 py-1 shadow-xs divide-x divide-gray-100 dark:divide-border text-xs">
                     {profitMargin !== null && (
-                        <div className="flex items-center gap-2 text-sm">
-                            <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="text-muted-foreground">Avg Profit Margin:</span>
-                            <span className={`font-semibold ${getProfitColor(profitMargin)}`}>
+                        <div className="flex items-center gap-1.5 first:pl-0 pl-3">
+                            <BarChart3 className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-[11px] text-muted-foreground">Avg Margin:</span>
+                            <span className={`font-mono font-bold ${profitMargin >= 0 ? "text-[#318d6c]" : "text-[#d23a69]"}`}>
                                 {formatPercent(profitMargin)}
-                            </span>
-                            <span className="text-[10px] text-muted-foreground/60">
-                                (Gross Profit ÷ Net Revenue)
                             </span>
                         </div>
                     )}
                     {roi !== null && (
-                        <div className="flex items-center gap-2 text-sm">
-                            <Target className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="text-muted-foreground">ROI (Return on Investment):</span>
-                            <span className={`font-semibold ${getProfitColor(roi)}`}>
+                        <div className="flex items-center gap-1.5 pl-3">
+                            <Target className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-[11px] text-muted-foreground">ROI:</span>
+                            <span className={`font-mono font-bold ${roi >= 0 ? "text-[#318d6c]" : "text-[#d23a69]"}`}>
                                 {formatPercent(roi)}
-                            </span>
-                            <span className="text-[10px] text-muted-foreground/60">
-                                (Gross Profit ÷ COGS)
                             </span>
                         </div>
                     )}
                     {summary.avg_days_on_stock !== undefined && (
-                        <div className="flex items-center gap-2 text-sm">
-                            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="text-muted-foreground">Avg Days on Stock:</span>
-                            <span className="font-semibold text-slate-600 dark:text-slate-400">
+                        <div className="flex items-center gap-1.5 pl-3">
+                            <Clock className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-[11px] text-muted-foreground">Avg Days on Stock:</span>
+                            <span className="font-mono font-bold text-[#d97706]">
                                 {summary.avg_days_on_stock}d
                             </span>
                         </div>

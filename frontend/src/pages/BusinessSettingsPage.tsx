@@ -319,38 +319,39 @@ export default function BusinessSettingsPage() {
         )
     }
 
-    const inputClass = "w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+    const inputClass = "h-8 w-full rounded-md border border-gray-200 dark:border-border bg-[#F3F3F3] dark:bg-secondary/40 px-2.5 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
 
     return (
-        <div className="space-y-6 pb-24">
+        <div className="space-y-3 pb-24 p-3 md:p-4">
             {/* Page Header */}
-            <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                    <Building className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                    <h1 className="text-2xl font-semibold text-foreground">Business Settings</h1>
-                    <p className="text-sm text-muted-foreground">Manage your business information, branches, and users</p>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 dark:border-border pb-2">
+                <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10">
+                        <Building className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                        <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground">Business Settings</h1>
+                        <p className="text-xs text-muted-foreground">Manage your business information, branches, and users</p>
+                    </div>
                 </div>
             </div>
 
             {saveSuccess && (
-                <div className="rounded-xl border border-green-500/50 bg-green-500/10 p-4">
-                    <p className="text-sm text-green-600 font-medium">All settings and changes saved successfully!</p>
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3">
+                    <p className="text-xs text-[#318d6c] font-medium">All settings and changes saved successfully!</p>
                 </div>
             )}
             {saveError && (
-                <div className="rounded-xl border border-destructive/50 bg-destructive/10 p-4">
-                    <p className="text-sm text-destructive font-medium">{saveError}</p>
+                <div className="rounded-lg border border-rose-200 bg-rose-50/60 p-3">
+                    <p className="text-xs text-[#d23a69] font-medium">{saveError}</p>
                 </div>
             )}
 
             {/* Business Details Form */}
-            <div className="rounded-xl border border-border bg-card">
-
-                <div className="p-6 space-y-6">
+            <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card shadow-xs">
+                <div className="p-4 space-y-4">
                     {/* Business Logo & Name Section */}
-                    <div className="flex flex-col md:flex-row items-center gap-6">
+                    <div className="flex flex-col md:flex-row items-center gap-4">
                         <VehicleImageUpload
                             label="Business Logo"
                             imageUrl={business.logo_url}
@@ -358,8 +359,8 @@ export default function BusinessSettingsPage() {
                             onFileChange={(file) => setLogoFile(file)}
                             className="shrink-0 w-full sm:w-auto"
                         />
-                        <div className="w-full md:w-1/2">
-                            <label className="block text-sm font-medium text-foreground mb-1.5">
+                        <div className="w-full md:w-1/2 space-y-1">
+                            <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300">
                                 Business Name <span className="text-destructive">*</span>
                             </label>
                             <input
@@ -372,27 +373,27 @@ export default function BusinessSettingsPage() {
                     </div>
 
                     {/* Address Section */}
-                    <div className="border-t border-border pt-6">
-                        <h3 className="text-sm font-medium text-muted-foreground mb-4">Address</h3>
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-5">
+                    <div className="border-t border-gray-100 dark:border-border pt-3">
+                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-2 border-b border-gray-100 dark:border-border pb-1">Address</h3>
+                        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-5">
                             <div>
-                                <label className="block text-sm font-medium text-foreground mb-1.5">Country</label>
+                                <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-0.5">Country</label>
                                 <input type="text" value={formData.address_country || ""} onChange={(e) => handleFieldChange("address_country", e.target.value)} className={inputClass} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-foreground mb-1.5">City</label>
+                                <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-0.5">City</label>
                                 <input type="text" value={formData.address_city || ""} onChange={(e) => handleFieldChange("address_city", e.target.value)} className={inputClass} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-foreground mb-1.5">Street</label>
+                                <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-0.5">Street</label>
                                 <input type="text" value={formData.address_street || ""} onChange={(e) => handleFieldChange("address_street", e.target.value)} className={inputClass} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-foreground mb-1.5">Street Number</label>
+                                <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-0.5">Street Number</label>
                                 <input type="text" value={formData.address_street_number || ""} onChange={(e) => handleFieldChange("address_street_number", e.target.value)} className={inputClass} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-foreground mb-1.5">Postal Code</label>
+                                <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-0.5">Postal Code</label>
                                 <input type="text" value={formData.address_postal_code || ""} onChange={(e) => handleFieldChange("address_postal_code", e.target.value)} className={inputClass} />
                             </div>
                         </div>

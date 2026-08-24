@@ -5,9 +5,6 @@ import { Button } from "@/components/ui/button"
 import { withMediaCacheKey, formatCurrency } from "@/lib/utils"
 import {
     calcDaysOnStock,
-    getTotalProfitColor,
-    getProfitColor,
-    getDaysOnStockColor,
     getDaysOnStockBgColor,
     formatPercent,
     formatDays,
@@ -59,18 +56,18 @@ export function VehicleCard({
 
     return (
         <article
-            className="relative w-full bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-lg hover:scale-[1.01] hover:bg-gray-50 dark:hover:bg-gray-800 transition-all cursor-pointer"
+            className="relative w-full bg-white dark:bg-card border border-gray-200 dark:border-border rounded-lg p-3 shadow-xs hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all cursor-pointer"
         >
             <Link
                 to={`${vehicle.internal_id}/edit`}
                 aria-label={`Edit vehicle #${vehicle.internal_id}`}
-                className="absolute inset-0 z-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="absolute inset-0 z-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
 
-            <div className="pointer-events-none relative z-10 grid grid-cols-12 gap-4 items-start">
+            <div className="pointer-events-none relative z-10 grid grid-cols-12 gap-3.5 items-start">
                 {/* Image */}
                 <div className="col-span-12 sm:col-span-2 flex items-center justify-center self-center">
-                    <div className="w-full sm:w-44 h-32 sm:h-32 rounded-md overflow-hidden bg-muted flex items-center justify-center">
+                    <div className="w-full sm:w-40 h-28 sm:h-28 rounded-md overflow-hidden bg-[#F3F3F3] dark:bg-muted flex items-center justify-center">
                         {vehicleImageUrl ? (
                             <img
                                 src={vehicleImageUrl}
@@ -79,7 +76,7 @@ export function VehicleCard({
                                 loading="lazy"
                             />
                         ) : (
-                            <Car className="w-20 h-20 text-muted-foreground" />
+                            <Car className="w-12 h-12 text-muted-foreground" />
                         )}
                     </div>
                 </div>
@@ -88,47 +85,47 @@ export function VehicleCard({
                 <div className="col-span-12 sm:col-span-8 min-w-0">
                     <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                            <h4 className="text-base font-semibold text-foreground truncate">
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-foreground truncate">
                                 {vehicle.make_name} {vehicle.model_name}
                                 {vehicle.year_of_construction && ` • ${vehicle.year_of_construction}`}
                             </h4>
-                            <div className="text-lg font-bold text-foreground mt-1 truncate">
-                                #{vehicle.internal_id} <span className="text-sm font-normal text-muted-foreground">• Branch: {vehicle.branch_name || "—"}</span>
+                            <div className="text-sm font-bold text-gray-900 dark:text-foreground mt-0.5 truncate">
+                                #{vehicle.internal_id} <span className="text-xs font-normal text-muted-foreground">• Branch: {vehicle.branch_name || "—"}</span>
                             </div>
                         </div>
 
                         <div className="text-right flex-shrink-0">
                             {vehicle.sale_price ? (
-                                <div className="text-lg font-semibold text-foreground">
+                                <div className="text-base font-bold font-mono text-gray-900 dark:text-foreground">
                                     {formatPrice(vehicle.sale_price)}
                                 </div>
                             ) : vehicle.buy_price ? (
-                                <div className="text-lg font-semibold text-foreground">
+                                <div className="text-base font-bold font-mono text-gray-900 dark:text-foreground">
                                     {formatPrice(vehicle.buy_price)}
                                 </div>
                             ) : (
-                                <div className="text-sm text-muted-foreground">—</div>
+                                <div className="text-xs text-muted-foreground font-mono">—</div>
                             )}
-                            <div className="text-xs text-muted-foreground mt-1">
+                            <div className="text-[11px] text-muted-foreground mt-0.5">
                                 Active for: {vehicle.active_for ?? 0} days
                             </div>
                             {/* Compact Financial Indicators */}
                             {hasBothPrices && (
-                                <div className="flex items-center justify-end gap-2 mt-1.5 text-xs">
+                                <div className="flex items-center justify-end gap-2 mt-1 text-xs">
                                     {totalProfit !== null && (
-                                        <span className={`font-semibold ${getTotalProfitColor(totalProfit)}`}>
+                                        <span className={`font-mono font-bold ${totalProfit >= 0 ? "text-[#318d6c]" : "text-[#d23a69]"}`}>
                                             {formatCurrency(totalProfit)}
                                         </span>
                                     )}
                                     {profitMargin !== null && (
-                                        <span className={`${getProfitColor(profitMargin)}`}>
+                                        <span className={`font-mono font-medium ${profitMargin >= 0 ? "text-[#318d6c]" : "text-[#d23a69]"}`}>
                                             {formatPercent(profitMargin)}
                                         </span>
                                     )}
                                     {daysOnStock !== null && (
-                                        <span className="inline-flex items-center gap-0.5">
+                                        <span className="inline-flex items-center gap-0.5 font-mono text-[11px]">
                                             <span className={`inline-block w-1.5 h-1.5 rounded-full ${getDaysOnStockBgColor(daysOnStock)}`} />
-                                            <span className={getDaysOnStockColor(daysOnStock)}>
+                                            <span className="text-[#d97706] font-semibold">
                                                 {formatDays(daysOnStock)}
                                             </span>
                                         </span>
@@ -139,7 +136,7 @@ export function VehicleCard({
                     </div>
 
                     {/* Details Grid */}
-                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-muted-foreground">
+                    <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs text-gray-600 dark:text-muted-foreground">
                         {/* Column 1: Buy & Sale */}
                         <div className="space-y-1">
                             <div className="truncate">
