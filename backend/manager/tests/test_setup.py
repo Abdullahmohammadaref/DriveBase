@@ -14,7 +14,7 @@ from decimal import Decimal
 from datetime import date
 
 from manager.models import (
-    Business, Branch, Vehicle, Transaction, LegalEntity,
+    Business, Branch, Vehicle, Transaction, LegalEntity, Country, City,
     Make, VehicleModel, VehicleType, BodyType, Color,
     FuelType, DamageType, DoorsChoice, PaymentMethod,
     TaxPercentage, Currency, Category, Subcategory,
@@ -28,16 +28,11 @@ class BaseTestCase(TestCase):
     """
     Base test case with full test data for two isolated businesses.
     
-    Business A (self.business_a):
-        - Manager: self.manager_a (username='manager_a', password='testpass123')
-        - Employee: self.employee_a (username='employee_a', password='testpass123')
-        - All choice types created
-        - 1 vehicle, 1 transaction, 1 legal entity
-    
-    Business B (self.business_b):
-        - Manager: self.manager_b (username='manager_b', password='testpass123')
-        - All choice types created
-        - 1 vehicle
+    Sets up:
+    - Business A & Business B
+    - Users for each business
+    - All dynamic choices
+    - 1 vehicle, 1 transaction, 1 legal entity per business
     """
 
     @classmethod
@@ -48,8 +43,11 @@ class BaseTestCase(TestCase):
         cls.business_a = Business.objects.create(
             name="Test Business A",
             address_city="Berlin",
-            address_country="Germany",
         )
+        cls.country_de_a = Country.objects.create(business=cls.business_a, name="Germany", is_active=True)
+        cls.city_berlin = City.objects.create(business=cls.business_a, name="Berlin", country=cls.country_de_a, is_active=True)
+        cls.city_munich = City.objects.create(business=cls.business_a, name="Munich", country=cls.country_de_a, is_active=True)
+
         cls.branch_a = Branch.objects.create(
             business=cls.business_a,
             name="Main Branch A",
@@ -126,8 +124,8 @@ class BaseTestCase(TestCase):
             address_street="Berliner Str",
             address_street_number=42,
             address_postal_code="10115",
-            address_city="Berlin",
-            address_country="Germany",
+            address_city=cls.city_berlin,
+            address_country=cls.country_de_a,
             tax_identification_number="DE123456789",
         )
 
@@ -221,6 +219,8 @@ class BaseTestCase(TestCase):
             business=cls.business_b, name="19% VAT", percentage=Decimal("19.00"),
             is_active=True, is_no_tax=False,
         )
+        cls.country_de_b = Country.objects.create(business=cls.business_b, name="Germany", is_active=True)
+        cls.city_munich_b = City.objects.create(business=cls.business_b, name="Munich", country=cls.country_de_b, is_active=True)
         cls.legal_entity_b = LegalEntity.objects.create(
             business=cls.business_b,
             name="Munich Motors",
@@ -228,8 +228,8 @@ class BaseTestCase(TestCase):
             address_street="Münchner Str",
             address_street_number=10,
             address_postal_code="80331",
-            address_city="Munich",
-            address_country="Germany",
+            address_city=cls.city_munich_b,
+            address_country=cls.country_de_b,
             tax_identification_number="DE987654321",
         )
 

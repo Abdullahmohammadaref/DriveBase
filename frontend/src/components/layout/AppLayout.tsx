@@ -25,7 +25,7 @@ export function AppLayout() {
             <main
                 className={cn(
                     "min-h-screen pt-11 transition-all duration-300",
-                    sidebarCollapsed ? "pl-14" : "pl-52"
+                    sidebarCollapsed ? "pl-14" : "pl-56"
                 )}
             >
                 <div className="px-3.5 pt-2 pb-16 max-w-full">

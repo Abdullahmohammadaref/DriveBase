@@ -367,6 +367,43 @@ class TransactionListApiTests(BaseTestCase):
         response = self.client.get("/api/transactions/?page=1&per_page=20")
         self.assertIn(response.status_code, [401, 403])
 
+    def test_list_transactions_excludes_inactive_by_default(self):
+        self.login_manager_a()
+        # Create an inactive transaction
+        Transaction.objects.create(
+            business=self.business_a,
+            vehicle=self.vehicle_a,
+            amount=Decimal("500.00"),
+            date=date(2024, 1, 20),
+            category="repair",
+            status="inactive",
+            currency="Euro (EUR)",
+        )
+        response = self.client.get("/api/transactions/?page=1&per_page=20")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        items = data["transactions"]["items"]
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0]["internal_id"], self.transaction_a.internal_id)
+
+    def test_list_transactions_shows_inactive_when_status_filtered(self):
+        self.login_manager_a()
+        inactive_tx = Transaction.objects.create(
+            business=self.business_a,
+            vehicle=self.vehicle_a,
+            amount=Decimal("500.00"),
+            date=date(2024, 1, 20),
+            category="repair",
+            status="inactive",
+            currency="Euro (EUR)",
+        )
+        response = self.client.get("/api/transactions/?status=inactive&page=1&per_page=20")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        items = data["transactions"]["items"]
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0]["internal_id"], inactive_tx.internal_id)
+
 
 class TransactionDetailApiTests(BaseTestCase):
     """Test GET /api/transactions/{internal_id} endpoint."""

@@ -116,42 +116,42 @@ export function AuthLayout() {
     }
 
     return (
-        <div className="min-h-screen bg-background text-foreground">
+        <div className="min-h-screen bg-[#F8F9FA] dark:bg-background text-foreground">
             {/* Header */}
-            <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 bg-background/80 backdrop-blur-sm border-b border-border">
+            <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-3.5 bg-[#F8F9FA]/90 dark:bg-background/80 backdrop-blur-sm border-b border-gray-200 dark:border-border">
                 {/* Logo */}
                 <Link to="/login" className="flex items-center gap-2">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-                        <Car className="h-6 w-6 text-primary-foreground" />
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white shadow-xs">
+                        <Car className="h-5 w-5" />
                     </div>
-                    <span className="text-xl font-bold text-foreground">ACAR</span>
+                    <span className="text-lg font-bold text-gray-900 dark:text-foreground">ACAR</span>
                 </Link>
 
                 {/* Right Controls */}
                 <div className="flex items-center gap-2">
                     {/* UI Scale Controls */}
-                    <div className="flex items-center mx-1 border border-border rounded-lg overflow-hidden bg-background">
+                    <div className="flex items-center mx-1 border border-gray-200 dark:border-border rounded-lg overflow-hidden bg-white dark:bg-background">
                         <button
                             onClick={handleZoomOut}
-                            className="flex h-9 w-9 items-center justify-center text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                            className="flex h-8 w-8 items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-accent dark:text-muted-foreground transition-colors"
                             title="Zoom Out"
                         >
-                            <ZoomOut className="h-4 w-4" />
+                            <ZoomOut className="h-3.5 w-3.5" />
                         </button>
-                        <div className="h-4 w-[1px] bg-border" />
+                        <div className="h-3.5 w-[1px] bg-gray-200 dark:bg-border" />
                         <span
-                            className="px-2 text-xs font-semibold text-foreground select-none min-w-[42px] text-center"
+                            className="px-2 text-xs font-semibold text-gray-700 dark:text-foreground select-none min-w-[38px] text-center"
                             title={`Current Zoom: ${Math.round(uiScale * 100)}%`}
                         >
                             {Math.round(uiScale * 100)}%
                         </span>
-                        <div className="h-4 w-[1px] bg-border" />
+                        <div className="h-3.5 w-[1px] bg-gray-200 dark:bg-border" />
                         <button
                             onClick={handleZoomIn}
-                            className="flex h-9 w-9 items-center justify-center text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                            className="flex h-8 w-8 items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-accent dark:text-muted-foreground transition-colors"
                             title="Zoom In"
                         >
-                            <ZoomIn className="h-4 w-4" />
+                            <ZoomIn className="h-3.5 w-3.5" />
                         </button>
                     </div>
 
@@ -161,7 +161,7 @@ export function AuthLayout() {
                         size="icon"
                         onClick={handleLanguageSwitch}
                         title={`Switch to ${LOCALE_CONFIG[nextLocale].name}`}
-                        className="flex items-center justify-center"
+                        className="flex items-center justify-center h-8 w-8"
                     >
                         <NextFlag />
                     </Button>
@@ -172,11 +172,12 @@ export function AuthLayout() {
                         size="icon"
                         onClick={toggleDarkMode}
                         title={darkMode ? t('common.switchToLight') : t('common.switchToDark')}
+                        className="h-8 w-8"
                     >
                         {darkMode ? (
-                            <Sun className="h-5 w-5" />
+                            <Sun className="h-4 w-4" />
                         ) : (
-                            <Moon className="h-5 w-5" />
+                            <Moon className="h-4 w-4" />
                         )}
                     </Button>
                 </div>
@@ -188,7 +189,7 @@ export function AuthLayout() {
             </main>
 
             {/* Footer */}
-            <footer className="fixed bottom-0 left-0 right-0 py-4 text-center text-sm text-muted-foreground bg-background/80 backdrop-blur-sm border-t border-border">
+            <footer className="fixed bottom-0 left-0 right-0 py-3 text-center text-xs text-gray-500 dark:text-muted-foreground bg-[#F8F9FA]/90 dark:bg-background/80 backdrop-blur-sm border-t border-gray-200 dark:border-border">
                 © {new Date().getFullYear()} ACAR Vehicle Management
             </footer>
         </div>

@@ -56,29 +56,29 @@ export function EmployeeLoginPage() {
     // Show polling/waiting UI
     if (pollStatus === "polling") {
         return (
-            <div className="w-full max-w-md space-y-6 text-center">
-                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 mx-auto">
-                    <Clock className="h-12 w-12 text-primary animate-pulse" />
+            <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/30 mx-auto">
+                    <Clock className="h-8 w-8 text-blue-600 dark:text-blue-400 animate-pulse" />
                 </div>
 
                 <div>
-                    <h1 className="text-2xl font-bold text-foreground">Waiting for Approval</h1>
-                    <p className="mt-2 text-muted-foreground">{pollMessage}</p>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Waiting for Approval</h1>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">{pollMessage}</p>
                 </div>
 
                 <div className="flex justify-center gap-1">
                     {[0, 1, 2].map((i) => (
                         <div
                             key={i}
-                            className="h-2 w-2 rounded-full bg-primary animate-bounce"
+                            className="h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400 animate-bounce"
                             style={{ animationDelay: `${i * 0.15}s` }}
                         />
                     ))}
                 </div>
 
-                <div className="rounded-lg bg-muted/50 p-4 text-left">
-                    <h3 className="font-medium text-foreground mb-2">What's happening?</h3>
-                    <ul className="text-sm text-muted-foreground space-y-1">
+                <div className="rounded-lg bg-[#F8F9FA] dark:bg-muted/40 border border-gray-200 dark:border-border p-3.5 text-left">
+                    <h3 className="text-xs font-semibold text-gray-900 dark:text-foreground mb-1.5">What's happening?</h3>
+                    <ul className="text-xs text-gray-500 dark:text-muted-foreground space-y-1">
                         <li>✉️ Your manager received an approval request</li>
                         <li>⏳ Once they click "Approve", you'll be logged in</li>
                         <li>🔄 This page is checking every 2 seconds...</li>
@@ -91,15 +91,15 @@ export function EmployeeLoginPage() {
     // Show approved UI
     if (pollStatus === "approved") {
         return (
-            <div className="w-full max-w-md space-y-6 text-center">
-                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-green-500/10 mx-auto">
-                    <CheckCircle className="h-12 w-12 text-green-500" />
+            <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/30 mx-auto">
+                    <CheckCircle className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold text-foreground">Login Approved!</h1>
-                    <p className="mt-2 text-muted-foreground">{pollMessage}</p>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Login Approved!</h1>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">{pollMessage}</p>
                 </div>
-                <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
+                <Loader2 className="h-5 w-5 animate-spin mx-auto text-blue-600 dark:text-blue-400" />
             </div>
         )
     }
@@ -107,49 +107,49 @@ export function EmployeeLoginPage() {
     // Show expired UI
     if (pollStatus === "expired" || pollStatus === "error") {
         return (
-            <div className="w-full max-w-md space-y-6 text-center">
-                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-destructive/10 mx-auto">
-                    <XCircle className="h-12 w-12 text-destructive" />
+            <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/30 mx-auto">
+                    <XCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold text-foreground">Request Failed</h1>
-                    <p className="mt-2 text-muted-foreground">{pollMessage}</p>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Request Failed</h1>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">{pollMessage}</p>
                 </div>
-                <Button onClick={() => window.location.reload()}>Try Again</Button>
+                <Button onClick={() => window.location.reload()} className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8">Try Again</Button>
             </div>
         )
     }
 
     // Default: Show login form
     return (
-        <div className="w-full max-w-md space-y-6">
+        <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5">
             <Link
                 to="/login"
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 dark:text-muted-foreground dark:hover:text-foreground transition-colors"
             >
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-3.5 w-3.5" />
                 Back to login options
             </Link>
 
             <div>
-                <h1 className="text-2xl font-bold text-foreground">Employee Login</h1>
-                <p className="mt-1 text-muted-foreground">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Employee Login</h1>
+                <p className="mt-0.5 text-xs text-gray-500 dark:text-muted-foreground">
                     Enter your credentials. Your manager will approve the login.
                 </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor="username" className="text-foreground">Username <span className="text-destructive ml-1">*</span></Label>
+                <div className="space-y-1.5">
+                    <Label htmlFor="username" className="text-xs font-medium text-gray-700 dark:text-foreground">Username <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
-                        <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <User className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="username"
                             type="text"
                             placeholder="Enter your username"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            className="pl-10 text-foreground"
+                            className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
                             required
                             autoFocus
                             autoComplete="username"
@@ -157,17 +157,17 @@ export function EmployeeLoginPage() {
                     </div>
                 </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="password" className="text-foreground">Password <span className="text-destructive ml-1">*</span></Label>
+                <div className="space-y-1.5">
+                    <Label htmlFor="password" className="text-xs font-medium text-gray-700 dark:text-foreground">Password <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Lock className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="password"
                             type="password"
                             placeholder="Enter your password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="pl-10 text-foreground"
+                            className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
                             required
                             autoComplete="current-password"
                         />
@@ -175,15 +175,15 @@ export function EmployeeLoginPage() {
                 </div>
 
                 {error && (
-                    <div className="rounded-lg bg-destructive/10 border border-destructive/50 p-3">
-                        <p className="text-sm text-destructive">{error}</p>
+                    <div className="rounded-md bg-destructive/10 border border-destructive/30 p-2.5">
+                        <p className="text-xs text-destructive">{error}</p>
                     </div>
                 )}
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs h-8 rounded-md shadow-xs" disabled={isLoading}>
                     {isLoading ? (
                         <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                             Submitting...
                         </>
                     ) : (
@@ -192,9 +192,9 @@ export function EmployeeLoginPage() {
                 </Button>
             </form>
 
-            <div className="rounded-lg bg-muted/50 p-4">
-                <p className="text-sm text-muted-foreground">
-                    <strong>How it works:</strong> After submitting, your manager will receive a
+            <div className="rounded-lg bg-[#F8F9FA] dark:bg-muted/40 border border-gray-200 dark:border-border p-3 text-xs text-gray-600 dark:text-muted-foreground">
+                <p>
+                    <strong className="text-gray-900 dark:text-foreground">How it works:</strong> After submitting, your manager will receive a
                     notification. Once they approve, you'll be logged in automatically.
                 </p>
             </div>

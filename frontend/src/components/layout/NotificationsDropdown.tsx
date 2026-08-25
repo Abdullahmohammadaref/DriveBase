@@ -6,16 +6,6 @@ import { useRecentActivityLogs, type ActivityLogItem } from "@/hooks/useActivity
 import { SUPPORTED_LOCALES, DEFAULT_LOCALE, type SupportedLocale } from "@/lib/i18n"
 
 /**
- * Action icon mapping
- */
-const actionIcons: Record<string, string> = {
-    create: "✨",
-    update: "✏️",
-    delete: "🗑️",
-    status_change: "🔄",
-}
-
-/**
  * Entity icon component
  */
 function EntityIcon({ type }: { type: string }) {
@@ -56,27 +46,43 @@ function formatRelativeTime(timestamp: string): string {
 }
 
 /**
+ * Action badge styling mapping
+ */
+function ActionBadge({ action, label }: { action: string; label: string }) {
+    let colorClass = "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+    if (action === "create") {
+        colorClass = "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+    } else if (action === "delete") {
+        colorClass = "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300"
+    } else if (action === "update" || action === "status_change") {
+        colorClass = "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300"
+    }
+    return (
+        <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0 ${colorClass}`}>
+            {label}
+        </span>
+    )
+}
+
+/**
  * Single notification item component
  */
 function NotificationItem({ log }: { log: ActivityLogItem }) {
     return (
-        <div className="flex items-start gap-3 p-3 hover:bg-accent/50 transition-colors cursor-pointer rounded-md">
-            <div className="flex-shrink-0 mt-0.5">
-                <span className="text-sm">{actionIcons[log.action] || "📝"}</span>
-            </div>
+        <div className="px-3.5 py-2 border-b border-gray-50 dark:border-border/50 hover:bg-gray-50/60 dark:hover:bg-muted/40 transition-colors flex items-start gap-2.5 text-xs cursor-pointer">
             <div className="flex-1 min-w-0">
-                <p className="text-sm text-foreground line-clamp-2">
-                    <span className="font-medium">{log.user_name}</span>
-                    {" "}
-                    <span className="text-muted-foreground">{log.action_display.toLowerCase()}</span>
-                    {" "}
-                    <span className="inline-flex items-center gap-1">
+                <div className="flex items-center gap-1.5 mb-1">
+                    <ActionBadge action={log.action} label={log.action_display} />
+                    <span className="inline-flex items-center gap-1 text-gray-500 dark:text-muted-foreground text-[11px]">
                         <EntityIcon type={log.entity_type} />
-                        <span className="font-medium">{log.entity_name || log.entity_type_display}</span>
+                        <span className="truncate max-w-[140px] font-medium text-gray-700 dark:text-foreground">{log.entity_name || log.entity_type_display}</span>
                     </span>
+                </div>
+                <p className="text-xs text-gray-600 dark:text-muted-foreground truncate">
+                    <span className="font-medium text-gray-900 dark:text-foreground">{log.user_name}</span>
                 </p>
-                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
+                <p className="text-[10px] text-gray-400 dark:text-muted-foreground font-mono mt-0.5 flex items-center gap-1">
+                    <Clock className="h-2.5 w-2.5" />
                     {formatRelativeTime(log.timestamp)}
                 </p>
             </div>
@@ -116,12 +122,12 @@ export function NotificationsDropdown() {
         <div className="relative">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                className="relative flex h-7 w-7 items-center justify-center rounded-md text-gray-500 hover:text-gray-700 dark:text-muted-foreground dark:hover:text-foreground hover:bg-gray-50 dark:hover:bg-muted transition-colors p-1.5"
                 title={t('common.notifications', 'Notifications')}
             >
-                <Bell className="h-5 w-5" />
+                <Bell className="h-4 w-4" />
                 {hasLogs && (
-                    <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />
+                    <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-blue-500 ring-2 ring-white dark:ring-card" />
                 )}
             </button>
 
@@ -132,10 +138,10 @@ export function NotificationsDropdown() {
                         className="fixed inset-0 z-40"
                         onClick={() => setIsOpen(false)}
                     />
-                    <div className="absolute right-0 top-full z-50 mt-1 w-80 rounded-lg border border-border bg-popover shadow-lg overflow-hidden">
+                    <div className="absolute right-0 top-full z-50 mt-1 w-80 bg-white dark:bg-card border border-gray-200 dark:border-border rounded-lg shadow-lg p-0 overflow-hidden">
                         {/* Header */}
-                        <div className="px-4 py-3 border-b border-border">
-                            <h3 className="font-medium text-foreground">
+                        <div className="px-3.5 py-2.5 border-b border-gray-100 dark:border-border">
+                            <h3 className="font-semibold text-xs text-gray-800 dark:text-foreground">
                                 {t('notifications.title', 'Recent Activity')}
                             </h3>
                         </div>
@@ -143,31 +149,31 @@ export function NotificationsDropdown() {
                         {/* Content */}
                         <div className="max-h-80 overflow-y-auto">
                             {isLoading ? (
-                                <div className="p-4 text-center text-muted-foreground text-sm">
+                                <div className="p-4 text-center text-gray-400 text-xs">
                                     {t('common.loading', 'Loading...')}
                                 </div>
                             ) : hasLogs ? (
-                                <div className="p-1">
+                                <div>
                                     {data.logs.map((log) => (
                                         <NotificationItem key={log.id} log={log} />
                                     ))}
                                 </div>
                             ) : (
-                                <div className="p-8 text-center text-muted-foreground text-sm">
-                                    <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                <div className="p-8 text-center text-gray-400 text-xs">
+                                    <Bell className="h-6 w-6 mx-auto mb-2 opacity-40 text-gray-400" />
                                     <p>{t('notifications.empty', 'No recent activity')}</p>
                                 </div>
                             )}
                         </div>
 
                         {/* Footer */}
-                        <div className="px-4 py-3 border-t border-border bg-muted/30">
+                        <div className="px-3.5 py-2 bg-gray-50/50 dark:bg-muted/30 border-t border-gray-100 dark:border-border">
                             <button
                                 onClick={handleViewAll}
-                                className="w-full flex items-center justify-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                                className="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 transition-colors"
                             >
                                 {t('notifications.viewAll', 'View All Logs')}
-                                <ArrowRight className="h-4 w-4" />
+                                <ArrowRight className="h-3.5 w-3.5" />
                             </button>
                         </div>
                     </div>

@@ -214,9 +214,11 @@ def apply_transaction_filters(qs, filters: TransactionFilters):
     if filters.internal_id:
         qs = qs.filter(internal_id=filters.internal_id)
     
-    # Status filter
+    # Status filter (default: exclude inactive unless explicitly requested)
     if filters.status:
         qs = qs.filter(status=filters.status)
+    else:
+        qs = qs.exclude(status='inactive')
     
     # Category/subcategory filters
     if filters.category:

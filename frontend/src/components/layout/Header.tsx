@@ -87,14 +87,14 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
     return (
         <header
             className={cn(
-                "fixed right-0 top-0 z-30 flex h-11 items-center justify-between border-b border-border bg-background px-3.5 transition-all duration-300",
-                sidebarCollapsed ? "left-14" : "left-52"
+                "fixed right-0 top-0 z-30 flex h-11 items-center justify-between border-b border-gray-200 dark:border-border bg-white dark:bg-card px-4 transition-all duration-300",
+                sidebarCollapsed ? "left-14" : "left-56"
             )}
         >
             {/* Business Name / Page Title */}
             <div className="flex items-center gap-2">
-                <Building className="h-4 w-4 text-muted-foreground" />
-                <h1 className="text-xs font-semibold text-foreground">
+                <Building className="h-3.5 w-3.5 text-gray-400 dark:text-muted-foreground" />
+                <h1 className="text-xs font-semibold text-gray-800 dark:text-foreground">
                     {user?.business_name || t('common.vehicleManagement')}
                 </h1>
             </div>
@@ -105,25 +105,25 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
                 <NotificationsDropdown />
 
                 {/* UI Scale Controls */}
-                <div className="flex items-center mx-0.5 border border-border rounded-md overflow-hidden bg-background">
+                <div className="flex items-center h-7 px-2 border border-gray-200 dark:border-border rounded-md text-xs text-gray-700 dark:text-foreground bg-[#F8F9FA] dark:bg-muted/30 gap-1.5 shadow-xs">
                     <button
                         onClick={handleZoomOut}
-                        className="flex h-7 w-7 items-center justify-center text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                        className="text-gray-500 hover:text-gray-900 dark:text-muted-foreground dark:hover:text-foreground flex items-center justify-center transition-colors"
                         title="Zoom Out"
                     >
                         <ZoomOut className="h-3.5 w-3.5" />
                     </button>
-                    <div className="h-3.5 w-[1px] bg-border" />
+                    <div className="h-3 w-[1px] bg-gray-200 dark:bg-border" />
                     <span
-                        className="px-1.5 text-[11px] font-semibold text-foreground select-none min-w-[36px] text-center"
+                        className="text-[11px] font-semibold text-gray-700 dark:text-foreground select-none min-w-[32px] text-center"
                         title={`Current Zoom: ${Math.round(uiScale * 100)}%`}
                     >
                         {Math.round(uiScale * 100)}%
                     </span>
-                    <div className="h-3.5 w-[1px] bg-border" />
+                    <div className="h-3 w-[1px] bg-gray-200 dark:bg-border" />
                     <button
                         onClick={handleZoomIn}
-                        className="flex h-7 w-7 items-center justify-center text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                        className="text-gray-500 hover:text-gray-900 dark:text-muted-foreground dark:hover:text-foreground flex items-center justify-center transition-colors"
                         title="Zoom In"
                     >
                         <ZoomIn className="h-3.5 w-3.5" />
@@ -133,13 +133,13 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
                 {/* Theme Toggle */}
                 <button
                     onClick={toggleDarkMode}
-                    className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    className="h-7 px-2 border border-gray-200 dark:border-border rounded-md text-xs text-gray-700 dark:text-foreground bg-white dark:bg-card hover:bg-gray-50 dark:hover:bg-muted/50 flex items-center justify-center gap-1.5 shadow-xs transition-colors"
                     title={darkMode ? t('common.switchToLight') : t('common.switchToDark')}
                 >
                     {darkMode ? (
-                        <Sun className="h-4 w-4" />
+                        <Sun className="h-3.5 w-3.5 text-amber-500" />
                     ) : (
-                        <Moon className="h-4 w-4" />
+                        <Moon className="h-3.5 w-3.5 text-gray-600 dark:text-muted-foreground" />
                     )}
                 </button>
 
@@ -150,17 +150,15 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
                 <div className="relative">
                     <button
                         onClick={() => setUserMenuOpen(!userMenuOpen)}
-                        className="flex h-7 items-center gap-1.5 rounded-md px-2 hover:bg-accent"
+                        className="h-7 px-2 border border-gray-200 dark:border-border rounded-md text-xs text-gray-700 dark:text-foreground bg-white dark:bg-card hover:bg-gray-50 dark:hover:bg-muted/50 flex items-center gap-1.5 shadow-xs transition-colors"
                     >
-                        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10">
-                            <User className="h-3 w-3 text-primary" />
+                        <div className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                            <User className="h-2.5 w-2.5" />
                         </div>
-                        <div className="hidden text-left md:block">
-                            <p className="text-xs font-medium leading-none text-foreground">
-                                {user?.username || "User"}
-                            </p>
-                        </div>
-                        <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                        <span className="hidden text-xs font-medium text-gray-900 dark:text-foreground md:inline-block max-w-[100px] truncate">
+                            {user?.username || "User"}
+                        </span>
+                        <ChevronDown className="h-3 w-3 text-gray-400 dark:text-muted-foreground" />
                     </button>
 
                     {/* Dropdown Menu */}
@@ -170,26 +168,26 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
                                 className="fixed inset-0 z-40"
                                 onClick={() => setUserMenuOpen(false)}
                             />
-                            <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-border bg-popover p-1 shadow-lg">
-                                <div className="px-3 py-2 border-b border-border mb-1">
-                                    <p className="text-xs font-medium text-foreground">{user?.email}</p>
-                                    <p className="text-[11px] text-muted-foreground">{user?.business_name}</p>
+                            <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-1 shadow-lg overflow-hidden">
+                                <div className="px-3 py-2 border-b border-gray-100 dark:border-border mb-1">
+                                    <p className="text-xs font-medium text-gray-900 dark:text-foreground truncate">{user?.email}</p>
+                                    <p className="text-[11px] text-gray-500 dark:text-muted-foreground truncate">{user?.business_name}</p>
                                 </div>
 
                                 {user?.is_manager && (
-                                    <div className="border-b border-border mb-1">
+                                    <div className="border-b border-gray-100 dark:border-border mb-1">
                                         <button
                                             onClick={() => handleNavigate("business-settings")}
-                                            className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                                            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-gray-700 dark:text-foreground hover:bg-gray-50 dark:hover:bg-muted/50 hover:text-gray-900 transition-colors"
                                         >
-                                            <Settings className="h-3.5 w-3.5" />
+                                            <Settings className="h-3.5 w-3.5 text-gray-400" />
                                             {t('user.businessSettings')}
                                         </button>
                                         <button
                                             onClick={() => handleNavigate("user-settings")}
-                                            className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                                            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-gray-700 dark:text-foreground hover:bg-gray-50 dark:hover:bg-muted/50 hover:text-gray-900 transition-colors"
                                         >
-                                            <UserCog className="h-3.5 w-3.5" />
+                                            <UserCog className="h-3.5 w-3.5 text-gray-400" />
                                             User Settings
                                         </button>
                                     </div>
@@ -197,7 +195,7 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
 
                                 <button
                                     onClick={handleLogout}
-                                    className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-destructive hover:bg-danger-bg"
+                                    className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-destructive hover:bg-destructive/10 transition-colors"
                                 >
                                     <LogOut className="h-3.5 w-3.5" />
                                     {t('user.logout')}

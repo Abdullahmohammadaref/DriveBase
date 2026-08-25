@@ -28,7 +28,6 @@ import { useParams } from "react-router-dom"
 import { useDashboard } from "@/hooks/useDashboard"
 import { formatCurrency } from "@/lib/utils"
 import {
-    getDaysOnStockColor,
     formatPercent,
     formatDays,
 } from "@/lib/vehicleFinancials"
@@ -122,8 +121,8 @@ export function DashboardPage() {
         <div className="space-y-6">
             {/* Page Header */}
             <div>
-                <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-                <p className="text-muted-foreground">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Dashboard</h1>
+                <p className="mt-0.5 text-xs text-gray-500 dark:text-muted-foreground">
                     Overview of your vehicle inventory and finances
                 </p>
             </div>
@@ -135,24 +134,24 @@ export function DashboardPage() {
                     label="Total Vehicles"
                     value={String(d.total_vehicles)}
                     subLabel={`${d.in_stock} in stock`}
-                    color="text-primary"
-                    bgColor="bg-primary/10"
+                    color="text-gray-900 dark:text-foreground font-mono font-bold"
+                    bgColor="bg-gray-100 dark:bg-muted"
                 />
                 <KPICard
                     icon={Package}
                     label="Vehicles Sold"
                     value={String(d.status_counts.sold)}
                     subLabel={`of ${d.total_vehicles} total`}
-                    color="text-emerald-600 dark:text-emerald-400"
-                    bgColor="bg-emerald-500/10"
+                    color="text-[#318d6c] font-mono font-bold"
+                    bgColor="bg-emerald-50 dark:bg-emerald-900/30"
                 />
                 <KPICard
                     icon={DollarSign}
                     label="Total Net Profit"
                     value={formatCurrency(d.total_profit)}
                     subLabel={`avg ${d.profit_distribution.avg_profit !== null ? formatCurrency(d.profit_distribution.avg_profit) : "—"} / vehicle`}
-                    color={d.total_profit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}
-                    bgColor={d.total_profit >= 0 ? "bg-emerald-500/10" : "bg-red-500/10"}
+                    color={d.total_profit >= 0 ? "text-[#318d6c] font-mono font-bold" : "text-[#d23a69] font-mono font-bold"}
+                    bgColor={d.total_profit >= 0 ? "bg-emerald-50 dark:bg-emerald-900/30" : "bg-rose-50 dark:bg-rose-900/30"}
                     equation="Σ (saleNet − buyNet)"
                 />
                 <KPICard
@@ -160,8 +159,8 @@ export function DashboardPage() {
                     label="Overall ROI"
                     value={d.overall_roi !== null ? formatPercent(d.overall_roi) : "—"}
                     subLabel={`Margin: ${d.overall_margin !== null ? formatPercent(d.overall_margin) : "—"}`}
-                    color={d.overall_roi !== null && d.overall_roi >= 0 ? "text-fuchsia-600 dark:text-fuchsia-400" : "text-red-500"}
-                    bgColor="bg-fuchsia-500/10"
+                    color={d.overall_roi !== null && d.overall_roi >= 0 ? "text-[#318d6c] font-mono font-bold" : "text-[#d23a69] font-mono font-bold"}
+                    bgColor={d.overall_roi !== null && d.overall_roi >= 0 ? "bg-emerald-50 dark:bg-emerald-900/30" : "bg-rose-50 dark:bg-rose-900/30"}
                     equation="profit ÷ cost × 100"
                 />
             </div>
@@ -173,37 +172,37 @@ export function DashboardPage() {
                     label="Total Revenue"
                     value={formatCurrency(d.total_revenue)}
                     subLabel="Net sale prices"
-                    color="text-green-500"
-                    bgColor="bg-green-500/10"
+                    color="text-[#318d6c] font-mono font-bold"
+                    bgColor="bg-emerald-50 dark:bg-emerald-900/30"
                 />
                 <KPICard
                     icon={TrendingDown}
                     label="Total Cost"
                     value={formatCurrency(d.total_cost)}
                     subLabel="Net buy prices"
-                    color="text-red-500"
-                    bgColor="bg-red-500/10"
+                    color="text-[#d23a69] font-mono font-bold"
+                    bgColor="bg-rose-50 dark:bg-rose-900/30"
                 />
                 {/* Days on Stock Card */}
-                <div className="rounded-xl border border-border bg-card p-4 col-span-2 lg:col-span-1">
+                <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-4 shadow-xs col-span-2 lg:col-span-1">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-500/10 flex-shrink-0">
-                            <Timer className="h-4 w-4 text-slate-500" />
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-900/30 flex-shrink-0">
+                            <Timer className="h-4 w-4 text-[#d97706]" />
                         </div>
                         <div className="min-w-0 flex-1">
-                            <p className="text-xs text-muted-foreground">Avg Days on Stock</p>
+                            <p className="text-xs text-gray-500 dark:text-muted-foreground">Avg Days on Stock</p>
                             <div className="flex items-center gap-4 mt-0.5">
                                 <div>
-                                    <p className={`text-lg font-bold ${getDaysOnStockColor(d.days_on_stock.avg_sold)}`}>
+                                    <p className="text-lg font-bold font-mono text-[#d97706]">
                                         {d.days_on_stock.avg_sold !== null ? formatDays(d.days_on_stock.avg_sold) : "—"}
                                     </p>
-                                    <p className="text-[10px] text-muted-foreground/60">sold</p>
+                                    <p className="text-[10px] text-gray-400 dark:text-muted-foreground/60">sold</p>
                                 </div>
-                                <div className="border-l border-border pl-4">
-                                    <p className={`text-lg font-bold ${getDaysOnStockColor(d.days_on_stock.avg_unsold)}`}>
+                                <div className="border-l border-gray-200 dark:border-border pl-4">
+                                    <p className="text-lg font-bold font-mono text-[#d97706]">
                                         {d.days_on_stock.avg_unsold !== null ? formatDays(d.days_on_stock.avg_unsold) : "—"}
                                     </p>
-                                    <p className="text-[10px] text-muted-foreground/60">
+                                    <p className="text-[10px] text-gray-400 dark:text-muted-foreground/60">
                                         stock ({d.days_on_stock.unsold_count})
                                     </p>
                                 </div>
@@ -214,11 +213,11 @@ export function DashboardPage() {
             </div>
 
             {/* Status Distribution Bar */}
-            <div className="rounded-xl border border-border bg-card p-4">
-                <h3 className="text-xs font-medium text-muted-foreground mb-2.5 uppercase tracking-wider">
+            <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-4 shadow-xs">
+                <h3 className="text-xs font-semibold text-gray-600 dark:text-muted-foreground mb-2.5 uppercase tracking-wider">
                     Vehicle Status Distribution
                 </h3>
-                <div className="h-3 w-full rounded-full overflow-hidden flex bg-muted">
+                <div className="h-2.5 w-full rounded-full overflow-hidden flex bg-gray-100 dark:bg-muted">
                     {statusEntries.map(([status, count]) => {
                         const pct = (count / d.total_vehicles) * 100
                         const cfg = statusConfig[status] || { color: "bg-gray-400" }
@@ -238,8 +237,8 @@ export function DashboardPage() {
                         return (
                             <div key={status} className="flex items-center gap-1.5 text-xs">
                                 <span className={`w-2 h-2 rounded-full ${cfg.dotColor}`} />
-                                <span className="text-foreground font-medium">{cfg.label || status}</span>
-                                <span className="text-muted-foreground">
+                                <span className="text-gray-700 dark:text-foreground font-medium">{cfg.label || status}</span>
+                                <span className="text-gray-400 dark:text-muted-foreground">
                                     {count} ({Math.round((count / d.total_vehicles) * 100)}%)
                                 </span>
                             </div>
@@ -252,15 +251,15 @@ export function DashboardPage() {
             {chartData.some((c) => c.Revenue > 0 || c.Expenses > 0) && (
                 <div className="grid gap-3 lg:grid-cols-2">
                     {/* Revenue vs Expenses Bar Chart */}
-                    <div className="rounded-xl border border-border bg-card p-4">
-                        <h3 className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wider flex items-center gap-1.5">
+                    <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-4 shadow-xs">
+                        <h3 className="text-xs font-semibold text-gray-600 dark:text-muted-foreground mb-3 uppercase tracking-wider flex items-center gap-1.5">
                             <BarChart3 className="h-3.5 w-3.5" />
                             Monthly Revenue vs Cost
                         </h3>
                         <div className="h-56">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={chartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" className="dark:stroke-border/50" />
                                     <XAxis dataKey="name" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
                                     <YAxis tick={{ fontSize: 10 }} className="fill-muted-foreground" tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
                                     <Tooltip
@@ -273,16 +272,16 @@ export function DashboardPage() {
                                         formatter={(value) => formatCurrency(Number(value))}
                                     />
                                     <Legend wrapperStyle={{ fontSize: "11px" }} />
-                                    <Bar dataKey="Revenue" fill="hsl(142, 71%, 45%)" radius={[3, 3, 0, 0]} />
-                                    <Bar dataKey="Expenses" fill="hsl(0, 84%, 60%)" radius={[3, 3, 0, 0]} />
+                                    <Bar dataKey="Revenue" fill="#318d6c" radius={[3, 3, 0, 0]} />
+                                    <Bar dataKey="Expenses" fill="#d23a69" radius={[3, 3, 0, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
                     </div>
 
                     {/* Profit Trend Area Chart */}
-                    <div className="rounded-xl border border-border bg-card p-4">
-                        <h3 className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wider flex items-center gap-1.5">
+                    <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-4 shadow-xs">
+                        <h3 className="text-xs font-semibold text-gray-600 dark:text-muted-foreground mb-3 uppercase tracking-wider flex items-center gap-1.5">
                             <TrendingUp className="h-3.5 w-3.5" />
                             Profit Trend
                         </h3>
@@ -291,11 +290,11 @@ export function DashboardPage() {
                                 <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="profitGrad" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="hsl(262, 83%, 58%)" stopOpacity={0.3} />
-                                            <stop offset="95%" stopColor="hsl(262, 83%, 58%)" stopOpacity={0} />
+                                            <stop offset="5%" stopColor="#318d6c" stopOpacity={0.25} />
+                                            <stop offset="95%" stopColor="#318d6c" stopOpacity={0.02} />
                                         </linearGradient>
                                     </defs>
-                                    <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" className="dark:stroke-border/50" />
                                     <XAxis dataKey="name" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
                                     <YAxis tick={{ fontSize: 10 }} className="fill-muted-foreground" tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
                                     <Tooltip
@@ -310,7 +309,7 @@ export function DashboardPage() {
                                     <Area
                                         type="monotone"
                                         dataKey="Profit"
-                                        stroke="hsl(262, 83%, 58%)"
+                                        stroke="#318d6c"
                                         fill="url(#profitGrad)"
                                         strokeWidth={2}
                                     />
@@ -321,18 +320,18 @@ export function DashboardPage() {
                 </div>
             )}
 
-            {/* Financial Breakdown (9 Cards) */}
-            <div className="space-y-4">
+            {/* Financial Breakdown */}
+            <div className="space-y-3">
                 <div className="flex items-center justify-between px-1">
                     <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-primary" />
-                        <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
+                        <DollarSign className="h-4 w-4 text-gray-600 dark:text-muted-foreground" />
+                        <h3 className="text-xs font-semibold text-gray-600 dark:text-muted-foreground uppercase tracking-wider">
                             Financial Performance Breakdown
                         </h3>
                     </div>
-                    <div className="h-px flex-1 mx-6 bg-border/40" />
+                    <div className="h-px flex-1 mx-4 bg-gray-200 dark:border-border/40" />
                 </div>
-                <div className="rounded-2xl border border-border bg-card/30 p-2 shadow-sm">
+                <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-2 shadow-xs">
                     <FinancialSummaryTable summary={d.financial_breakdown} />
                 </div>
             </div>
@@ -340,46 +339,46 @@ export function DashboardPage() {
             {/* Bottom Row — Profit Distribution + Top Vehicles */}
             <div className="grid gap-3 lg:grid-cols-2">
                 {/* Profit Distribution */}
-                <div className="rounded-xl border border-border bg-card p-4">
-                    <h3 className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wider">
+                <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-4 shadow-xs">
+                    <h3 className="text-xs font-semibold text-gray-600 dark:text-muted-foreground mb-3 uppercase tracking-wider">
                         Profit Distribution
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <MiniStat label="Highest" value={d.profit_distribution.highest !== null ? formatCurrency(d.profit_distribution.highest) : "—"} color="text-emerald-600 dark:text-emerald-400" />
-                        <MiniStat label="Lowest" value={d.profit_distribution.lowest !== null ? formatCurrency(d.profit_distribution.lowest) : "—"} color={d.profit_distribution.lowest !== null && d.profit_distribution.lowest >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"} />
-                        <MiniStat label="Avg Profit" value={d.profit_distribution.avg_profit !== null ? formatCurrency(d.profit_distribution.avg_profit) : "—"} color={d.profit_distribution.avg_profit !== null && d.profit_distribution.avg_profit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"} />
-                        <MiniStat label="Avg Margin" value={d.profit_distribution.avg_margin !== null ? formatPercent(d.profit_distribution.avg_margin) : "—"} color="text-purple-600 dark:text-purple-400" />
+                        <MiniStat label="Highest" value={d.profit_distribution.highest !== null ? formatCurrency(d.profit_distribution.highest) : "—"} color="text-[#318d6c] font-mono font-bold" />
+                        <MiniStat label="Lowest" value={d.profit_distribution.lowest !== null ? formatCurrency(d.profit_distribution.lowest) : "—"} color={d.profit_distribution.lowest !== null && d.profit_distribution.lowest >= 0 ? "text-[#318d6c] font-mono font-bold" : "text-[#d23a69] font-mono font-bold"} />
+                        <MiniStat label="Avg Profit" value={d.profit_distribution.avg_profit !== null ? formatCurrency(d.profit_distribution.avg_profit) : "—"} color={d.profit_distribution.avg_profit !== null && d.profit_distribution.avg_profit >= 0 ? "text-[#318d6c] font-mono font-bold" : "text-[#d23a69] font-mono font-bold"} />
+                        <MiniStat label="Avg Margin" value={d.profit_distribution.avg_margin !== null ? formatPercent(d.profit_distribution.avg_margin) : "—"} color="text-blue-600 dark:text-blue-400 font-mono font-bold" />
                     </div>
                 </div>
 
                 {/* Top Performers */}
                 {d.top_vehicles.length > 0 && (
-                    <div className="rounded-xl border border-border bg-card p-4">
-                        <h3 className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wider flex items-center gap-1.5">
+                    <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-4 shadow-xs">
+                        <h3 className="text-xs font-semibold text-gray-600 dark:text-muted-foreground mb-3 uppercase tracking-wider flex items-center gap-1.5">
                             <Trophy className="h-3.5 w-3.5 text-amber-500" />
                             Top Performers
                         </h3>
-                        <div className="space-y-1.5">
+                        <div className="space-y-1">
                             {d.top_vehicles.slice(0, 5).map((v, i) => (
                                 <a
                                     key={v.internal_id}
                                     href={`/${business_slug}/vehicles/${v.internal_id}/edit`}
-                                    className="flex items-center justify-between rounded-lg px-2.5 py-1.5 hover:bg-muted/50 transition-colors group text-xs"
+                                    className="flex items-center justify-between rounded-md px-2.5 py-1.5 hover:bg-gray-50 dark:hover:bg-muted/50 transition-colors group text-xs"
                                 >
                                     <div className="flex items-center gap-2 min-w-0">
-                                        <span className="text-muted-foreground font-mono w-4 text-right">{i + 1}.</span>
-                                        <span className="text-foreground font-medium truncate">
+                                        <span className="text-gray-400 dark:text-muted-foreground font-mono w-4 text-right">{i + 1}.</span>
+                                        <span className="text-gray-900 dark:text-foreground font-medium truncate">
                                             #{v.internal_id} {v.make} {v.model}
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-3 flex-shrink-0">
-                                        <span className={`font-bold font-mono ${v.profit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}`}>
+                                        <span className={`font-bold font-mono ${v.profit >= 0 ? "text-[#318d6c]" : "text-[#d23a69]"}`}>
                                             {formatCurrency(v.profit)}
                                         </span>
                                         {v.margin !== null && (
-                                            <span className="text-muted-foreground">{formatPercent(v.margin)}</span>
+                                            <span className="text-gray-500 dark:text-muted-foreground font-mono">{formatPercent(v.margin)}</span>
                                         )}
-                                        <ArrowUpRight className="h-3 w-3 text-muted-foreground/0 group-hover:text-muted-foreground transition-colors" />
+                                        <ArrowUpRight className="h-3 w-3 text-gray-300 group-hover:text-gray-600 dark:text-muted-foreground/0 dark:group-hover:text-muted-foreground transition-colors" />
                                     </div>
                                 </a>
                             ))}
@@ -407,19 +406,19 @@ interface KPICardProps {
 
 function KPICard({ icon: Icon, label, value, subLabel, color, bgColor, equation }: KPICardProps) {
     return (
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-4 shadow-xs">
             <div className="flex items-center gap-2.5">
                 <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${bgColor} flex-shrink-0`}>
                     <Icon className={`h-4 w-4 ${color}`} />
                 </div>
                 <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground truncate">{label}</p>
-                    <p className={`text-lg font-bold ${color} leading-tight`}>{value}</p>
+                    <p className="text-xs text-gray-500 dark:text-muted-foreground truncate">{label}</p>
+                    <p className={`text-lg leading-tight ${color}`}>{value}</p>
                     {subLabel && (
-                        <p className="text-[10px] text-muted-foreground truncate">{subLabel}</p>
+                        <p className="text-[10px] text-gray-400 dark:text-muted-foreground truncate">{subLabel}</p>
                     )}
                     {equation && (
-                        <p className="text-[9px] text-muted-foreground/50 mt-0.5 font-mono">{equation}</p>
+                        <p className="text-[9px] text-gray-400/70 dark:text-muted-foreground/50 mt-0.5 font-mono">{equation}</p>
                     )}
                 </div>
             </div>
@@ -430,8 +429,8 @@ function KPICard({ icon: Icon, label, value, subLabel, color, bgColor, equation 
 function MiniStat({ label, value, color }: { label: string; value: string; color: string }) {
     return (
         <div>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-0.5">{label}</p>
-            <p className={`text-base font-bold ${color}`}>{value}</p>
+            <p className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-muted-foreground font-medium mb-0.5">{label}</p>
+            <p className={`text-base leading-tight ${color}`}>{value}</p>
         </div>
     )
 }

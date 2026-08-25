@@ -24,52 +24,52 @@ function PollingUI({
     onTryAgain?: () => void
 }) {
     return (
-        <div className="w-full max-w-md space-y-6 text-center">
+        <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5 text-center">
             {status === "approved" ? (
                 <>
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-500/20 mx-auto">
-                        <CheckCircle className="h-10 w-10 text-green-500" />
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/30 mx-auto">
+                        <CheckCircle className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">Verified!</h1>
-                        <p className="mt-2 text-muted-foreground">{message}</p>
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Verified!</h1>
+                        <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">{message}</p>
                     </div>
                 </>
             ) : status === "expired" ? (
                 <>
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-amber-500/20 mx-auto">
-                        <KeyRound className="h-10 w-10 text-amber-500" />
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-900/30 mx-auto">
+                        <KeyRound className="h-8 w-8 text-amber-600 dark:text-amber-400" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">Request Expired</h1>
-                        <p className="mt-2 text-muted-foreground">{message}</p>
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Request Expired</h1>
+                        <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">{message}</p>
                     </div>
                     {onTryAgain && (
-                        <Button onClick={onTryAgain}>Try Again</Button>
+                        <Button onClick={onTryAgain} className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8">Try Again</Button>
                     )}
                 </>
             ) : (
                 <>
                     {/* Animated waiting icon */}
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 mx-auto relative">
-                        <Mail className="h-10 w-10 text-primary" />
-                        <div className="absolute inset-0 rounded-full border-2 border-primary/30 animate-ping" />
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/30 mx-auto relative">
+                        <Mail className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                        <div className="absolute inset-0 rounded-full border-2 border-blue-600/30 animate-ping" />
                     </div>
 
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">{title}</h1>
-                        <p className="mt-2 text-muted-foreground">{description}</p>
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{title}</h1>
+                        <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">{description}</p>
                     </div>
 
                     {/* Animated dots */}
-                    <div className="flex justify-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0ms" }} />
-                        <div className="h-2 w-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: "150ms" }} />
-                        <div className="h-2 w-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: "300ms" }} />
+                    <div className="flex justify-center gap-1">
+                        <div className="h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <div className="h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <div className="h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400 animate-bounce" style={{ animationDelay: "300ms" }} />
                     </div>
 
-                    <div className="rounded-lg bg-muted/50 p-4">
-                        <p className="text-sm text-muted-foreground">
+                    <div className="rounded-lg bg-[#F8F9FA] dark:bg-muted/40 border border-gray-200 dark:border-border p-3 text-xs text-gray-600 dark:text-muted-foreground">
+                        <p>
                             {message || "Waiting for you to click the link..."}
                         </p>
                     </div>
@@ -128,70 +128,70 @@ function NewPasswordForm({
     }
 
     return (
-        <div className="w-full max-w-md space-y-6">
+        <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5">
             {/* Header */}
             <div className="text-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-500/20 mx-auto mb-4">
-                    <CheckCircle className="h-10 w-10 text-green-500" />
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/30 mx-auto mb-2">
+                    <CheckCircle className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
                 </div>
-                <h1 className="text-2xl font-bold text-foreground">Email Verified!</h1>
-                <p className="mt-2 text-muted-foreground">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Email Verified!</h1>
+                <p className="mt-0.5 text-xs text-gray-500 dark:text-muted-foreground">
                     Now set your new password below
                 </p>
             </div>
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor="password" className="text-foreground">New Password <span className="text-destructive ml-1">*</span></Label>
+                <div className="space-y-1.5">
+                    <Label htmlFor="password" className="text-xs font-medium text-gray-700 dark:text-foreground">New Password <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Lock className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="password"
                             type={showPassword ? "text" : "password"}
                             placeholder="Enter new password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="pl-10 pr-10 text-foreground"
+                            className="pl-8 pr-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
                             required
                             autoFocus
                         />
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                         >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                         </button>
                     </div>
                 </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="confirm-password" className="text-foreground">Confirm Password <span className="text-destructive ml-1">*</span></Label>
+                <div className="space-y-1.5">
+                    <Label htmlFor="confirm-password" className="text-xs font-medium text-gray-700 dark:text-foreground">Confirm Password <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Lock className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="confirm-password"
                             type={showPassword ? "text" : "password"}
                             placeholder="Confirm new password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="pl-10 text-foreground"
+                            className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
                             required
                         />
                     </div>
                 </div>
 
                 {error && (
-                    <div className="rounded-lg bg-destructive/10 border border-destructive/50 p-3">
-                        <p className="text-sm text-destructive">{error}</p>
+                    <div className="rounded-md bg-destructive/10 border border-destructive/30 p-2.5">
+                        <p className="text-xs text-destructive">{error}</p>
                     </div>
                 )}
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs h-8 rounded-md shadow-xs" disabled={isLoading}>
                     {isLoading ? (
                         <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                             Updating...
                         </>
                     ) : (
@@ -209,18 +209,18 @@ function NewPasswordForm({
  */
 function PasswordUpdatedSuccess() {
     return (
-        <div className="w-full max-w-md space-y-6 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-500/20 mx-auto">
-                <CheckCircle className="h-10 w-10 text-green-500" />
+        <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/30 mx-auto">
+                <CheckCircle className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-                <h1 className="text-2xl font-bold text-foreground">Password Updated!</h1>
-                <p className="mt-2 text-muted-foreground">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Password Updated!</h1>
+                <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">
                     Your password has been changed successfully. You can now log in with your new password.
                 </p>
             </div>
-            <Link to="/login/manager">
-                <Button className="w-full">Continue to Login</Button>
+            <Link to="/login/manager" className="block pt-1">
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs h-8">Continue to Login</Button>
             </Link>
         </div>
     )
@@ -325,47 +325,48 @@ export function ForgotPasswordPage() {
 
     // Step 1: Form
     return (
-        <div className="w-full max-w-md space-y-6">
+        <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5">
             {/* Back Link */}
             <Link
                 to="/login/manager"
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 dark:text-muted-foreground dark:hover:text-foreground transition-colors"
             >
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-3.5 w-3.5" />
                 Back to manager login
             </Link>
 
             {/* Header */}
             <div>
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 mb-4">
-                    <KeyRound className="h-7 w-7 text-primary" />
-                </div>
-                <h1 className="text-2xl font-bold text-foreground">Reset Password</h1>
-                <p className="mt-1 text-muted-foreground">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Reset Password</h1>
+                <p className="mt-0.5 text-xs text-gray-500 dark:text-muted-foreground">
                     Enter your email or username to receive a password reset link
                 </p>
             </div>
 
             {/* Method Toggle */}
-            <div className="flex rounded-lg border border-border p-1 bg-muted/50">
+            <div className="bg-gray-100 dark:bg-muted p-1 rounded-lg flex gap-1 mb-4">
                 <button
                     type="button"
                     onClick={() => setMethod("email")}
-                    className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${method === "email"
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                        }`}
+                    className={`py-1 px-3 text-xs rounded-md flex-1 flex items-center justify-center gap-1.5 transition-all ${
+                        method === "email"
+                            ? "bg-white dark:bg-card text-gray-900 dark:text-foreground shadow-xs font-semibold"
+                            : "text-gray-500 hover:text-gray-900 dark:text-muted-foreground dark:hover:text-foreground font-medium"
+                    }`}
                 >
+                    <Mail className="h-3.5 w-3.5" />
                     Email
                 </button>
                 <button
                     type="button"
                     onClick={() => setMethod("username")}
-                    className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${method === "username"
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                        }`}
+                    className={`py-1 px-3 text-xs rounded-md flex-1 flex items-center justify-center gap-1.5 transition-all ${
+                        method === "username"
+                            ? "bg-white dark:bg-card text-gray-900 dark:text-foreground shadow-xs font-semibold"
+                            : "text-gray-500 hover:text-gray-900 dark:text-muted-foreground dark:hover:text-foreground font-medium"
+                    }`}
                 >
+                    <User className="h-3.5 w-3.5" />
                     Username
                 </button>
             </div>
@@ -373,34 +374,34 @@ export function ForgotPasswordPage() {
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
                 {method === "email" ? (
-                    <div className="space-y-2">
-                        <Label htmlFor="email" className="text-foreground">Email <span className="text-destructive ml-1">*</span></Label>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="email" className="text-xs font-medium text-gray-700 dark:text-foreground">Email <span className="text-destructive ml-0.5">*</span></Label>
                         <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <Mail className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                             <Input
                                 id="email"
                                 type="email"
                                 placeholder="Enter your email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="pl-10 text-foreground"
+                                className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
                                 required
                                 autoFocus
                             />
                         </div>
                     </div>
                 ) : (
-                    <div className="space-y-2">
-                        <Label htmlFor="username" className="text-foreground">Username <span className="text-destructive ml-1">*</span></Label>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="username" className="text-xs font-medium text-gray-700 dark:text-foreground">Username <span className="text-destructive ml-0.5">*</span></Label>
                         <div className="relative">
-                            <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <User className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                             <Input
                                 id="username"
                                 type="text"
                                 placeholder="Enter your username"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
-                                className="pl-10 text-foreground"
+                                className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
                                 required
                                 autoFocus
                             />
@@ -409,15 +410,15 @@ export function ForgotPasswordPage() {
                 )}
 
                 {error && (
-                    <div className="rounded-lg bg-destructive/10 border border-destructive/50 p-3">
-                        <p className="text-sm text-destructive">{error}</p>
+                    <div className="rounded-md bg-destructive/10 border border-destructive/30 p-2.5">
+                        <p className="text-xs text-destructive">{error}</p>
                     </div>
                 )}
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs h-8 rounded-md shadow-xs" disabled={isLoading}>
                     {isLoading ? (
                         <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                             Sending...
                         </>
                     ) : (
@@ -501,18 +502,18 @@ export function ForgotEmailPage() {
     // Step 3: Success
     if (step === "success") {
         return (
-            <div className="w-full max-w-md space-y-6 text-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-500/20 mx-auto">
-                    <CheckCircle className="h-10 w-10 text-green-500" />
+            <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/30 mx-auto">
+                    <CheckCircle className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold text-foreground">Email Updated!</h1>
-                    <p className="mt-2 text-muted-foreground">
-                        Your email has been changed to <strong className="text-foreground">{newEmail}</strong>.
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Email Updated!</h1>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">
+                        Your email has been changed to <strong className="text-gray-900 dark:text-foreground font-semibold">{newEmail}</strong>.
                     </p>
                 </div>
-                <Link to="/login/manager">
-                    <Button className="w-full">Continue to Login</Button>
+                <Link to="/login/manager" className="block pt-1">
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs h-8">Continue to Login</Button>
                 </Link>
             </div>
         )
@@ -546,107 +547,104 @@ export function ForgotEmailPage() {
 
     // Step 1: Form
     return (
-        <div className="w-full max-w-md space-y-6">
+        <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5">
             {/* Back Link */}
             <Link
                 to="/login/manager"
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 dark:text-muted-foreground dark:hover:text-foreground transition-colors"
             >
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-3.5 w-3.5" />
                 Back to manager login
             </Link>
 
             {/* Header */}
             <div>
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 mb-4">
-                    <Mail className="h-7 w-7 text-primary" />
-                </div>
-                <h1 className="text-2xl font-bold text-foreground">Change Email</h1>
-                <p className="mt-1 text-muted-foreground">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Change Email</h1>
+                <p className="mt-0.5 text-xs text-gray-500 dark:text-muted-foreground">
                     Verify your identity using your backup email
                 </p>
             </div>
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor="username" className="text-foreground">Username <span className="text-destructive ml-1">*</span></Label>
+                <div className="space-y-1.5">
+                    <Label htmlFor="username" className="text-xs font-medium text-gray-700 dark:text-foreground">Username <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
-                        <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <User className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="username"
                             type="text"
                             placeholder="Enter your username"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            className="pl-10 text-foreground"
+                            className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
                             required
                             autoFocus
                         />
                     </div>
                 </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="password" className="text-foreground">Password <span className="text-destructive ml-1">*</span></Label>
+                <div className="space-y-1.5">
+                    <Label htmlFor="password" className="text-xs font-medium text-gray-700 dark:text-foreground">Password <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Lock className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="password"
                             type="password"
                             placeholder="Enter your password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="pl-10 text-foreground"
+                            className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
                             required
                         />
                     </div>
                 </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="backup-email" className="text-foreground">Backup Email <span className="text-destructive ml-1">*</span></Label>
+                <div className="space-y-1.5">
+                    <Label htmlFor="backup-email" className="text-xs font-medium text-gray-700 dark:text-foreground">Backup Email <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Mail className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="backup-email"
                             type="email"
                             placeholder="Your registered backup email"
                             value={backupEmail}
                             onChange={(e) => setBackupEmail(e.target.value)}
-                            className="pl-10 text-foreground"
+                            className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
                             required
                         />
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] text-gray-500 dark:text-muted-foreground mt-1">
                         We'll send a verification link to this email
                     </p>
                 </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="new-email" className="text-foreground">New Email <span className="text-destructive ml-1">*</span></Label>
+                <div className="space-y-1.5">
+                    <Label htmlFor="new-email" className="text-xs font-medium text-gray-700 dark:text-foreground">New Email <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Mail className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="new-email"
                             type="email"
                             placeholder="Your new email address"
                             value={newEmail}
                             onChange={(e) => setNewEmail(e.target.value)}
-                            className="pl-10 text-foreground"
+                            className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
                             required
                         />
                     </div>
                 </div>
 
                 {error && (
-                    <div className="rounded-lg bg-destructive/10 border border-destructive/50 p-3">
-                        <p className="text-sm text-destructive">{error}</p>
+                    <div className="rounded-md bg-destructive/10 border border-destructive/30 p-2.5">
+                        <p className="text-xs text-destructive">{error}</p>
                     </div>
                 )}
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs h-8 rounded-md shadow-xs" disabled={isLoading}>
                     {isLoading ? (
                         <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                             Sending...
                         </>
                     ) : (
@@ -656,9 +654,9 @@ export function ForgotEmailPage() {
             </form>
 
             {/* Info */}
-            <div className="rounded-lg bg-muted/50 p-4">
-                <p className="text-sm text-muted-foreground">
-                    <strong>How it works:</strong> Click the verification link sent to your backup email. Once verified, your email will be updated automatically.
+            <div className="rounded-lg bg-[#F8F9FA] dark:bg-muted/40 border border-gray-200 dark:border-border p-3 text-xs text-gray-600 dark:text-muted-foreground">
+                <p>
+                    <strong className="text-gray-900 dark:text-foreground">How it works:</strong> Click the verification link sent to your backup email. Once verified, your email will be updated automatically.
                 </p>
             </div>
         </div>

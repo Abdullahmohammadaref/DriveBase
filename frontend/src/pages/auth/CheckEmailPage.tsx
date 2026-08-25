@@ -52,45 +52,43 @@ export function CheckEmailPage() {
     }
 
     return (
-        <div className="w-full max-w-md space-y-6 text-center">
+        <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5 text-center">
             {/* Success Icon */}
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-500/10 mx-auto">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500/20">
-                    <CheckCircle className="h-8 w-8 text-green-500" />
-                </div>
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/30 mx-auto">
+                <CheckCircle className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
             </div>
 
             {/* Title */}
             <div>
-                <h1 className="text-2xl font-bold text-foreground">{getTitle()}</h1>
-                <p className="mt-2 text-muted-foreground">{message}</p>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{getTitle()}</h1>
+                <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">{message}</p>
             </div>
 
             {/* Email indicator */}
             {state?.email && (
-                <div className="inline-flex items-center gap-2 rounded-full bg-muted px-4 py-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-foreground">{state.email}</span>
+                <div className="inline-flex items-center gap-2 rounded-full bg-gray-100 dark:bg-muted px-3.5 py-1.5 text-xs text-gray-700 dark:text-foreground">
+                    <Mail className="h-3.5 w-3.5 text-gray-400" />
+                    <span>{state.email}</span>
                 </div>
             )}
 
             {/* Info Box */}
-            <div className="rounded-lg bg-muted/50 p-4 text-left">
-                <h3 className="font-medium text-foreground mb-2">What happens next?</h3>
+            <div className="rounded-lg bg-[#F8F9FA] dark:bg-muted/40 border border-gray-200 dark:border-border p-3.5 text-left">
+                <h3 className="text-xs font-semibold text-gray-900 dark:text-foreground mb-1.5">What happens next?</h3>
                 {type === "employee" ? (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs text-gray-500 dark:text-muted-foreground">
                         Your manager will receive a login link. Once they click it,
                         you'll be logged in automatically. This usually takes a few minutes.
                     </p>
                 ) : type === "email-change" ? (
-                    <ol className="text-sm text-muted-foreground list-decimal list-inside space-y-1">
+                    <ol className="text-xs text-gray-500 dark:text-muted-foreground list-decimal list-inside space-y-1">
                         <li>Check your backup email for a verification link</li>
                         <li>Click the link to verify your identity</li>
                         <li>A second link will be sent to your new email</li>
                         <li>Click that link to complete the change</li>
                     </ol>
                 ) : (
-                    <ul className="text-sm text-muted-foreground space-y-1">
+                    <ul className="text-xs text-gray-500 dark:text-muted-foreground space-y-1">
                         <li>• Check your inbox (and spam folder)</li>
                         <li>• The link expires in 1 minute</li>
                         <li>• Click the link to continue</li>
@@ -99,15 +97,15 @@ export function CheckEmailPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2.5 pt-1 border-t border-gray-100 dark:border-border">
                 <Link to={backLink.href}>
-                    <Button variant="outline" className="w-full">
-                        <ArrowLeft className="mr-2 h-4 w-4" />
+                    <Button variant="outline" className="w-full h-8 text-xs font-medium">
+                        <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
                         {backLink.label}
                     </Button>
                 </Link>
 
-                <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/login" className="text-xs text-blue-600 dark:text-blue-400 hover:underline transition-colors">
                     Return to login options
                 </Link>
             </div>

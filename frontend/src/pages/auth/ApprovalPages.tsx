@@ -81,9 +81,9 @@ export function ApprovalPage() {
 
     if (status === "loading") {
         return (
-            <div className="w-full max-w-md space-y-6 text-center">
-                <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
-                <p className="text-muted-foreground">Processing...</p>
+            <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5 text-center">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600 dark:text-blue-400" />
+                <p className="text-xs text-gray-500 dark:text-muted-foreground">Processing...</p>
             </div>
         )
     }
@@ -93,15 +93,15 @@ export function ApprovalPage() {
         const getIcon = () => {
             switch (data.action_type) {
                 case "employee_login":
-                    return <User className="h-12 w-12 text-green-500" />
+                    return <User className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
                 case "manager_login":
-                    return <User className="h-12 w-12 text-green-500" />
+                    return <User className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
                 case "password_reset":
-                    return <Key className="h-12 w-12 text-green-500" />
+                    return <Key className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
                 case "verify_email":
-                    return <Mail className="h-12 w-12 text-green-500" />
+                    return <Mail className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
                 default:
-                    return <CheckCircle className="h-12 w-12 text-green-500" />
+                    return <CheckCircle className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
             }
         }
 
@@ -138,25 +138,25 @@ export function ApprovalPage() {
         }
 
         return (
-            <div className="w-full max-w-md space-y-6 text-center">
-                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-green-500/10 mx-auto">
+            <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/30 mx-auto">
                     {getIcon()}
                 </div>
 
                 <div>
-                    <h1 className="text-2xl font-bold text-foreground">{getTitle()}</h1>
-                    <p className="mt-2 text-muted-foreground">{getDescription()}</p>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{getTitle()}</h1>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">{getDescription()}</p>
                 </div>
 
-                <div className="rounded-lg bg-muted/50 p-4">
-                    <p className="text-sm text-muted-foreground">
+                <div className="rounded-lg bg-[#F8F9FA] dark:bg-muted/40 border border-gray-200 dark:border-border p-3.5 text-xs text-gray-600 dark:text-muted-foreground">
+                    <p>
                         You can close this page. The original browser will continue automatically.
                     </p>
                 </div>
 
-                <Link to="/login">
-                    <Button variant="outline">
-                        <ArrowLeft className="mr-2 h-4 w-4" />
+                <Link to="/login" className="block pt-1">
+                    <Button variant="outline" className="w-full h-8 text-xs font-medium">
+                        <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
                         Back to Login
                     </Button>
                 </Link>
@@ -166,19 +166,19 @@ export function ApprovalPage() {
 
     // Error state
     return (
-        <div className="w-full max-w-md space-y-6 text-center">
-            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-destructive/10 mx-auto">
-                <XCircle className="h-12 w-12 text-destructive" />
+        <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/30 mx-auto">
+                <XCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
             </div>
 
             <div>
-                <h1 className="text-2xl font-bold text-foreground">Request Failed</h1>
-                <p className="mt-2 text-muted-foreground">{data?.message || "An error occurred"}</p>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Request Failed</h1>
+                <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">{data?.message || "An error occurred"}</p>
             </div>
 
-            <Link to="/login">
-                <Button>
-                    <ArrowLeft className="mr-2 h-4 w-4" />
+            <Link to="/login" className="block pt-1">
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs h-8">
+                    <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
                     Back to Login
                 </Button>
             </Link>
@@ -197,13 +197,13 @@ export function VerifyPage() {
     useParams<{ uid: string; token: string }>()
 
     return (
-        <div className="w-full max-w-md space-y-6 text-center">
-            <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
-            <p className="text-muted-foreground">
+        <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5 text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600 dark:text-blue-400" />
+            <p className="text-xs text-gray-500 dark:text-muted-foreground">
                 Legacy link detected. Please use the new approval flow.
             </p>
-            <Link to="/login">
-                <Button variant="outline">Go to Login</Button>
+            <Link to="/login" className="block pt-1">
+                <Button variant="outline" className="w-full h-8 text-xs font-medium">Go to Login</Button>
             </Link>
         </div>
     )

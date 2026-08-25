@@ -174,33 +174,33 @@ export function RegisterPage() {
     if (step === "polling_email" || step === "polling_backup") {
         const isBackup = step === "polling_backup"
         return (
-            <div className="w-full max-w-md space-y-6 text-center">
+            <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5 text-center">
                 {status === "expired" ? (
                     <>
-                        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-amber-500/20 mx-auto">
-                            <Mail className="h-10 w-10 text-amber-500" />
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-900/30 mx-auto">
+                            <Mail className="h-8 w-8 text-amber-600 dark:text-amber-400" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-foreground">Request Expired</h1>
-                            <p className="mt-2 text-muted-foreground">{message}</p>
+                            <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Request Expired</h1>
+                            <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">{message}</p>
                         </div>
-                        <Button onClick={handleTryAgain}>Try Again</Button>
+                        <Button onClick={handleTryAgain} className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8">Try Again</Button>
                     </>
                 ) : (
                     <>
-                        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 mx-auto relative">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/30 mx-auto relative">
                             {isBackup ? (
-                                <ShieldCheck className="h-10 w-10 text-primary" />
+                                <ShieldCheck className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                             ) : (
-                                <Mail className="h-10 w-10 text-primary" />
+                                <Mail className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                             )}
-                            <div className="absolute inset-0 rounded-full border-2 border-primary/30 animate-ping" />
+                            <div className="absolute inset-0 rounded-full border-2 border-blue-600/30 animate-ping" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-foreground">
+                            <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">
                                 {isBackup ? "Check Your Backup Email" : "Check Your Email"}
                             </h1>
-                            <p className="mt-2 text-muted-foreground">
+                            <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">
                                 {isBackup
                                     ? `Primary email verified! Now check ${backupEmail} for the backup verification link.`
                                     : `We've sent a verification link to ${email}. Click it to continue.`
@@ -208,10 +208,10 @@ export function RegisterPage() {
                             </p>
                         </div>
 
-                        <div className="flex justify-center gap-2">
-                            <div className="h-2 w-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0ms" }} />
-                            <div className="h-2 w-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: "150ms" }} />
-                            <div className="h-2 w-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: "300ms" }} />
+                        <div className="flex justify-center gap-1">
+                            <div className="h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                            <div className="h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                            <div className="h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400 animate-bounce" style={{ animationDelay: "300ms" }} />
                         </div>
                     </>
                 )}
@@ -222,26 +222,24 @@ export function RegisterPage() {
     // VERIFICATION COMPLETE - shown after all emails verified, before going back to form
     if (step === "verification_complete") {
         return (
-            <div className="w-full max-w-md space-y-6 text-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-500/10 mx-auto">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500/20">
-                        <CheckCircle className="h-8 w-8 text-green-500" />
-                    </div>
+            <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/30 mx-auto">
+                    <CheckCircle className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
                 </div>
 
                 <div>
-                    <h1 className="text-2xl font-bold text-foreground">Verification Complete!</h1>
-                    <p className="mt-2 text-muted-foreground">
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Verification Complete!</h1>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">
                         All email verifications are complete. You can now go back to the registration page.
                     </p>
                 </div>
 
-                <div className="rounded-lg bg-green-500/10 border border-green-500/50 p-4 text-left">
-                    <div className="flex items-start gap-3">
-                        <Clock className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
+                <div className="rounded-lg bg-[#F8F9FA] dark:bg-muted/40 border border-gray-200 dark:border-border p-3.5 text-left">
+                    <div className="flex items-start gap-2.5">
+                        <Clock className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
                         <div>
-                            <p className="text-sm font-medium text-green-600">What happens next?</p>
-                            <p className="text-sm text-green-600/80 mt-1">
+                            <p className="text-xs font-semibold text-gray-900 dark:text-foreground">What happens next?</p>
+                            <p className="text-xs text-gray-500 dark:text-muted-foreground mt-0.5">
                                 An email has been sent to the administrator for approval.
                                 Once your account is activated, you'll be able to log in.
                             </p>
@@ -249,7 +247,7 @@ export function RegisterPage() {
                     </div>
                 </div>
 
-                <Button onClick={handleContinueToForm} className="w-full">
+                <Button onClick={handleContinueToForm} className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs h-8">
                     Continue
                 </Button>
             </div>
@@ -258,23 +256,20 @@ export function RegisterPage() {
 
     // FORM (includes waiting_admin and success banners)
     return (
-        <div className="w-full max-w-md space-y-6">
+        <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5">
             {/* Back Link */}
             <Link
                 to="/login"
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 dark:text-muted-foreground dark:hover:text-foreground transition-colors"
             >
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-3.5 w-3.5" />
                 Back to login
             </Link>
 
             {/* Header */}
             <div>
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 mb-4">
-                    <Building2 className="h-7 w-7 text-primary" />
-                </div>
-                <h1 className="text-2xl font-bold text-foreground">Register as Manager</h1>
-                <p className="mt-1 text-muted-foreground">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Register as Manager</h1>
+                <p className="mt-0.5 text-xs text-gray-500 dark:text-muted-foreground">
                     Create your business account. Email verification and admin approval required.
                 </p>
             </div>
@@ -312,17 +307,17 @@ export function RegisterPage() {
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Business Name */}
-                <div className="space-y-2">
-                    <Label htmlFor="reg-business" className="text-foreground">Business Name <span className="text-destructive ml-1">*</span></Label>
+                <div className="space-y-1.5">
+                    <Label htmlFor="reg-business" className="text-xs font-medium text-gray-700 dark:text-foreground">Business Name <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
-                        <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Building2 className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="reg-business"
                             type="text"
                             placeholder="Your business name"
                             value={businessName}
                             onChange={(e) => setBusinessName(e.target.value)}
-                            className="pl-10 text-foreground"
+                            className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
                             disabled={step === "waiting_admin" || step === "success"}
                             required
                         />
@@ -330,44 +325,44 @@ export function RegisterPage() {
                 </div>
 
                 {/* Username */}
-                <div className="space-y-2">
-                    <Label htmlFor="reg-username" className="text-foreground">Username <span className="text-destructive ml-1">*</span></Label>
+                <div className="space-y-1.5">
+                    <Label htmlFor="reg-username" className="text-xs font-medium text-gray-700 dark:text-foreground">Username <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
-                        <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <User className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="reg-username"
                             type="text"
                             placeholder="Choose a username"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            className="pl-10 text-foreground"
+                            className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
                             disabled={step === "waiting_admin" || step === "success"}
                             required
                         />
                         {usernameChecking && (
-                            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                            <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 animate-spin text-gray-400" />
                         )}
                         {!usernameChecking && usernameAvailable === true && username.length >= 3 && (
-                            <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                            <CheckCircle className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-emerald-600" />
                         )}
                         {!usernameChecking && usernameAvailable === false && username.length >= 3 && (
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-destructive">Taken</span>
+                            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-destructive">Taken</span>
                         )}
                     </div>
                 </div>
 
                 {/* Email */}
-                <div className="space-y-2">
-                    <Label htmlFor="reg-email" className="text-foreground">Email <span className="text-destructive ml-1">*</span></Label>
+                <div className="space-y-1.5">
+                    <Label htmlFor="reg-email" className="text-xs font-medium text-gray-700 dark:text-foreground">Email <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Mail className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="reg-email"
                             type="email"
                             placeholder="your@email.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="pl-10 text-foreground"
+                            className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
                             disabled={step === "waiting_admin" || step === "success"}
                             required
                         />
@@ -375,101 +370,101 @@ export function RegisterPage() {
                 </div>
 
                 {/* Backup Email */}
-                <div className="space-y-2">
-                    <Label htmlFor="reg-backup-email" className="text-foreground">Backup Email</Label>
+                <div className="space-y-1.5">
+                    <Label htmlFor="reg-backup-email" className="text-xs font-medium text-gray-700 dark:text-foreground">Backup Email</Label>
                     <div className="relative">
-                        <ShieldCheck className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <ShieldCheck className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="reg-backup-email"
                             type="email"
                             placeholder="backup@email.com"
                             value={backupEmail}
                             onChange={(e) => setBackupEmail(e.target.value)}
-                            className="pl-10 text-foreground"
+                            className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
                             disabled={step === "waiting_admin" || step === "success"}
                         />
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2">
+                    <p className="text-[11px] text-gray-500 dark:text-muted-foreground mt-1">
                         Optional: Used for account recovery if you lose access to your primary email
                     </p>
                 </div>
 
                 {/* Password */}
-                <div className="space-y-2">
-                    <Label htmlFor="reg-password" className="text-foreground">Password <span className="text-destructive ml-1">*</span></Label>
+                <div className="space-y-1.5">
+                    <Label htmlFor="reg-password" className="text-xs font-medium text-gray-700 dark:text-foreground">Password <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Lock className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="reg-password"
                             type={showPassword ? "text" : "password"}
                             placeholder="Minimum 8 characters"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="pl-10 pr-10 text-foreground"
+                            className="pl-8 pr-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
                             disabled={step === "waiting_admin" || step === "success"}
                             required
                         />
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                         >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                         </button>
                     </div>
                     {password && (
-                        <div className="space-y-1">
-                            <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                        <div className="space-y-1 mt-1">
+                            <div className="h-1.5 w-full rounded-full bg-gray-200 dark:bg-muted overflow-hidden">
                                 <div
                                     className={`h-full rounded-full transition-all ${strength.color}`}
                                     style={{ width: strength.width }}
                                 />
                             </div>
-                            <p className="text-xs text-muted-foreground">{strength.label}</p>
+                            <p className="text-[10px] text-gray-500 dark:text-muted-foreground">{strength.label}</p>
                         </div>
                     )}
                 </div>
 
                 {/* Confirm Password */}
-                <div className="space-y-2">
-                    <Label htmlFor="reg-confirm-password" className="text-foreground">Confirm Password <span className="text-destructive ml-1">*</span></Label>
+                <div className="space-y-1.5">
+                    <Label htmlFor="reg-confirm-password" className="text-xs font-medium text-gray-700 dark:text-foreground">Confirm Password <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Lock className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="reg-confirm-password"
                             type={showPassword ? "text" : "password"}
                             placeholder="Re-enter password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="pl-10 text-foreground"
+                            className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
                             disabled={step === "waiting_admin" || step === "success"}
                             required
                         />
                     </div>
                     {confirmPassword && password !== confirmPassword && (
-                        <p className="text-xs text-destructive">Passwords do not match</p>
+                        <p className="text-[11px] text-destructive">Passwords do not match</p>
                     )}
                 </div>
 
                 {/* Error */}
                 {error && (
-                    <div className="rounded-lg bg-destructive/10 border border-destructive/50 p-3">
-                        <p className="text-sm text-destructive">{error}</p>
+                    <div className="rounded-md bg-destructive/10 border border-destructive/30 p-2.5">
+                        <p className="text-xs text-destructive">{error}</p>
                     </div>
                 )}
 
                 {/* Submit */}
                 {step === "waiting_admin" || step === "success" ? (
-                    <Link to="/login/manager">
-                        <Button type="button" className="w-full">
+                    <Link to="/login/manager" className="block">
+                        <Button type="button" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs h-8 rounded-md shadow-xs">
                             Continue to Login
                         </Button>
                     </Link>
                 ) : (
-                    <Button type="submit" className="w-full" disabled={isLoading}>
+                    <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs h-8 rounded-md shadow-xs" disabled={isLoading}>
                         {isLoading ? (
                             <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                                 Creating Account...
                             </>
                         ) : (
@@ -479,11 +474,10 @@ export function RegisterPage() {
                 )}
             </form>
 
-
             {/* Login Link */}
-            <p className="text-center text-sm text-muted-foreground">
+            <p className="text-center text-xs text-gray-500 dark:text-muted-foreground pt-1 border-t border-gray-100 dark:border-border">
                 Already have an account?{" "}
-                <Link to="/login/manager" className="text-primary hover:underline font-medium">
+                <Link to="/login/manager" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
                     Sign in
                 </Link>
             </p>
