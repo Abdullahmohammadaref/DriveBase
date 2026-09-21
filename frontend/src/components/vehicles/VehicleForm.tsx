@@ -913,7 +913,7 @@ export function VehicleForm({
                 {/* SECTION 2: MEDIA & NOTES */}
                 <section>
                     <SectionTitle title="Media & Notes" />
-                    <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 2xl:grid-cols-4">
+                    <div className="grid grid-cols-4 gap-2.5">
                         {/* Vehicle Photo */}
                         <VehicleImageUpload
                             imageUrl={vehicle?.image_url}
@@ -986,7 +986,7 @@ export function VehicleForm({
                                 )
                             }
                         />
-                        <div className="grid grid-cols-2 gap-x-2.5 gap-y-2 lg:grid-cols-3">
+                        <div className="grid grid-cols-2 gap-x-2.5 gap-y-2 sm:grid-cols-4">
                             <FieldWrapper label="Buy Price (Gross)" required error={errors.buy_price?.message}>
                                 <Input
                                     type="number"
@@ -1071,7 +1071,7 @@ export function VehicleForm({
                                     )
                                 }
                             />
-                            <div className="grid grid-cols-2 gap-x-2.5 gap-y-2 lg:grid-cols-3">
+                            <div className="grid grid-cols-2 gap-x-2.5 gap-y-2 sm:grid-cols-4">
                                 <FieldWrapper label="Sale Price (Gross)" required>
                                     <Input
                                         type="number"

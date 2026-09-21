@@ -18,6 +18,9 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import { StickyFooter } from "@/components/StickyFooter"
+import { PerPageInput } from "@/components/PerPageInput"
+import { PageInput } from "@/components/PageInput"
 import { useActivityLogs, useActivityLogUsers, type ActivityLogFilters } from "@/hooks/useActivityLogs"
 
 /**
@@ -90,6 +93,10 @@ export function ActivityLogsPage() {
         setFilters((prev) => ({ ...prev, page }))
     }, [])
 
+    const handlePerPageChange = useCallback((per_page: number) => {
+        setFilters((prev) => ({ ...prev, per_page, page: 1 }))
+    }, [])
+
     // Handle sort
     const handleSort = useCallback((column: string) => {
         setFilters((prev) => {
@@ -136,9 +143,7 @@ export function ActivityLogsPage() {
     }
 
     return (
-        <div className="flex flex-col h-[calc(100vh-4rem)]">
-            {/* Main Content Area - Scrollable */}
-            <div className="flex-1 overflow-auto p-3 pb-24 space-y-3">
+        <div className="space-y-3">
                 {/* Page Header */}
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 dark:border-border pb-2">
                     <div>
@@ -297,40 +302,55 @@ export function ActivityLogsPage() {
                         </TableBody>
                     </Table>
                 </div>
-            </div>
 
-            {/* Sticky Footer Pagination */}
-            {data && data.pages > 1 && (
-                <div className="sticky bottom-0 z-10 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 px-6 py-3">
-                    <div className="flex items-center justify-between">
-                        <p className="text-sm text-muted-foreground">
-                            {t("common.showing", "Showing")} {((data.page - 1) * (filters.per_page || 20)) + 1} - {Math.min(data.page * (filters.per_page || 20), data.total)} {t("common.of", "of")} {data.total}
-                        </p>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={data.page <= 1 || isFetching}
-                                onClick={() => handlePageChange(data.page - 1)}
-                            >
-                                <ChevronLeft className="h-4 w-4 mr-1" />
-                                {t("common.previous", "Previous")}
-                            </Button>
-                            <span className="text-sm text-muted-foreground px-3">
-                                {t("common.page", "Page")} {data.page} {t("common.of", "of")} {data.pages}
-                            </span>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={data.page >= data.pages || isFetching}
-                                onClick={() => handlePageChange(data.page + 1)}
-                            >
-                                {t("common.next", "Next")}
-                                <ChevronRight className="h-4 w-4 ml-1" />
-                            </Button>
-                        </div>
+            {/* Padding to prevent sticky footer overlap */}
+            <div className="pb-24" />
+
+            {/* Pagination Sticky Footer */}
+            {data && (
+                <StickyFooter>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                        {t("common.showing", "Showing")}
+                        <PerPageInput
+                            value={filters.per_page || 20}
+                            onChange={handlePerPageChange}
+                            label=""
+                        />
+                        {t("common.of", "of")} <span className="text-foreground">{data.total}</span> {t("activityLogs.title", "entries")}
                     </div>
-                </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            disabled={data.page <= 1 || isFetching}
+                            onClick={() => handlePageChange(data.page - 1)}
+                        >
+                            <ChevronLeft className="h-3.5 w-3.5 mr-1" />
+                            {t("common.previous", "Previous")}
+                        </Button>
+                        <span className="text-xs text-muted-foreground px-2 font-medium flex items-center gap-1.5">
+                            {t("common.page", "Page")}
+                            <PageInput
+                                currentPage={data.page}
+                                totalPages={data.pages || 1}
+                                onPageChange={handlePageChange}
+                                disabled={isFetching}
+                            />
+                            {t("common.of", "of")} <span className="text-foreground">{data.pages || 1}</span>
+                        </span>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            disabled={data.page >= data.pages || isFetching}
+                            onClick={() => handlePageChange(data.page + 1)}
+                        >
+                            {t("common.next", "Next")}
+                            <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                        </Button>
+                    </div>
+                </StickyFooter>
             )}
 
             {/* Loading overlay */}

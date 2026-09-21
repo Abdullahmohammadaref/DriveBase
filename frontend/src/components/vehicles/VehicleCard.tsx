@@ -208,18 +208,12 @@ export function VehicleCard({
                             </div>
                         </div>
                     </div>
-
-                    {vehicle.internal_comments && (
-                        <div className="mt-2 text-sm text-muted-foreground truncate">
-                            {vehicle.internal_comments}
-                        </div>
-                    )}
                 </div>
 
                 {/* Actions Column */}
                 <div className="pointer-events-none relative z-20 col-span-12 sm:col-span-2 flex flex-col items-end gap-2">
                     {/* Vehicle Pipeline Component */}
-                    <div className="pointer-events-auto w-full">
+                    <div className="pointer-events-auto w-full flex justify-end">
                         <VehiclePipeline
                             currentStatus={(status as VehicleStatus)}
                             canMoveTo={vehicle.can_move_to || []}

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Building, Save, Plus, ArrowLeft, Eye, EyeOff, Download, Loader2 } from "lucide-react"
 import api from "@/lib/api"
+import { Button } from "@/components/ui/button"
 import { StickyFooter } from "@/components/StickyFooter"
 import { VehicleImageUpload } from "@/components/vehicles/VehicleImageUpload"
 
@@ -735,28 +736,31 @@ export default function BusinessSettingsPage() {
             {/* Form Actions - Sticky Footer */}
             <StickyFooter>
                 <div className="flex w-full items-center justify-between">
-                    <button
+                    <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={() => navigate(-1)}
-                        className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                        className="h-7 px-2.5 text-xs gap-1.5"
                     >
-                        <ArrowLeft className="h-4 w-4" />
+                        <ArrowLeft className="size-3.5" />
                         Back
-                    </button>
+                    </Button>
 
-                    <button
+                    <Button
                         type="button"
+                        size="sm"
                         onClick={handleSave}
                         disabled={isSaving}
-                        className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+                        className="h-7 px-3.5 text-xs gap-1.5 font-medium"
                     >
                         {isSaving ? (
-                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-r-transparent" />
+                            <Loader2 className="size-3.5 animate-spin" />
                         ) : (
-                            <Save className="h-4 w-4" />
+                            <Save className="size-3.5" />
                         )}
                         Save Changes
-                    </button>
+                    </Button>
                 </div>
             </StickyFooter>
         </div>
