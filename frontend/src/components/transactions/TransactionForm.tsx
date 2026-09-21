@@ -55,6 +55,7 @@ interface SubcategorySelectProps {
 }
 
 function SubcategorySelect({ categoryId, value, onChange }: SubcategorySelectProps) {
+    const { t } = useTranslation()
     const { data: subcategoriesData, isLoading } = useSubcategories(categoryId)
 
     // Convert subcategories to options format for DynamicSelect
@@ -71,7 +72,7 @@ function SubcategorySelect({ categoryId, value, onChange }: SubcategorySelectPro
 
     return (
         <div className="space-y-2">
-            <Label htmlFor="subcategory">Subcategory <span className="text-red-500">*</span></Label>
+            <Label htmlFor="subcategory">{t("transactions.form.subcategory", "Subcategory")} <span className="text-red-500">*</span></Label>
             <DynamicSelect
                 choiceType="subcategory"
                 options={options}
@@ -82,14 +83,14 @@ function SubcategorySelect({ categoryId, value, onChange }: SubcategorySelectPro
                 }}
                 placeholder={
                     !categoryId
-                        ? "Select a category first"
+                        ? t("transactions.form.selectCategoryFirst", "Select a category first")
                         : isLoading
-                            ? "Loading..."
-                            : "Select subcategory"
+                            ? t("common.loading", "Loading...")
+                            : t("transactions.form.selectSubcategory", "Select subcategory")
                 }
                 disabled={!categoryId || isLoading}
                 allowCreate={!!categoryId}
-                createLabel="Subcategory"
+                createLabel={t("transactions.form.subcategory", "Subcategory")}
                 parentId={categoryId}
             />
         </div>
@@ -495,7 +496,7 @@ export function TransactionForm({
                             {/* Transaction Details Section */}
                             <div className="rounded-xl border border-border bg-card">
                                 <div className="border-b border-border px-5 py-4 flex items-center justify-between">
-                                    <h3 className="text-base font-medium">Transaction Details</h3>
+                                    <h3 className="text-base font-medium">{t("transactions.form.transactionDetails", "Transaction Details")}</h3>
                                     {/* Auto-computed Status Badge */}
                                     {mode === "edit" && initialData?.status && (
                                         <span
@@ -520,7 +521,7 @@ export function TransactionForm({
                                 <div className={cn("grid gap-4 p-5", showSplitView ? "grid-cols-3" : "grid-cols-1 md:grid-cols-3")}>
                                     {/* Category - DynamicSelect with Add New */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="category">Category <span className="text-red-500">*</span></Label>
+                                        <Label htmlFor="category">{t("transactions.form.category", "Category")} <span className="text-red-500">*</span></Label>
                                         <DynamicSelect
                                             choiceType="category"
                                             options={categoryOptions}
@@ -541,9 +542,9 @@ export function TransactionForm({
                                                 // Trigger immediate auto-save for dropdown
                                                 handleAutoSave({ category: categoryName, subcategory: "" })
                                             }}
-                                            placeholder="Select category"
+                                            placeholder={t("transactions.form.selectCategory", "Select category")}
                                             allowCreate={true}
-                                            createLabel="Category"
+                                            createLabel={t("transactions.form.category", "Category")}
                                             onCreated={(item) => {
                                                 setCategoryId(item.id)
                                                 clearError("category")
@@ -596,14 +597,14 @@ export function TransactionForm({
                                                 // Trigger immediate auto-save for dropdown
                                                 handleAutoSave({ vehicle_id: vehicleId })
                                             }}
-                                            placeholder="Search vehicles..."
-                                            searchPlaceholder="Type to search..."
+                                            placeholder={t("transactions.form.searchVehicles", "Search vehicles...")}
+                                            searchPlaceholder={t("transactions.form.typeToSearch", "Type to search...")}
                                         />
                                     </div>
 
                                     {/* Date */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="date">Date <span className="text-red-500">*</span></Label>
+                                        <Label htmlFor="date">{t("transactions.form.date", "Date")} <span className="text-red-500">*</span></Label>
                                         <div className="relative">
                                             <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                             <Input
@@ -628,7 +629,7 @@ export function TransactionForm({
 
                                     {/* Method - DynamicSelect with Add New */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="method">Method <span className="text-red-500">*</span></Label>
+                                        <Label htmlFor="method">{t("transactions.form.method", "Method")} <span className="text-red-500">*</span></Label>
                                         <DynamicSelect
                                             choiceType="method"
                                             options={methodOptions}
@@ -646,9 +647,9 @@ export function TransactionForm({
                                                 // Trigger immediate auto-save for dropdown
                                                 handleAutoSave({ method: methodName })
                                             }}
-                                            placeholder="Select method"
+                                            placeholder={t("transactions.form.selectMethod", "Select method")}
                                             allowCreate={true}
-                                            createLabel="Method"
+                                            createLabel={t("transactions.form.method", "Method")}
                                             onCreated={(item) => {
                                                 setMethodId(item.id)
                                                 clearError("method")
@@ -666,7 +667,7 @@ export function TransactionForm({
 
                                     {/* From/To */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="from_or_to">From/To <span className="text-red-500">*</span></Label>
+                                        <Label htmlFor="from_or_to">{t("transactions.form.fromTo", "From/To")} <span className="text-red-500">*</span></Label>
                                         <Input
                                             id="from_or_to"
                                             type="text"
@@ -677,7 +678,7 @@ export function TransactionForm({
                                                     clearError("from_or_to")
                                                 }
                                             }}
-                                            placeholder="Sender or recipient name"
+                                            placeholder={t("transactions.form.senderRecipientPlaceholder", "Sender or recipient name")}
                                         />
                                         {validationErrors.from_or_to && (
                                             <p className="text-sm text-red-500">{validationErrors.from_or_to}</p>
@@ -686,24 +687,24 @@ export function TransactionForm({
 
                                     {/* Description */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="description">Description</Label>
+                                        <Label htmlFor="description">{t("transactions.form.description", "Description")}</Label>
                                         <Textarea
                                             id="description"
                                             value={formData.description}
                                             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleChange("description", e.target.value)}
-                                            placeholder="Transaction description..."
+                                            placeholder={t("transactions.form.descriptionPlaceholder", "Transaction description...")}
                                             rows={4}
                                         />
                                     </div>
 
                                     {/* Internal Comments */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="internal_comments">Internal Comments</Label>
+                                        <Label htmlFor="internal_comments">{t("transactions.form.internalComments", "Internal Comments")}</Label>
                                         <Textarea
                                             id="internal_comments"
                                             value={formData.internal_comments}
                                             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleChange("internal_comments", e.target.value)}
-                                            placeholder="Internal notes..."
+                                            placeholder={t("transactions.form.internalCommentsPlaceholder", "Internal notes...")}
                                             rows={4}
                                         />
                                     </div>
@@ -720,32 +721,32 @@ export function TransactionForm({
                             {/* Purchase Details Section */}
                             <div className="rounded-xl border border-border bg-card">
                                 <div className="border-b border-border px-5 py-4">
-                                    <h3 className="text-base font-medium">Purchase Details</h3>
+                                    <h3 className="text-base font-medium">{t("transactions.form.priceBreakdown", "Purchase Details")}</h3>
                                 </div>
                                 <div className="px-5 pt-5 pb-0">
                                     <div className="flex flex-row flex-wrap items-center gap-x-4 gap-y-1 min-w-0 rounded-md border p-2 shadow-sm transition-colors bg-background border-border/40 hover:border-border/80 w-full mb-2">
                                         <div className="flex items-center gap-1.5">
-                                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold whitespace-nowrap">Gross:</span>
+                                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold whitespace-nowrap">{t("vehicles.buyGross", "Gross")}:</span>
                                             <span className={`text-sm font-bold ${getAmountColor(grossAmount)} whitespace-nowrap`}>
                                                 {formatMoney(grossAmount)}
                                             </span>
                                         </div>
                                         <div className="text-[10px] text-muted-foreground/50 font-medium whitespace-nowrap">
-                                            Net ({formatMoney(netAmount)}) + Tax {taxRate}% ({formatMoney(taxAmount)})
+                                            {t("vehicleForm.net", "Net")} ({formatMoney(netAmount)}) + {t("vehicleForm.tax", "Tax")} {taxRate}% ({formatMoney(taxAmount)})
                                         </div>
                                     </div>
                                 </div>
                                 <div className={cn("grid gap-4 p-5 pt-2", showSplitView ? "grid-cols-3" : "grid-cols-1 md:grid-cols-3")}>
                                     {/* Amount */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="amount">Amount <span className="text-red-500">*</span></Label>
+                                        <Label htmlFor="amount">{t("transactions.form.amount", "Amount")} <span className="text-red-500">*</span></Label>
                                         <div className="relative">
                                             <Input
                                                 id="amount"
                                                 type="number"
                                                 step="0.01"
                                                 value={formData.amount ?? ""}
-                                                placeholder="Enter amount"
+                                                placeholder={t("transactions.form.enterAmount", "Enter amount")}
                                                 onChange={(e) => {
                                                     const inputVal = e.target.value
                                                     // Allow empty string (undefined) or any valid number
@@ -768,7 +769,7 @@ export function TransactionForm({
 
                                     {/* Tax - DynamicSelect with Add New */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="tax">Tax <span className="text-red-500">*</span></Label>
+                                        <Label htmlFor="tax">{t("transactions.form.tax", "Tax")} <span className="text-red-500">*</span></Label>
                                         <DynamicSelect
                                             choiceType="tax_percentage"
                                             options={taxOptions}
@@ -805,9 +806,9 @@ export function TransactionForm({
                                                     handleAutoSave({ tax: item.percentage })
                                                 }
                                             }}
-                                            placeholder="Select tax"
+                                            placeholder={t("transactions.form.selectTax", "Select tax")}
                                             allowCreate={true}
-                                            createLabel="Tax Rate"
+                                            createLabel={t("transactions.form.taxRate", "Tax Rate")}
                                             showPercentage
                                         />
                                         {validationErrors.tax && (
@@ -817,7 +818,7 @@ export function TransactionForm({
 
                                     {/* Currency - DynamicSelect with Add New */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="currency">Currency <span className="text-red-500">*</span></Label>
+                                        <Label htmlFor="currency">{t("transactions.form.currency", "Currency")} <span className="text-red-500">*</span></Label>
                                         <DynamicSelect
                                             choiceType="currency"
                                             options={currencyOptions}
@@ -835,9 +836,9 @@ export function TransactionForm({
                                                 // Trigger immediate auto-save for dropdown
                                                 handleAutoSave({ currency: currencyName })
                                             }}
-                                            placeholder="Select currency"
+                                            placeholder={t("transactions.form.selectCurrency", "Select currency")}
                                             allowCreate={true}
-                                            createLabel="Currency"
+                                            createLabel={t("transactions.form.currency", "Currency")}
                                             onCreated={(item) => {
                                                 setCurrencyId(item.id)
                                                 clearError("currency")
@@ -925,7 +926,7 @@ export function TransactionForm({
                 <div className="flex w-full items-center justify-between">
                     <div className="flex items-center gap-2">
                         <Button type="button" variant="outline" onClick={handleCancel}>
-                            {mode === "edit" ? "Back to List" : "Cancel"}
+                            {mode === "edit" ? t("transactions.form.backToList", "Back to List") : t("common.cancel", "Cancel")}
                         </Button>
 
                         {/* Status action buttons (edit mode only) */}
@@ -954,10 +955,10 @@ export function TransactionForm({
                                         disabled={isConfirmedDisabled}
                                         title={
                                             !hasMandatoryFields
-                                                ? "All mandatory fields (*) must be filled to confirm"
+                                                ? t("transactions.form.cannotConfirmTooltip", "All mandatory fields (*) must be filled to confirm")
                                                 : initialData.status === "confirmed"
-                                                    ? "Transaction is already confirmed"
-                                                    : "Mark status as Confirmed"
+                                                    ? t("transactions.form.alreadyConfirmedTooltip", "Transaction is already confirmed")
+                                                    : t("transactions.form.markConfirmedTooltip", "Mark status as Confirmed")
                                         }
                                         className={cn(
                                             "gap-1.5 font-medium transition-colors",
@@ -987,7 +988,7 @@ export function TransactionForm({
                                         ) : (
                                             <CheckCircle className="h-3.5 w-3.5" />
                                         )}
-                                        Confirmed
+                                        {t("transactions.form.confirmed", "Confirmed")}
                                     </Button>
 
                                     {/* Review Required Button */}
@@ -998,10 +999,10 @@ export function TransactionForm({
                                         disabled={isReviewRequiredDisabled}
                                         title={
                                             !hasMandatoryFields
-                                                ? "All mandatory fields (*) must be filled"
+                                                ? t("transactions.form.cannotReviewTooltip", "All mandatory fields (*) must be filled")
                                                 : initialData.status === "review_required"
-                                                    ? "Transaction is already in Review Required status"
-                                                    : "Mark status as Review Required"
+                                                    ? t("transactions.form.alreadyReviewTooltip", "Transaction is already in Review Required status")
+                                                    : t("transactions.form.markReviewTooltip", "Mark status as Review Required")
                                         }
                                         className={cn(
                                             "gap-1.5 font-medium transition-colors",
@@ -1031,7 +1032,7 @@ export function TransactionForm({
                                         ) : (
                                             <AlertCircle className="h-3.5 w-3.5" />
                                         )}
-                                        Review Required
+                                        {t("transactions.form.reviewRequired", "Review Required")}
                                     </Button>
 
                                     {/* Activate/Deactivate Button */}
@@ -1059,7 +1060,7 @@ export function TransactionForm({
                                             ) : (
                                                 <RotateCcw className="h-3.5 w-3.5" />
                                             )}
-                                            Activate
+                                            {t("transactions.form.activate", "Activate")}
                                         </Button>
                                     ) : (
                                         <Button
@@ -1085,7 +1086,7 @@ export function TransactionForm({
                                             ) : (
                                                 <Trash2 className="h-3.5 w-3.5" />
                                             )}
-                                            Deactivate
+                                            {t("transactions.form.deactivate", "Deactivate")}
                                         </Button>
                                     )}
                                 </div>
@@ -1103,12 +1104,12 @@ export function TransactionForm({
                             {isLoading ? (
                                 <>
                                     <Loader2 className="h-4 w-4 animate-spin" />
-                                    Creating...
+                                    {t("transactions.form.creating", "Creating...")}
                                 </>
                             ) : (
                                 <>
                                     <FileText className="h-4 w-4" />
-                                    Add Transaction
+                                    {t("transactions.form.addTransaction", "Add Transaction")}
                                 </>
                             )}
                         </Button>
@@ -1150,7 +1151,7 @@ export function TransactionForm({
                                 ) : (
                                     <span
                                         className="inline-flex items-center gap-2 rounded-md border border-input bg-muted px-4 py-2 text-sm font-medium text-muted-foreground cursor-not-allowed opacity-50"
-                                        title="Complete all required fields (amount, date, category, subcategory, tax) to generate PDF"
+                                        title={t("transactions.form.pdfRequiredFieldsTooltip", "Complete all required fields (amount, date, category, subcategory, tax) to generate PDF")}
                                     >
                                         <Download className="h-4 w-4" />
                                         PDF
@@ -1169,7 +1170,7 @@ export function TransactionForm({
                                 prevId={initialData?.prev_transaction_internal_id}
                                 nextId={initialData?.next_transaction_internal_id}
                                 pathSuffix="/edit"
-                                label="Transaction"
+                                label={t("transactions.form.transactionLabel", "Transaction")}
                             />
 
                             <ReviewQueueNavigation

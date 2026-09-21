@@ -69,9 +69,9 @@ export function LoginPage() {
                     </a>
                 </p>
                 <p className="text-xs text-gray-500 dark:text-muted-foreground">
-                    Don't have an account?{" "}
+                    {t("auth.dontHaveAccount", "Don't have an account?")}{" "}
                     <Link to="/register" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
-                        Register as Manager
+                        {t("auth.registerAsManager", "Register as Manager")}
                     </Link>
                 </p>
             </div>

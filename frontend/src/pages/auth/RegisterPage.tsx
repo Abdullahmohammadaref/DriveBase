@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import {
     ArrowLeft, Loader2, Mail, User, Lock, Building2,
     CheckCircle, Eye, EyeOff, ShieldCheck, Clock
@@ -26,6 +27,7 @@ import { useAuthPolling } from "@/hooks/useAuthPolling"
 type RegistrationStep = "form" | "polling_email" | "polling_backup" | "verification_complete" | "waiting_admin" | "success"
 
 export function RegisterPage() {
+    const { t } = useTranslation()
     const { register, checkUsername } = useAuth()
 
     const [username, setUsername] = useState("")
@@ -85,11 +87,11 @@ export function RegisterPage() {
         if (/[A-Z]/.test(pw)) score++
         if (/[0-9]/.test(pw)) score++
         if (/[^A-Za-z0-9]/.test(pw)) score++
-        if (score <= 1) return { label: "Weak", color: "bg-red-500", width: "20%" }
-        if (score <= 2) return { label: "Fair", color: "bg-amber-500", width: "40%" }
-        if (score <= 3) return { label: "Good", color: "bg-yellow-500", width: "60%" }
-        if (score <= 4) return { label: "Strong", color: "bg-green-500", width: "80%" }
-        return { label: "Very Strong", color: "bg-green-600", width: "100%" }
+        if (score <= 1) return { label: t("auth.strengthWeak", "Weak"), color: "bg-red-500", width: "20%" }
+        if (score <= 2) return { label: t("auth.strengthFair", "Fair"), color: "bg-amber-500", width: "40%" }
+        if (score <= 3) return { label: t("auth.strengthGood", "Good"), color: "bg-yellow-500", width: "60%" }
+        if (score <= 4) return { label: t("auth.strengthStrong", "Strong"), color: "bg-green-500", width: "80%" }
+        return { label: t("auth.strengthVeryStrong", "Very Strong"), color: "bg-green-600", width: "100%" }
     }
 
     const strength = getStrength(password)
@@ -100,37 +102,37 @@ export function RegisterPage() {
 
         // Validations
         if (!username || username.length < 3) {
-            setError("Username must be at least 3 characters.")
+            setError(t("auth.usernameMin3Chars", "Username must be at least 3 characters."))
             return
         }
 
         if (usernameAvailable === false) {
-            setError("Username is already taken. Please choose another.")
+            setError(t("auth.usernameAlreadyTaken", "Username is already taken. Please choose another."))
             return
         }
 
         if (!email) {
-            setError("Email is required.")
+            setError(t("auth.emailRequired", "Email is required."))
             return
         }
 
         if (backupEmail && email.toLowerCase() === backupEmail.toLowerCase()) {
-            setError("Primary and backup email must be different.")
+            setError(t("auth.primaryAndBackupMustDiffer", "Primary and backup email must be different."))
             return
         }
 
         if (!businessName.trim()) {
-            setError("Business name is required.")
+            setError(t("auth.businessNameRequired", "Business name is required."))
             return
         }
 
         if (password.length < 8) {
-            setError("Password must be at least 8 characters.")
+            setError(t("auth.passwordMin8Chars", "Password must be at least 8 characters."))
             return
         }
 
         if (password !== confirmPassword) {
-            setError("Passwords do not match.")
+            setError(t("auth.passwordsDoNotMatch", "Passwords do not match."))
             return
         }
 
@@ -153,7 +155,7 @@ export function RegisterPage() {
                 setError(result.message)
             }
         } catch (err) {
-            setError("An unexpected error occurred.")
+            setError(t("auth.unexpectedError", "An unexpected error occurred."))
         } finally {
             setIsLoading(false)
         }
@@ -181,10 +183,10 @@ export function RegisterPage() {
                             <Mail className="h-8 w-8 text-amber-600 dark:text-amber-400" />
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Request Expired</h1>
+                            <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{t("auth.requestExpired", "Request Expired")}</h1>
                             <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">{message}</p>
                         </div>
-                        <Button onClick={handleTryAgain} className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8">Try Again</Button>
+                        <Button onClick={handleTryAgain} className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8">{t("auth.tryAgain", "Try Again")}</Button>
                     </>
                 ) : (
                     <>
@@ -198,12 +200,12 @@ export function RegisterPage() {
                         </div>
                         <div>
                             <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">
-                                {isBackup ? "Check Your Backup Email" : "Check Your Email"}
+                                {isBackup ? t("auth.checkYourBackupEmail", "Check Your Backup Email") : t("auth.checkYourEmail", "Check Your Email")}
                             </h1>
                             <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">
                                 {isBackup
-                                    ? `Primary email verified! Now check ${backupEmail} for the backup verification link.`
-                                    : `We've sent a verification link to ${email}. Click it to continue.`
+                                    ? t("auth.backupVerificationSentTo", "Primary email verified! Now check {{email}} for the backup verification link.", { email: backupEmail })
+                                    : t("auth.verificationLinkSentTo", "We've sent a verification link to {{email}}. Click it to continue.", { email })
                                 }
                             </p>
                         </div>
@@ -228,9 +230,9 @@ export function RegisterPage() {
                 </div>
 
                 <div>
-                    <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Verification Complete!</h1>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{t("auth.verificationComplete", "Verification Complete!")}</h1>
                     <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">
-                        All email verifications are complete. You can now go back to the registration page.
+                        {t("auth.verificationCompleteDesc", "All email verifications are complete. You can now go back to the registration page.")}
                     </p>
                 </div>
 
@@ -238,17 +240,16 @@ export function RegisterPage() {
                     <div className="flex items-start gap-2.5">
                         <Clock className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
                         <div>
-                            <p className="text-xs font-semibold text-gray-900 dark:text-foreground">What happens next?</p>
+                            <p className="text-xs font-semibold text-gray-900 dark:text-foreground">{t("auth.whatHappensNext", "What happens next?")}</p>
                             <p className="text-xs text-gray-500 dark:text-muted-foreground mt-0.5">
-                                An email has been sent to the administrator for approval.
-                                Once your account is activated, you'll be able to log in.
+                                {t("auth.adminApprovalNotice", "An email has been sent to the administrator for approval. Once your account is activated, you'll be able to log in.")}
                             </p>
                         </div>
                     </div>
                 </div>
 
                 <Button onClick={handleContinueToForm} className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs h-8">
-                    Continue
+                    {t("auth.continue", "Continue")}
                 </Button>
             </div>
         )
@@ -263,14 +264,14 @@ export function RegisterPage() {
                 className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 dark:text-muted-foreground dark:hover:text-foreground transition-colors"
             >
                 <ArrowLeft className="h-3.5 w-3.5" />
-                Back to login
+                {t("auth.backToLogin", "Back to login")}
             </Link>
 
             {/* Header */}
             <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Register as Manager</h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{t("auth.registerTitle", "Register as Manager")}</h1>
                 <p className="mt-0.5 text-xs text-gray-500 dark:text-muted-foreground">
-                    Create your business account. Email verification and admin approval required.
+                    {t("auth.registerSubtitle", "Create your business account. Email verification and admin approval required.")}
                 </p>
             </div>
 
@@ -280,10 +281,10 @@ export function RegisterPage() {
                     <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2 text-green-600">
                             <CheckCircle className="h-5 w-5" />
-                            <span className="font-medium text-lg">Registration successful!</span>
+                            <span className="font-medium text-lg">{t("auth.registrationSuccessful", "Registration successful!")}</span>
                         </div>
                         <p className="text-sm text-green-600/80">
-                            Your registration is complete. Please wait for the administrator to approve your account before you can log in.
+                            {t("auth.registrationWaitingAdminDesc", "Your registration is complete. Please wait for the administrator to approve your account before you can log in.")}
                         </p>
                     </div>
                 </div>
@@ -295,10 +296,10 @@ export function RegisterPage() {
                     <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2 text-green-600">
                             <CheckCircle className="h-5 w-5" />
-                            <span className="font-medium text-lg">Account activated!</span>
+                            <span className="font-medium text-lg">{t("auth.accountActivated", "Account activated!")}</span>
                         </div>
                         <p className="text-sm text-green-600/80">
-                            Your account has been activated by the administrator. You can now log in.
+                            {t("auth.accountActivatedDesc", "Your account has been activated by the administrator. You can now log in.")}
                         </p>
                     </div>
                 </div>
@@ -308,13 +309,13 @@ export function RegisterPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Business Name */}
                 <div className="space-y-1.5">
-                    <Label htmlFor="reg-business" className="text-xs font-medium text-gray-700 dark:text-foreground">Business Name <span className="text-destructive ml-0.5">*</span></Label>
+                    <Label htmlFor="reg-business" className="text-xs font-medium text-gray-700 dark:text-foreground">{t("auth.businessName", "Business Name")} <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
                         <Building2 className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="reg-business"
                             type="text"
-                            placeholder="Your business name"
+                            placeholder={t("auth.businessNamePlaceholder", "Your business name")}
                             value={businessName}
                             onChange={(e) => setBusinessName(e.target.value)}
                             className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
@@ -326,13 +327,13 @@ export function RegisterPage() {
 
                 {/* Username */}
                 <div className="space-y-1.5">
-                    <Label htmlFor="reg-username" className="text-xs font-medium text-gray-700 dark:text-foreground">Username <span className="text-destructive ml-0.5">*</span></Label>
+                    <Label htmlFor="reg-username" className="text-xs font-medium text-gray-700 dark:text-foreground">{t("auth.username", "Username")} <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
                         <User className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="reg-username"
                             type="text"
-                            placeholder="Choose a username"
+                            placeholder={t("auth.chooseUsernamePlaceholder", "Choose a username")}
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
@@ -346,20 +347,20 @@ export function RegisterPage() {
                             <CheckCircle className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-emerald-600" />
                         )}
                         {!usernameChecking && usernameAvailable === false && username.length >= 3 && (
-                            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-destructive">Taken</span>
+                            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-destructive">{t("auth.usernameTaken", "Taken")}</span>
                         )}
                     </div>
                 </div>
 
                 {/* Email */}
                 <div className="space-y-1.5">
-                    <Label htmlFor="reg-email" className="text-xs font-medium text-gray-700 dark:text-foreground">Email <span className="text-destructive ml-0.5">*</span></Label>
+                    <Label htmlFor="reg-email" className="text-xs font-medium text-gray-700 dark:text-foreground">{t("auth.email", "Email")} <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
                         <Mail className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="reg-email"
                             type="email"
-                            placeholder="your@email.com"
+                            placeholder={t("auth.emailPlaceholder", "your@email.com")}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
@@ -371,13 +372,13 @@ export function RegisterPage() {
 
                 {/* Backup Email */}
                 <div className="space-y-1.5">
-                    <Label htmlFor="reg-backup-email" className="text-xs font-medium text-gray-700 dark:text-foreground">Backup Email</Label>
+                    <Label htmlFor="reg-backup-email" className="text-xs font-medium text-gray-700 dark:text-foreground">{t("auth.backupEmail", "Backup Email")}</Label>
                     <div className="relative">
                         <ShieldCheck className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="reg-backup-email"
                             type="email"
-                            placeholder="backup@email.com"
+                            placeholder={t("auth.backupEmailPlaceholder", "backup@email.com")}
                             value={backupEmail}
                             onChange={(e) => setBackupEmail(e.target.value)}
                             className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
@@ -385,19 +386,19 @@ export function RegisterPage() {
                         />
                     </div>
                     <p className="text-[11px] text-gray-500 dark:text-muted-foreground mt-1">
-                        Optional: Used for account recovery if you lose access to your primary email
+                        {t("auth.backupEmailOptionalHint", "Optional: Used for account recovery if you lose access to your primary email")}
                     </p>
                 </div>
 
                 {/* Password */}
                 <div className="space-y-1.5">
-                    <Label htmlFor="reg-password" className="text-xs font-medium text-gray-700 dark:text-foreground">Password <span className="text-destructive ml-0.5">*</span></Label>
+                    <Label htmlFor="reg-password" className="text-xs font-medium text-gray-700 dark:text-foreground">{t("auth.password", "Password")} <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
                         <Lock className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="reg-password"
                             type={showPassword ? "text" : "password"}
-                            placeholder="Minimum 8 characters"
+                            placeholder={t("auth.passwordMinChars", "Minimum 8 characters")}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className="pl-8 pr-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
@@ -427,13 +428,13 @@ export function RegisterPage() {
 
                 {/* Confirm Password */}
                 <div className="space-y-1.5">
-                    <Label htmlFor="reg-confirm-password" className="text-xs font-medium text-gray-700 dark:text-foreground">Confirm Password <span className="text-destructive ml-0.5">*</span></Label>
+                    <Label htmlFor="reg-confirm-password" className="text-xs font-medium text-gray-700 dark:text-foreground">{t("auth.confirmPassword", "Confirm Password")} <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
                         <Lock className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="reg-confirm-password"
                             type={showPassword ? "text" : "password"}
-                            placeholder="Re-enter password"
+                            placeholder={t("auth.reenterPasswordPlaceholder", "Re-enter password")}
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
@@ -442,7 +443,7 @@ export function RegisterPage() {
                         />
                     </div>
                     {confirmPassword && password !== confirmPassword && (
-                        <p className="text-[11px] text-destructive">Passwords do not match</p>
+                        <p className="text-[11px] text-destructive">{t("auth.passwordsDoNotMatch", "Passwords do not match")}</p>
                     )}
                 </div>
 
@@ -457,7 +458,7 @@ export function RegisterPage() {
                 {step === "waiting_admin" || step === "success" ? (
                     <Link to="/login/manager" className="block">
                         <Button type="button" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs h-8 rounded-md shadow-xs">
-                            Continue to Login
+                            {t("auth.continueToLogin", "Continue to Login")}
                         </Button>
                     </Link>
                 ) : (
@@ -465,10 +466,10 @@ export function RegisterPage() {
                         {isLoading ? (
                             <>
                                 <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                                Creating Account...
+                                {t("auth.creatingAccount", "Creating Account...")}
                             </>
                         ) : (
-                            "Create Account"
+                            t("auth.createAccount", "Create Account")
                         )}
                     </Button>
                 )}
@@ -476,9 +477,9 @@ export function RegisterPage() {
 
             {/* Login Link */}
             <p className="text-center text-xs text-gray-500 dark:text-muted-foreground pt-1 border-t border-gray-100 dark:border-border">
-                Already have an account?{" "}
+                {t("auth.alreadyHaveAccount", "Already have an account?")}{" "}
                 <Link to="/login/manager" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
-                    Sign in
+                    {t("auth.signIn", "Sign in")}
                 </Link>
             </p>
         </div>

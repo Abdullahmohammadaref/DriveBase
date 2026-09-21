@@ -47,7 +47,7 @@ function LocaleWrapper({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Determine locale from URL parameter
-    const detectedLocale = (locale && SUPPORTED_LOCALES.includes(locale as SupportedLocale))
+    const detectedLocale = (locale && (SUPPORTED_LOCALES as readonly string[]).includes(locale))
       ? locale as SupportedLocale
       : DEFAULT_LOCALE
 
@@ -57,7 +57,7 @@ function LocaleWrapper({ children }: { children: React.ReactNode }) {
     }
 
     // Update document direction for RTL languages (Arabic)
-    document.documentElement.dir = detectedLocale === 'ar' ? 'rtl' : 'ltr'
+    document.documentElement.dir = (detectedLocale as string) === 'ar' ? 'rtl' : 'ltr'
     document.documentElement.lang = detectedLocale
   }, [locale, i18n])
 

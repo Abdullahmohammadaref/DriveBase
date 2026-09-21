@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Building, Save, Plus, ArrowLeft, Eye, EyeOff, Download, Loader2 } from "lucide-react"
 import api from "@/lib/api"
@@ -50,6 +51,7 @@ interface BusinessData {
 }
 
 export default function BusinessSettingsPage() {
+    const { t } = useTranslation()
     const queryClient = useQueryClient()
     const navigate = useNavigate()
 
@@ -315,7 +317,7 @@ export default function BusinessSettingsPage() {
     if (error || !business) {
         return (
             <div className="rounded-xl border border-destructive/50 bg-destructive/10 p-4">
-                <p className="text-sm text-destructive">Failed to load business settings. Please try again.</p>
+                <p className="text-sm text-destructive">{t("businessSettings.failedToLoad", "Failed to load business settings. Please try again.")}</p>
             </div>
         )
     }
@@ -331,15 +333,15 @@ export default function BusinessSettingsPage() {
                         <Building className="h-4 w-4 text-primary" />
                     </div>
                     <div>
-                        <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground">Business Settings</h1>
-                        <p className="text-xs text-muted-foreground">Manage your business information, branches, and users</p>
+                        <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground">{t("businessSettings.title", "Business Settings")}</h1>
+                        <p className="text-xs text-muted-foreground">{t("businessSettings.manageBusinessDesc", "Manage your business information, branches, and users")}</p>
                     </div>
                 </div>
             </div>
 
             {saveSuccess && (
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3">
-                    <p className="text-xs text-[#318d6c] font-medium">All settings and changes saved successfully!</p>
+                    <p className="text-xs text-[#318d6c] font-medium">{t("businessSettings.savedSuccessfully", "All settings and changes saved successfully!")}</p>
                 </div>
             )}
             {saveError && (
@@ -354,7 +356,7 @@ export default function BusinessSettingsPage() {
                     {/* Business Logo & Name Section */}
                     <div className="flex flex-col md:flex-row items-center gap-4">
                         <VehicleImageUpload
-                            label="Business Logo"
+                            label={t("businessSettings.businessLogo", "Business Logo")}
                             imageUrl={business.logo_url}
                             selectedFile={logoFile}
                             onFileChange={(file) => setLogoFile(file)}
@@ -362,7 +364,7 @@ export default function BusinessSettingsPage() {
                         />
                         <div className="w-full md:w-1/2 space-y-1">
                             <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300">
-                                Business Name <span className="text-destructive">*</span>
+                                {t("businessSettings.businessName", "Business Name")} <span className="text-destructive">*</span>
                             </label>
                             <input
                                 type="text"
@@ -375,26 +377,26 @@ export default function BusinessSettingsPage() {
 
                     {/* Address Section */}
                     <div className="border-t border-gray-100 dark:border-border pt-3">
-                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-2 border-b border-gray-100 dark:border-border pb-1">Address</h3>
+                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-2 border-b border-gray-100 dark:border-border pb-1">{t("businessSettings.address", "Address")}</h3>
                         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-5">
                             <div>
-                                <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-0.5">Country</label>
+                                <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-0.5">{t("businessSettings.country", "Country")}</label>
                                 <input type="text" value={formData.address_country || ""} onChange={(e) => handleFieldChange("address_country", e.target.value)} className={inputClass} />
                             </div>
                             <div>
-                                <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-0.5">City</label>
+                                <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-0.5">{t("businessSettings.city", "City")}</label>
                                 <input type="text" value={formData.address_city || ""} onChange={(e) => handleFieldChange("address_city", e.target.value)} className={inputClass} />
                             </div>
                             <div>
-                                <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-0.5">Street</label>
+                                <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-0.5">{t("businessSettings.street", "Street")}</label>
                                 <input type="text" value={formData.address_street || ""} onChange={(e) => handleFieldChange("address_street", e.target.value)} className={inputClass} />
                             </div>
                             <div>
-                                <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-0.5">Street Number</label>
+                                <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-0.5">{t("businessSettings.streetNumber", "Street Number")}</label>
                                 <input type="text" value={formData.address_street_number || ""} onChange={(e) => handleFieldChange("address_street_number", e.target.value)} className={inputClass} />
                             </div>
                             <div>
-                                <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-0.5">Postal Code</label>
+                                <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-0.5">{t("businessSettings.postalCode", "Postal Code")}</label>
                                 <input type="text" value={formData.address_postal_code || ""} onChange={(e) => handleFieldChange("address_postal_code", e.target.value)} className={inputClass} />
                             </div>
                         </div>
@@ -402,10 +404,10 @@ export default function BusinessSettingsPage() {
 
                     {/* Preferences Section */}
                     <div className="border-t border-border pt-6">
-                        <h3 className="text-sm font-medium text-muted-foreground mb-4">Financial Preferences</h3>
+                        <h3 className="text-sm font-medium text-muted-foreground mb-4">{t("businessSettings.financialPreferences", "Financial Preferences")}</h3>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                             <div>
-                                <label className="block text-sm font-medium text-foreground mb-1.5">Target Profit Margin (%)</label>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">{t("businessSettings.targetProfitMargin", "Target Profit Margin (%)")}</label>
                                 <input
                                     type="number"
                                     step="0.01"
@@ -413,10 +415,10 @@ export default function BusinessSettingsPage() {
                                     onChange={(e) => handleFieldChange("target_annual_return", e.target.value)}
                                     className={inputClass}
                                 />
-                                <p className="mt-1 text-xs text-muted-foreground">Target profit margin used to calculate break-even sale price for each vehicle</p>
+                                <p className="mt-1 text-xs text-muted-foreground">{t("businessSettings.targetProfitMarginDesc", "Target profit margin used to calculate break-even sale price for each vehicle")}</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-foreground mb-1.5">Target Days on Stock</label>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">{t("businessSettings.targetDaysOnStock", "Target Days on Stock")}</label>
                                 <input
                                     type="number"
                                     step="1"
@@ -424,7 +426,7 @@ export default function BusinessSettingsPage() {
                                     onChange={(e) => handleFieldChange("target_days_on_stock", e.target.value)}
                                     className={inputClass}
                                 />
-                                <p className="mt-1 text-xs text-muted-foreground">Threshold for urgency indicators</p>
+                                <p className="mt-1 text-xs text-muted-foreground">{t("businessSettings.targetDaysOnStockDesc", "Threshold for urgency indicators")}</p>
                             </div>
                         </div>
                     </div>
@@ -432,35 +434,35 @@ export default function BusinessSettingsPage() {
                     {/* Contact & Bank Details Side-by-Side Section */}
                     <div className="border-t border-border pt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
                         <div>
-                            <h3 className="text-sm font-medium text-muted-foreground mb-4">Contact</h3>
+                            <h3 className="text-sm font-medium text-muted-foreground mb-4">{t("businessSettings.contact", "Contact")}</h3>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                 <div>
-                                    <label className="block text-sm font-medium text-foreground mb-1.5">Telephone No</label>
+                                    <label className="block text-sm font-medium text-foreground mb-1.5">{t("businessSettings.telephoneNo", "Telephone No")}</label>
                                     <input type="text" value={formData.telephone_number || ""} onChange={(e) => handleFieldChange("telephone_number", e.target.value)} className={inputClass} />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-foreground mb-1.5">Fax Number</label>
+                                    <label className="block text-sm font-medium text-foreground mb-1.5">{t("businessSettings.faxNumber", "Fax Number")}</label>
                                     <input type="text" value={formData.fax_number || ""} onChange={(e) => handleFieldChange("fax_number", e.target.value)} className={inputClass} />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-foreground mb-1.5">Email</label>
+                                    <label className="block text-sm font-medium text-foreground mb-1.5">{t("businessSettings.email", "Email")}</label>
                                     <input type="email" value={formData.email || ""} onChange={(e) => handleFieldChange("email", e.target.value)} className={inputClass} />
                                 </div>
                             </div>
                         </div>
                         <div>
-                            <h3 className="text-sm font-medium text-muted-foreground mb-4">Bank Details</h3>
+                            <h3 className="text-sm font-medium text-muted-foreground mb-4">{t("businessSettings.bankDetails", "Bank Details")}</h3>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                 <div>
-                                    <label className="block text-sm font-medium text-foreground mb-1.5">Bank Name</label>
+                                    <label className="block text-sm font-medium text-foreground mb-1.5">{t("businessSettings.bankName", "Bank Name")}</label>
                                     <input type="text" value={formData.bank_name || ""} onChange={(e) => handleFieldChange("bank_name", e.target.value)} className={inputClass} />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-foreground mb-1.5">BIC/SWIFT</label>
+                                    <label className="block text-sm font-medium text-foreground mb-1.5">{t("businessSettings.bicSwift", "BIC/SWIFT")}</label>
                                     <input type="text" value={formData.bank_bic_swift || ""} onChange={(e) => handleFieldChange("bank_bic_swift", e.target.value)} className={inputClass} />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-foreground mb-1.5">IBAN</label>
+                                    <label className="block text-sm font-medium text-foreground mb-1.5">{t("businessSettings.iban", "IBAN")}</label>
                                     <input type="text" value={formData.bank_iban || ""} onChange={(e) => handleFieldChange("bank_iban", e.target.value)} className={inputClass} />
                                 </div>
                             </div>
@@ -469,34 +471,34 @@ export default function BusinessSettingsPage() {
 
                     {/* Company Registration Section */}
                     <div className="border-t border-border pt-6">
-                        <h3 className="text-sm font-medium text-muted-foreground mb-4">Company Registration</h3>
+                        <h3 className="text-sm font-medium text-muted-foreground mb-4">{t("businessSettings.companyRegistration", "Company Registration")}</h3>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-7">
                             <div>
-                                <label className="block text-sm font-medium text-foreground mb-1.5">Managing Director</label>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">{t("businessSettings.managingDirector", "Managing Director")}</label>
                                 <input type="text" value={formData.managing_director || ""} onChange={(e) => handleFieldChange("managing_director", e.target.value)} className={inputClass} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-foreground mb-1.5">Tax ID</label>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">{t("businessSettings.taxId", "Tax ID")}</label>
                                 <input type="text" value={formData.tax_id || ""} onChange={(e) => handleFieldChange("tax_id", e.target.value)} className={inputClass} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-foreground mb-1.5">EORI Number</label>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">{t("businessSettings.eoriNumber", "EORI Number")}</label>
                                 <input type="text" value={formData.eori_number || ""} onChange={(e) => handleFieldChange("eori_number", e.target.value)} className={inputClass} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-foreground mb-1.5">USt-IdNr</label>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">{t("businessSettings.ustIdNr", "USt-IdNr")}</label>
                                 <input type="text" value={formData.ust_id_nr || ""} onChange={(e) => handleFieldChange("ust_id_nr", e.target.value)} className={inputClass} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-foreground mb-1.5">Headquarters City</label>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">{t("businessSettings.headquarters", "Headquarters City")}</label>
                                 <input type="text" value={formData.headquarters_city || ""} onChange={(e) => handleFieldChange("headquarters_city", e.target.value)} className={inputClass} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-foreground mb-1.5">Court District</label>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">{t("businessSettings.courtDistrict", "Court District")}</label>
                                 <input type="text" value={formData.court_district || ""} onChange={(e) => handleFieldChange("court_district", e.target.value)} className={inputClass} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-foreground mb-1.5">Court Reg Number</label>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">{t("businessSettings.courtRegistrationNumber", "Court Reg Number")}</label>
                                 <input type="text" value={formData.court_registration_number || ""} onChange={(e) => handleFieldChange("court_registration_number", e.target.value)} className={inputClass} />
                             </div>
                         </div>
@@ -509,15 +511,15 @@ export default function BusinessSettingsPage() {
                 {/* Branches Section */}
                 <div className="rounded-xl border border-border bg-card">
                     <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-                        <h2 className="text-lg font-medium text-foreground">Branches</h2>
+                        <h2 className="text-lg font-medium text-foreground">{t("businessSettings.branches", "Branches")}</h2>
                     </div>
                     <div className="p-6 overflow-x-auto">
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-border bg-muted/50">
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Branch Name</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Address</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Status</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t("businessSettings.branchName", "Branch Name")}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t("businessSettings.address", "Address")}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t("businessSettings.status", "Status")}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
@@ -547,7 +549,7 @@ export default function BusinessSettingsPage() {
                                                     onChange={(e) => handleBranchFieldChange(branch.id, "is_active", e.target.checked)}
                                                     className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
                                                 />
-                                                <span className="text-sm text-muted-foreground">Active</span>
+                                                <span className="text-sm text-muted-foreground">{t("businessSettings.active", "Active")}</span>
                                             </label>
                                         </td>
                                     </tr>
@@ -555,7 +557,7 @@ export default function BusinessSettingsPage() {
                                 {editableBranches.length === 0 && (
                                     <tr>
                                         <td colSpan={3} className="px-4 py-6 text-center text-sm text-muted-foreground">
-                                            No branches found.
+                                            {t("businessSettings.noBranchesFound", "No branches found.")}
                                         </td>
                                     </tr>
                                 )}
@@ -563,20 +565,20 @@ export default function BusinessSettingsPage() {
                         </table>
                         
                         <div className="mt-4 pt-4 border-t border-border">
-                            <h3 className="text-sm font-medium text-foreground mb-3">Add New Branch</h3>
+                            <h3 className="text-sm font-medium text-foreground mb-3">{t("businessSettings.addNewBranch", "Add New Branch")}</h3>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <input
                                     type="text"
                                     value={newBranch.name}
                                     onChange={(e) => setNewBranch((prev) => ({ ...prev, name: e.target.value }))}
-                                    placeholder="Branch Name *"
+                                    placeholder={t("businessSettings.branchNameRequired", "Branch Name *")}
                                     className={inputClass}
                                 />
                                 <input
                                     type="text"
                                     value={newBranch.address}
                                     onChange={(e) => setNewBranch((prev) => ({ ...prev, address: e.target.value }))}
-                                    placeholder="Branch Address"
+                                    placeholder={t("businessSettings.branchAddress", "Branch Address")}
                                     className={inputClass}
                                 />
                             </div>
@@ -585,7 +587,7 @@ export default function BusinessSettingsPage() {
                                 disabled={!newBranch.name.trim() || createBranchMutation.isPending}
                                 className="mt-3 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                             >
-                                <Plus className="h-4 w-4" /> Add Branch
+                                <Plus className="h-4 w-4" /> {t("businessSettings.addBranch", "Add Branch")}
                             </button>
                         </div>
                     </div>
@@ -594,16 +596,16 @@ export default function BusinessSettingsPage() {
                 {/* Users Section */}
                 <div className="rounded-xl border border-border bg-card">
                     <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-                        <h2 className="text-lg font-medium text-foreground">Users</h2>
+                        <h2 className="text-lg font-medium text-foreground">{t("businessSettings.users", "Users")}</h2>
                     </div>
                     <div className="p-6 overflow-x-auto">
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-border bg-muted/50">
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Username</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Password</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Access</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Status</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t("businessSettings.username", "Username")}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t("businessSettings.password", "Password")}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t("businessSettings.access", "Access")}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t("businessSettings.status", "Status")}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
@@ -621,7 +623,7 @@ export default function BusinessSettingsPage() {
                                             <div className="relative">
                                                 <input
                                                     type={showPasswords[employee.id] ? "text" : "password"}
-                                                    placeholder="New Password"
+                                                    placeholder={t("businessSettings.newPassword", "New Password")}
                                                     onChange={(e) => handleEmployeeFieldChange(employee.id, "password", e.target.value)}
                                                     className={`${inputClass} pr-9`}
                                                 />
@@ -642,7 +644,7 @@ export default function BusinessSettingsPage() {
                                                     onChange={(e) => handleEmployeeFieldChange(employee.id, "transactions_access", e.target.checked)}
                                                     className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
                                                 />
-                                                <span className="text-sm text-muted-foreground">Transactions</span>
+                                                <span className="text-sm text-muted-foreground">{t("businessSettings.transactions", "Transactions")}</span>
                                             </label>
                                         </td>
                                         <td className="px-4 py-3">
@@ -653,7 +655,7 @@ export default function BusinessSettingsPage() {
                                                     onChange={(e) => handleEmployeeFieldChange(employee.id, "is_active", e.target.checked)}
                                                     className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
                                                 />
-                                                <span className="text-sm text-muted-foreground">Active</span>
+                                                <span className="text-sm text-muted-foreground">{t("businessSettings.active", "Active")}</span>
                                             </label>
                                         </td>
                                     </tr>
@@ -661,7 +663,7 @@ export default function BusinessSettingsPage() {
                                 {employees.length === 0 && (
                                     <tr>
                                         <td colSpan={4} className="px-4 py-6 text-center text-sm text-muted-foreground">
-                                            No users found.
+                                            {t("businessSettings.noUsersFound", "No users found.")}
                                         </td>
                                     </tr>
                                 )}
@@ -669,13 +671,13 @@ export default function BusinessSettingsPage() {
                         </table>
                         
                         <div className="mt-4 pt-4 border-t border-border">
-                            <h3 className="text-sm font-medium text-foreground mb-3">Add New User</h3>
+                            <h3 className="text-sm font-medium text-foreground mb-3">{t("businessSettings.addNewUser", "Add New User")}</h3>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <input
                                     type="text"
                                     value={newEmployee.username}
                                     onChange={(e) => setNewEmployee((prev) => ({ ...prev, username: e.target.value }))}
-                                    placeholder="Username *"
+                                    placeholder={t("businessSettings.usernameRequired", "Username *")}
                                     className={inputClass}
                                 />
                                 <div className="relative">
@@ -683,7 +685,7 @@ export default function BusinessSettingsPage() {
                                         type={showNewPassword ? "text" : "password"}
                                         value={newEmployee.password}
                                         onChange={(e) => setNewEmployee((prev) => ({ ...prev, password: e.target.value }))}
-                                        placeholder="Password *"
+                                        placeholder={t("businessSettings.passwordRequired", "Password *")}
                                         className={`${inputClass} pr-9`}
                                     />
                                     <button
@@ -700,7 +702,7 @@ export default function BusinessSettingsPage() {
                                 disabled={!newEmployee.username.trim() || !newEmployee.password.trim() || createEmployeeMutation.isPending}
                                 className="mt-3 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                             >
-                                <Plus className="h-4 w-4" /> Add User
+                                <Plus className="h-4 w-4" /> {t("businessSettings.addUser", "Add User")}
                             </button>
                         </div>
                     </div>
@@ -712,10 +714,10 @@ export default function BusinessSettingsPage() {
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                     <div>
                         <h3 className="text-base font-semibold text-foreground">
-                            Export Business Data
+                            {t("businessSettings.exportBusinessData", "Export Business Data")}
                         </h3>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            Download a ZIP file containing all your business data — vehicles, transactions, legal entities, choices, and uploaded images. Keep a copy somewhere safe.
+                            {t("businessSettings.exportBusinessDataDesc", "Download a ZIP file containing all your business data — vehicles, transactions, legal entities, choices, and uploaded images. Keep a copy somewhere safe.")}
                         </p>
                     </div>
                     <button
@@ -728,7 +730,7 @@ export default function BusinessSettingsPage() {
                         ) : (
                             <Download className="h-4 w-4" />
                         )}
-                        {exportLoading ? "Preparing Export..." : "Download Export"}
+                        {exportLoading ? t("businessSettings.preparingExport", "Preparing Export...") : t("businessSettings.downloadExport", "Download Export")}
                     </button>
                 </div>
             </div>
@@ -744,7 +746,7 @@ export default function BusinessSettingsPage() {
                         className="h-7 px-2.5 text-xs gap-1.5"
                     >
                         <ArrowLeft className="size-3.5" />
-                        Back
+                        {t("common.back", "Back")}
                     </Button>
 
                     <Button
@@ -759,7 +761,7 @@ export default function BusinessSettingsPage() {
                         ) : (
                             <Save className="size-3.5" />
                         )}
-                        Save Changes
+                        {isSaving ? t("common.saving", "Saving...") : t("common.saveChanges", "Save Changes")}
                     </Button>
                 </div>
             </StickyFooter>

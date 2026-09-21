@@ -1,4 +1,5 @@
 import { TrendingUp, TrendingDown, DollarSign, BarChart3, Target, Clock, Scale } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { formatCurrency } from "@/lib/utils"
 import {
     formatPercent,
@@ -14,6 +15,7 @@ export function FinancialSummaryCard({
     summary,
     isLoading,
 }: FinancialSummaryCardProps) {
+    const { t } = useTranslation()
     if (isLoading || !summary) {
         return (
             <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
@@ -48,44 +50,44 @@ export function FinancialSummaryCard({
 
     const cards = [
         {
-            label: "Gross Revenue",
+            label: t("financialSummary.grossRevenue", "Gross Revenue"),
             value: summary.gross_total_revenue,
-            subLabel: "Net",
+            subLabel: t("financialSummary.net", "Net"),
             subValue: summary.net_total_revenue,
             icon: TrendingUp,
             color: "text-[#318d6c]",
             bgColor: "bg-emerald-500/10",
         },
         {
-            label: "Gross Expenses",
+            label: t("financialSummary.grossExpenses", "Gross Expenses"),
             value: summary.gross_total_expenses,
-            subLabel: "Net",
+            subLabel: t("financialSummary.net", "Net"),
             subValue: summary.net_total_expenses,
             icon: TrendingDown,
             color: "text-[#d23a69]",
             bgColor: "bg-rose-500/10",
         },
         {
-            label: "Gross Profit",
+            label: t("financialSummary.grossProfit", "Gross Profit"),
             value: summary.gross_difference,
-            subLabel: "Net",
+            subLabel: t("financialSummary.net", "Net"),
             subValue: summary.net_difference,
             icon: DollarSign,
             color: summary.gross_difference >= 0 ? "text-[#318d6c]" : "text-[#d23a69]",
             bgColor: summary.gross_difference >= 0 ? "bg-emerald-500/10" : "bg-rose-500/10",
         },
         {
-            label: "Total Profit",
+            label: t("financialSummary.totalProfit", "Total Profit"),
             value: totalProfit,
-            subText: "Net Profit − VAT Liability",
+            subText: t("financialSummary.netProfitMinusVat", "Net Profit − VAT Liability"),
             icon: DollarSign,
             color: totalProfit >= 0 ? "text-[#318d6c]" : "text-[#d23a69]",
             bgColor: totalProfit >= 0 ? "bg-emerald-500/10" : "bg-rose-500/10",
         },
         {
-            label: "VAT Liability",
+            label: t("financialSummary.vatLiability", "VAT Liability"),
             value: vatLiability,
-            subText: "|Sale VAT − Buy VAT|",
+            subText: t("financialSummary.vatFormula", "|Sale VAT − Buy VAT|"),
             icon: Scale,
             color: "text-[#d97706]",
             bgColor: "bg-amber-500/10",
@@ -136,7 +138,7 @@ export function FinancialSummaryCard({
                     {profitMargin !== null && (
                         <div className="flex items-center gap-1.5 first:pl-0 pl-3">
                             <BarChart3 className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-[11px] text-muted-foreground">Avg Margin:</span>
+                            <span className="text-[11px] text-muted-foreground">{t("financialSummary.avgMargin", "Avg Margin:")}</span>
                             <span className={`font-mono font-bold ${profitMargin >= 0 ? "text-[#318d6c]" : "text-[#d23a69]"}`}>
                                 {formatPercent(profitMargin)}
                             </span>
@@ -145,7 +147,7 @@ export function FinancialSummaryCard({
                     {roi !== null && (
                         <div className="flex items-center gap-1.5 pl-3">
                             <Target className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-[11px] text-muted-foreground">ROI:</span>
+                            <span className="text-[11px] text-muted-foreground">{t("financialSummary.roi", "ROI:")}</span>
                             <span className={`font-mono font-bold ${roi >= 0 ? "text-[#318d6c]" : "text-[#d23a69]"}`}>
                                 {formatPercent(roi)}
                             </span>
@@ -154,7 +156,7 @@ export function FinancialSummaryCard({
                     {summary.avg_days_on_stock !== undefined && (
                         <div className="flex items-center gap-1.5 pl-3">
                             <Clock className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-[11px] text-muted-foreground">Avg Days on Stock:</span>
+                            <span className="text-[11px] text-muted-foreground">{t("financialSummary.avgDaysOnStock", "Avg Days on Stock:")}</span>
                             <span className="font-mono font-bold text-[#d97706]">
                                 {summary.avg_days_on_stock}d
                             </span>

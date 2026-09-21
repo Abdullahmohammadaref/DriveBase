@@ -22,6 +22,7 @@ import { StickyFooter } from "@/components/StickyFooter"
 import { PerPageInput } from "@/components/PerPageInput"
 import { PageInput } from "@/components/PageInput"
 import { useActivityLogs, useActivityLogUsers, type ActivityLogFilters } from "@/hooks/useActivityLogs"
+import { formatActivityLogDetails } from "@/lib/activityLogFormatter"
 
 /**
  * Entity icon component
@@ -48,6 +49,7 @@ function EntityIcon({ type }: { type: string }) {
  * Action badge with appropriate color
  */
 function ActionBadge({ action, display }: { action: string; display: string }) {
+    const { t } = useTranslation()
     const colorMap: Record<string, string> = {
         create: "bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400",
         update: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400",
@@ -57,7 +59,7 @@ function ActionBadge({ action, display }: { action: string; display: string }) {
 
     return (
         <Badge variant="secondary" className={colorMap[action] || ""}>
-            {display}
+            {t(`activityLogs.actions.${action}`, display || action)}
         </Badge>
     )
 }
@@ -74,7 +76,7 @@ function formatTimestamp(timestamp: string): string {
  * Activity Logs page - full history of user actions
  */
 export function ActivityLogsPage() {
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
 
     // Filter state
     const [filters, setFilters] = useState<ActivityLogFilters>({
@@ -99,13 +101,23 @@ export function ActivityLogsPage() {
 
     // Handle sort
     const handleSort = useCallback((column: string) => {
-        setFilters((prev) => {
-            const newOrder = prev.sort === column && prev.order === "asc" ? "desc" : "asc"
-            return { ...prev, sort: column, order: newOrder, page: 1 }
-        })
+        setFilters((prev) => ({
+            ...prev,
+            sort: column,
+            order: prev.sort === column && prev.order === "asc" ? "desc" : "asc",
+            page: 1,
+        }))
     }, [])
 
     // Handle filter changes
+    const handleUserFilter = useCallback((value: string) => {
+        setFilters((prev) => ({
+            ...prev,
+            user_id: value === "all" ? undefined : parseInt(value, 10),
+            page: 1,
+        }))
+    }, [])
+
     const handleActionFilter = useCallback((value: string) => {
         setFilters((prev) => ({
             ...prev,
@@ -122,20 +134,17 @@ export function ActivityLogsPage() {
         }))
     }, [])
 
-    const handleUserFilter = useCallback((value: string) => {
-        setFilters((prev) => ({
-            ...prev,
-            user_id: value === "all" ? undefined : Number(value),
-            page: 1,
-        }))
-    }, [])
+    // Check if any filters are active
+    const hasActiveFilters = Boolean(
+        filters.user_id !== undefined ||
+        filters.action !== undefined ||
+        filters.entity_type !== undefined
+    )
 
-    const hasActiveFilters = filters.action || filters.entity_type || filters.user_id
-
-    // Sort indicator component
+    // Sort indicator helper
     const SortIndicator = ({ column }: { column: string }) => {
         if (filters.sort !== column) {
-            return <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />
+            return <ArrowUpDown className="ml-1 h-3 w-3 opacity-40" />
         }
         return filters.order === "asc"
             ? <ChevronUp className="ml-1 h-3 w-3" />
@@ -185,10 +194,10 @@ export function ActivityLogsPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all" className="text-xs">{t("activityLogs.allActions", "All Actions")}</SelectItem>
-                                    <SelectItem value="create" className="text-xs">{t("activityLogs.create", "Create")}</SelectItem>
-                                    <SelectItem value="update" className="text-xs">{t("activityLogs.update", "Update")}</SelectItem>
-                                    <SelectItem value="delete" className="text-xs">{t("activityLogs.delete", "Delete")}</SelectItem>
-                                    <SelectItem value="status_change" className="text-xs">{t("activityLogs.statusChange", "Status Change")}</SelectItem>
+                                    <SelectItem value="create" className="text-xs">{t("activityLogs.actions.create", "Create")}</SelectItem>
+                                    <SelectItem value="update" className="text-xs">{t("activityLogs.actions.update", "Update")}</SelectItem>
+                                    <SelectItem value="delete" className="text-xs">{t("activityLogs.actions.delete", "Delete")}</SelectItem>
+                                    <SelectItem value="status_change" className="text-xs">{t("activityLogs.actions.status_change", "Status Change")}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -201,10 +210,10 @@ export function ActivityLogsPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all" className="text-xs">{t("activityLogs.allEntities", "All Entities")}</SelectItem>
-                                    <SelectItem value="vehicle" className="text-xs">{t("activityLogs.vehicle", "Vehicle")}</SelectItem>
-                                    <SelectItem value="transaction" className="text-xs">{t("activityLogs.transaction", "Transaction")}</SelectItem>
-                                    <SelectItem value="legal_entity" className="text-xs">{t("activityLogs.legalEntity", "Legal Entity")}</SelectItem>
-                                    <SelectItem value="user" className="text-xs">{t("activityLogs.user", "User")}</SelectItem>
+                                    <SelectItem value="vehicle" className="text-xs">{t("activityLogs.entities.vehicle", "Vehicle")}</SelectItem>
+                                    <SelectItem value="transaction" className="text-xs">{t("activityLogs.entities.transaction", "Transaction")}</SelectItem>
+                                    <SelectItem value="legal_entity" className="text-xs">{t("activityLogs.entities.legal_entity", "Legal Entity")}</SelectItem>
+                                    <SelectItem value="user" className="text-xs">{t("activityLogs.entities.user", "User")}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -277,11 +286,13 @@ export function ActivityLogsPage() {
                                         <TableCell className="px-3 py-1">
                                             <div className="flex items-center gap-1.5 text-xs">
                                                 <EntityIcon type={log.entity_type} />
-                                                <span className="font-medium">{log.entity_name || log.entity_type_display}</span>
+                                                <span className="font-medium">
+                                                    {log.entity_name || t(`activityLogs.entities.${log.entity_type}`, log.entity_type_display || log.entity_type)}
+                                                </span>
                                             </div>
                                         </TableCell>
                                         <TableCell className="px-3 py-1 text-muted-foreground text-xs">
-                                            {log.details || "-"}
+                                            {formatActivityLogDetails(log.details, i18n.language)}
                                         </TableCell>
                                         <TableCell className="px-3 py-1">
                                             <div className="flex items-center gap-1 text-muted-foreground text-xs font-mono">

@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { FileText, Globe, ArrowLeft, Receipt, ClipboardList, FileSignature, AlertCircle } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -35,6 +36,7 @@ export function ContractModal({
     onOpenChange,
     vehicle,
 }: ContractModalProps) {
+    const { t } = useTranslation()
     const [step, setStep] = useState<ModalStep>("choose-type")
     const [saleRegion, setSaleRegion] = useState<SaleRegion | null>(null)
     const [pendingPdfs, setPendingPdfs] = useState<PdfEntry[]>([])
@@ -46,10 +48,10 @@ export function ContractModal({
         const missing: string[] = []
         const v = vehicle as any
         
-        if (!v.buy_price) missing.push("Buy Price (Gross)")
-        if (!v.buy_date) missing.push("Buy Date")
-        if (!v.buy_payment_method_id && !v.buy_payment_method) missing.push("Payment Method")
-        if (!v.seller_id && !v.seller_name && !v.seller) missing.push("Seller (Legal Entity)")
+        if (!v.buy_price) missing.push(t("contracts.missingFields.buyPriceGross", "Buy Price (Gross)"))
+        if (!v.buy_date) missing.push(t("contracts.missingFields.buyDate", "Buy Date"))
+        if (!v.buy_payment_method_id && !v.buy_payment_method) missing.push(t("contracts.missingFields.paymentMethod", "Payment Method"))
+        if (!v.seller_id && !v.seller_name && !v.seller) missing.push(t("contracts.missingFields.seller", "Seller (Legal Entity)"))
         
         return missing
     }
@@ -60,10 +62,10 @@ export function ContractModal({
         const missing: string[] = []
         const v = vehicle as any
         
-        if (!v.sale_price) missing.push("Sale Price (Gross)")
-        if (!v.sale_date) missing.push("Sale Date")
-        if (!v.sale_payment_method_id && !v.sale_payment_method) missing.push("Payment Method")
-        if (!v.buyer_id && !v.buyer_name && !v.buyer) missing.push("Buyer (Legal Entity)")
+        if (!v.sale_price) missing.push(t("contracts.missingFields.salePriceGross", "Sale Price (Gross)"))
+        if (!v.sale_date) missing.push(t("contracts.missingFields.saleDate", "Sale Date"))
+        if (!v.sale_payment_method_id && !v.sale_payment_method) missing.push(t("contracts.missingFields.paymentMethod", "Payment Method"))
+        if (!v.buyer_id && !v.buyer_name && !v.buyer) missing.push(t("contracts.missingFields.buyer", "Buyer (Legal Entity)"))
         
         return missing
     }
@@ -122,7 +124,7 @@ export function ContractModal({
         e.stopPropagation()
         if (!vehicle?.internal_id) return
         triggerPdfGeneration([
-            { label: "Purchase Contract", url: pdfUrl("buy-contract") },
+            { label: t("contracts.purchaseContract", "Purchase Contract"), url: pdfUrl("buy-contract") },
         ], step)
     }
 
@@ -142,8 +144,8 @@ export function ContractModal({
         e.stopPropagation()
         if (!vehicle?.internal_id) return
         triggerPdfGeneration([
-            { label: "Sales Agreement", url: pdfUrl("sale-agreement") },
-            { label: "Identity Check", url: pdfUrl("identity-check") },
+            { label: t("contracts.salesAgreement", "Sales Agreement"), url: pdfUrl("sale-agreement") },
+            { label: t("contracts.identityCheck", "Identity Check"), url: pdfUrl("identity-check") },
         ], step)
     }
 
@@ -153,8 +155,8 @@ export function ContractModal({
         if (!vehicle?.internal_id) return
         const backendRegion = saleRegion === "non-eu" ? "outside_eu" : "eu"
         triggerPdfGeneration([
-            { label: "Receipt", url: pdfUrl("receipt", { region: backendRegion }) },
-            { label: "Identity Check", url: pdfUrl("identity-check") },
+            { label: t("contracts.receipt", "Receipt"), url: pdfUrl("receipt", { region: backendRegion }) },
+            { label: t("contracts.identityCheck", "Identity Check"), url: pdfUrl("identity-check") },
         ], step)
     }
 
@@ -163,7 +165,7 @@ export function ContractModal({
         e.stopPropagation()
         if (!vehicle?.internal_id) return
         triggerPdfGeneration([
-            { label: "Binding Order", url: pdfUrl("binding-order") },
+            { label: t("contracts.bindingOrder", "Binding Order"), url: pdfUrl("binding-order") },
         ], step)
     }
 
@@ -199,20 +201,24 @@ export function ContractModal({
                             </Button>
                         )}
                         <FileText className="h-5 w-5" />
-                        Generate Documents
+                        {t("contracts.generateDocuments", "Generate Documents")}
                     </DialogTitle>
                 </DialogHeader>
 
                 <div className="mt-2">
                     {/* Vehicle Info */}
                     <p className="text-sm text-muted-foreground mb-4">
-                        Vehicle: <strong>{vehicle.make_name} {vehicle.model_name}</strong> (ID: {vehicle.internal_id})
+                        {t("contracts.vehicleHeader", "Vehicle: {{make}} {{model}} (ID: {{id}})", {
+                            make: vehicle.make_name || "",
+                            model: vehicle.model_name || "",
+                            id: vehicle.internal_id,
+                        })}
                     </p>
 
                     {/* Step 1: Choose Type (Buy vs Sale) */}
                     {step === "choose-type" && (
                         <div className="space-y-4">
-                            <p className="text-sm text-muted-foreground">Select document type:</p>
+                            <p className="text-sm text-muted-foreground">{t("contracts.selectDocumentType", "Select document type:")}</p>
                             <div className="grid grid-cols-2 gap-4 items-start">
                                 <div className="flex flex-col gap-2">
                                     <Button
@@ -223,16 +229,16 @@ export function ContractModal({
                                         disabled={!vehicle.can_generate_buy_contract}
                                     >
                                         <FileText className="h-8 w-8 text-blue-500" />
-                                        <span className="font-medium">Purchase Contract</span>
+                                        <span className="font-medium">{t("contracts.purchaseContract", "Purchase Contract")}</span>
                                         <span className="text-xs text-muted-foreground">
-                                            {vehicle.can_generate_buy_contract ? "Opens PDF" : "Not available"}
+                                            {vehicle.can_generate_buy_contract ? t("contracts.opensPdf", "Opens PDF") : t("contracts.notAvailable", "Not available")}
                                         </span>
                                     </Button>
                                     {!vehicle.can_generate_buy_contract && (
                                         <div className="mt-1 px-3 py-2 text-[11px] leading-relaxed text-amber-800 dark:text-amber-300 bg-amber-500/10 rounded-md border border-amber-500/20">
                                             <p className="font-semibold mb-1 flex items-center gap-1">
                                                 <AlertCircle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-                                                <span>To unlock, fill in:</span>
+                                                <span>{t("contracts.toUnlockFillIn", "To unlock, fill in:")}</span>
                                             </p>
                                             <div className="space-y-0.5 ml-1 text-muted-foreground dark:text-gray-400">
                                                 {getMissingBuyFields().map((f, i) => (
@@ -251,16 +257,16 @@ export function ContractModal({
                                         disabled={!vehicle.can_generate_sale_contract}
                                     >
                                         <FileText className="h-8 w-8 text-green-500" />
-                                        <span className="font-medium">Sale Documents</span>
+                                        <span className="font-medium">{t("contracts.saleDocuments", "Sale Documents")}</span>
                                         <span className="text-xs text-muted-foreground">
-                                            {vehicle.can_generate_sale_contract ? "Choose options" : "Not available"}
+                                            {vehicle.can_generate_sale_contract ? t("contracts.chooseOptions", "Choose options") : t("contracts.notAvailable", "Not available")}
                                         </span>
                                     </Button>
                                     {!vehicle.can_generate_sale_contract && (
                                         <div className="mt-1 px-3 py-2 text-[11px] leading-relaxed text-amber-800 dark:text-amber-300 bg-amber-500/10 rounded-md border border-amber-500/20">
                                             <p className="font-semibold mb-1 flex items-center gap-1">
                                                 <AlertCircle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-                                                <span>To unlock, fill in:</span>
+                                                <span>{t("contracts.toUnlockFillIn", "To unlock, fill in:")}</span>
                                             </p>
                                             <div className="space-y-0.5 ml-1 text-muted-foreground dark:text-gray-400">
                                                 {getMissingSaleFields().map((f, i) => (
@@ -277,7 +283,7 @@ export function ContractModal({
                     {/* Step 2: Sale Region (EU vs Non-EU) */}
                     {step === "sale-region" && (
                         <div className="space-y-4">
-                            <p className="text-sm text-muted-foreground">Select the sale destination:</p>
+                            <p className="text-sm text-muted-foreground">{t("contracts.selectSaleDestination", "Select the sale destination:")}</p>
                             <div className="grid grid-cols-2 gap-4">
                                 <Button
                                     type="button"
@@ -286,7 +292,7 @@ export function ContractModal({
                                     onClick={() => handleSelectRegion("eu")}
                                 >
                                     <Globe className="h-8 w-8 text-primary" />
-                                    <span className="font-medium">Sale to EU Country</span>
+                                    <span className="font-medium">{t("contracts.saleToEuCountry", "Sale to EU Country")}</span>
                                 </Button>
                                 <Button
                                     type="button"
@@ -295,7 +301,7 @@ export function ContractModal({
                                     onClick={() => handleSelectRegion("non-eu")}
                                 >
                                     <Globe className="h-8 w-8 text-orange-500" />
-                                    <span className="font-medium">Sale Outside EU</span>
+                                    <span className="font-medium">{t("contracts.saleOutsideEu", "Sale Outside EU")}</span>
                                 </Button>
                             </div>
                         </div>
@@ -305,7 +311,7 @@ export function ContractModal({
                     {step === "sale-documents" && (
                         <div className="space-y-4">
                             <p className="text-sm text-muted-foreground">
-                                {saleRegion === "eu" ? "Sale to EU Country" : "Sale Outside EU"} - Select document:
+                                {saleRegion === "eu" ? t("contracts.saleToEuCountry", "Sale to EU Country") : t("contracts.saleOutsideEu", "Sale Outside EU")} - {t("contracts.selectDocumentType", "Select document:")}
                             </p>
                             <div className="space-y-3">
                                 <Button
@@ -316,8 +322,8 @@ export function ContractModal({
                                 >
                                     <FileSignature className="h-6 w-6 text-green-500 flex-shrink-0" />
                                     <div className="text-left">
-                                        <span className="font-medium">Sales Agreement</span>
-                                        <p className="text-xs text-muted-foreground">Generates 2 PDFs</p>
+                                        <span className="font-medium">{t("contracts.salesAgreement", "Sales Agreement")}</span>
+                                        <p className="text-xs text-muted-foreground">{t("contracts.generatesTwoPdfs", "Generates 2 PDFs")}</p>
                                     </div>
                                 </Button>
                                 <Button
@@ -328,8 +334,8 @@ export function ContractModal({
                                 >
                                     <Receipt className="h-6 w-6 text-blue-500 flex-shrink-0" />
                                     <div className="text-left">
-                                        <span className="font-medium">Receipt</span>
-                                        <p className="text-xs text-muted-foreground">Generates 2 PDFs</p>
+                                        <span className="font-medium">{t("contracts.receipt", "Receipt")}</span>
+                                        <p className="text-xs text-muted-foreground">{t("contracts.generatesTwoPdfs", "Generates 2 PDFs")}</p>
                                     </div>
                                 </Button>
                                 <Button
@@ -340,8 +346,8 @@ export function ContractModal({
                                 >
                                     <ClipboardList className="h-6 w-6 text-purple-500 flex-shrink-0" />
                                     <div className="text-left">
-                                        <span className="font-medium">Binding Order</span>
-                                        <p className="text-xs text-muted-foreground">Generates 1 PDF</p>
+                                        <span className="font-medium">{t("contracts.bindingOrder", "Binding Order")}</span>
+                                        <p className="text-xs text-muted-foreground">{t("contracts.generatesOnePdf", "Generates 1 PDF")}</p>
                                     </div>
                                 </Button>
                             </div>
@@ -353,8 +359,8 @@ export function ContractModal({
                         <div className="space-y-3">
                             <p className="text-sm text-muted-foreground">
                                 {pendingPdfs.length === 1
-                                    ? "Your document is ready. Click below to open it."
-                                    : `Your ${pendingPdfs.length} documents are ready. Open each one below.`}
+                                    ? t("contracts.docReadySingle", "Your document is ready. Click below to open it.")
+                                    : t("contracts.docReadyMultiple", "Your {{count}} documents are ready. Open each one below.", { count: pendingPdfs.length })}
                             </p>
 
                             {/* One download button per PDF */}
@@ -369,7 +375,7 @@ export function ContractModal({
                                     >
                                         <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                         <span>{pdf.label}</span>
-                                        <span className="ml-auto text-xs text-muted-foreground">Open PDF →</span>
+                                        <span className="ml-auto text-xs text-muted-foreground">{t("contracts.openPdfLink", "Open PDF →")}</span>
                                     </a>
                                 ))}
                             </div>
@@ -377,7 +383,7 @@ export function ContractModal({
                             {/* Quiet popup hint — only shown if there are multiple PDFs */}
                             {pendingPdfs.length > 1 && (
                                 <p className="text-xs text-muted-foreground pt-1 border-t border-border">
-                                    If a PDF didn't open automatically, use the buttons above. You may need to allow pop-ups for this site in your browser settings.
+                                    {t("contracts.popupHint", "If a PDF didn't open automatically, use the buttons above. You may need to allow pop-ups for this site in your browser settings.")}
                                 </p>
                             )}
                         </div>

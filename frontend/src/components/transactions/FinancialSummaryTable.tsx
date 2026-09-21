@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 import type { TransactionFinancialSummary } from "@/types/transaction"
 
@@ -16,6 +17,8 @@ export function FinancialSummaryTable({
     summary,
     isLoading,
 }: FinancialSummaryTableProps) {
+    const { t } = useTranslation()
+
     if (isLoading) {
         return (
             <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-2 shadow-xs">
@@ -44,17 +47,17 @@ export function FinancialSummaryTable({
     }
 
     const cards = [
-        { label: "Net Revenue", value: summary?.net_total_revenue, color: "text-[#318d6c]" },
-        { label: "Net Expenses", value: summary?.net_total_expenses, color: "text-[#d23a69]" },
-        { label: "Net Profit", value: summary?.net_difference, color: parseValue(summary?.net_difference) >= 0 ? "text-[#318d6c]" : "text-[#d23a69]" },
+        { label: t("transactions.summaryTable.netRevenue", "Net Revenue"), value: summary?.net_total_revenue, color: "text-[#318d6c]" },
+        { label: t("transactions.summaryTable.netExpenses", "Net Expenses"), value: summary?.net_total_expenses, color: "text-[#d23a69]" },
+        { label: t("transactions.summaryTable.netProfit", "Net Profit"), value: summary?.net_difference, color: parseValue(summary?.net_difference) >= 0 ? "text-[#318d6c]" : "text-[#d23a69]" },
         
-        { label: "Tax Revenue", value: summary?.tax_total_revenue, color: "text-[#318d6c]" },
-        { label: "Tax Expenses", value: summary?.tax_total_expenses, color: "text-[#d23a69]" },
-        { label: "Total Tax", value: summary?.tax_difference, color: parseValue(summary?.tax_difference) >= 0 ? "text-[#318d6c]" : "text-[#d23a69]" },
+        { label: t("transactions.summaryTable.taxRevenue", "Tax Revenue"), value: summary?.tax_total_revenue, color: "text-[#318d6c]" },
+        { label: t("transactions.summaryTable.taxExpenses", "Tax Expenses"), value: summary?.tax_total_expenses, color: "text-[#d23a69]" },
+        { label: t("transactions.summaryTable.totalTax", "Total Tax"), value: summary?.tax_difference, color: parseValue(summary?.tax_difference) >= 0 ? "text-[#318d6c]" : "text-[#d23a69]" },
         
-        { label: "Gross Revenue", value: summary?.gross_total_revenue, color: "text-[#318d6c]" },
-        { label: "Gross Expenses", value: summary?.gross_total_expenses, color: "text-[#d23a69]" },
-        { label: "Gross Difference", value: summary?.gross_difference, color: parseValue(summary?.gross_difference) >= 0 ? "text-[#318d6c]" : "text-[#d23a69]" },
+        { label: t("transactions.summaryTable.grossRevenue", "Gross Revenue"), value: summary?.gross_total_revenue, color: "text-[#318d6c]" },
+        { label: t("transactions.summaryTable.grossExpenses", "Gross Expenses"), value: summary?.gross_total_expenses, color: "text-[#d23a69]" },
+        { label: t("transactions.summaryTable.grossDifference", "Gross Difference"), value: summary?.gross_difference, color: parseValue(summary?.gross_difference) >= 0 ? "text-[#318d6c]" : "text-[#d23a69]" },
     ]
 
     return (

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useTranslation } from "react-i18next"
 import { useQueryClient } from "@tanstack/react-query"
 import {
     User, Lock, Mail, ShieldCheck, Eye, EyeOff, Loader2, CheckCircle,
@@ -24,6 +25,7 @@ function PollingStatus({
     message: string
     onCancel?: () => void
 }) {
+    const { t } = useTranslation()
     if (status === "idle") return null
 
     return (
@@ -34,7 +36,7 @@ function PollingStatus({
                         <CheckCircle className="h-5 w-5 text-green-500" />
                     </div>
                     <div>
-                        <p className="font-medium text-green-600">Verified!</p>
+                        <p className="font-medium text-green-600">{t("userSettings.verified", "Verified!")}</p>
                         <p className="text-sm text-muted-foreground">{message}</p>
                     </div>
                 </div>
@@ -45,13 +47,13 @@ function PollingStatus({
                     </div>
                     <div className="flex-1">
                         <p className="font-medium text-amber-600">
-                            {status === "expired" ? "Expired" : "Error"}
+                            {status === "expired" ? t("userSettings.expired", "Expired") : t("common.error", "Error")}
                         </p>
                         <p className="text-sm text-muted-foreground">{message}</p>
                     </div>
                     {onCancel && (
                         <Button variant="outline" size="sm" onClick={onCancel}>
-                            Try Again
+                            {t("common.tryAgain", "Try Again")}
                         </Button>
                     )}
                 </div>
@@ -64,8 +66,8 @@ function PollingStatus({
                     <div className="flex-1">
                         <p className="font-medium text-foreground">
                             {status === "waiting_for_new_email"
-                                ? "Check Your New Email"
-                                : "Check Your Email"}
+                                ? t("userSettings.checkNewEmail", "Check Your New Email")
+                                : t("userSettings.checkEmail", "Check Your Email")}
                         </p>
                         <p className="text-sm text-muted-foreground">{message}</p>
                     </div>
@@ -85,6 +87,7 @@ function PollingStatus({
 // =============================================================================
 
 function UsernameSection({ currentUsername }: { currentUsername: string }) {
+    const { t } = useTranslation()
     const [username, setUsername] = useState(currentUsername)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -127,19 +130,19 @@ function UsernameSection({ currentUsername }: { currentUsername: string }) {
                     <User className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                    <h3 className="text-sm font-semibold text-foreground">Username</h3>
-                    <p className="text-[11px] text-muted-foreground">Change your display username</p>
+                    <h3 className="text-sm font-semibold text-foreground">{t("userSettings.username", "Username")}</h3>
+                    <p className="text-[11px] text-muted-foreground">{t("userSettings.changeUsernameDesc", "Change your display username")}</p>
                 </div>
             </div>
 
             <div className="space-y-1.5">
-                <Label htmlFor="settings-username" className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">Username</Label>
+                <Label htmlFor="settings-username" className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">{t("userSettings.username", "Username")}</Label>
                 <div className="flex gap-2">
                     <Input
                         id="settings-username"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
-                        placeholder="Enter new username"
+                        placeholder={t("userSettings.enterNewUsername", "Enter new username")}
                         disabled={isLoading}
                         className="h-8 text-xs"
                     />
@@ -149,7 +152,7 @@ function UsernameSection({ currentUsername }: { currentUsername: string }) {
                         size="sm"
                         className="h-8 px-3 text-xs shrink-0"
                     >
-                        {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save"}
+                        {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : t("common.save", "Save")}
                     </Button>
                 </div>
             </div>
@@ -161,7 +164,7 @@ function UsernameSection({ currentUsername }: { currentUsername: string }) {
             )}
             {success && (
                 <div className="rounded-lg bg-green-500/10 border border-green-500/50 p-3">
-                    <p className="text-sm text-green-600">Username updated successfully!</p>
+                    <p className="text-sm text-green-600">{t("userSettings.usernameUpdated", "Username updated successfully!")}</p>
                 </div>
             )}
         </div>
@@ -173,6 +176,7 @@ function UsernameSection({ currentUsername }: { currentUsername: string }) {
 // =============================================================================
 
 function PasswordSection() {
+    const { t } = useTranslation()
     const { setNewPassword } = useAuth()
     const [newPassword, setNewPasswordState] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
@@ -276,9 +280,9 @@ function PasswordSection() {
                     <Lock className="h-5 w-5 text-amber-500" />
                 </div>
                 <div>
-                    <h3 className="text-lg font-semibold text-foreground">Password</h3>
+                    <h3 className="text-lg font-semibold text-foreground">{t("userSettings.password", "Password")}</h3>
                     <p className="text-sm text-muted-foreground">
-                        Change your password (requires email verification)
+                        {t("userSettings.changePasswordDesc", "Change your password (requires email verification)")}
                     </p>
                 </div>
             </div>
@@ -286,10 +290,10 @@ function PasswordSection() {
             {step === "success" ? (
                 <div className="rounded-lg bg-green-500/10 border border-green-500/50 p-4 text-center space-y-2">
                     <CheckCircle className="h-8 w-8 text-green-500 mx-auto" />
-                    <p className="font-medium text-green-600">Password Updated!</p>
-                    <p className="text-sm text-muted-foreground">Your password has been changed successfully.</p>
+                    <p className="font-medium text-green-600">{t("userSettings.passwordUpdated", "Password Updated!")}</p>
+                    <p className="text-sm text-muted-foreground">{t("userSettings.passwordChangedSuccess", "Your password has been changed successfully.")}</p>
                     <Button variant="outline" size="sm" onClick={() => setStep("form")}>
-                        Done
+                        {t("common.done", "Done")}
                     </Button>
                 </div>
             ) : step === "polling" ? (
@@ -297,13 +301,13 @@ function PasswordSection() {
             ) : (
                 <>
                     <div className="space-y-2">
-                        <Label htmlFor="settings-new-password" className="text-foreground">New Password</Label>
+                        <Label htmlFor="settings-new-password" className="text-foreground">{t("userSettings.newPassword", "New Password")}</Label>
                         <div className="relative">
                             <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 id="settings-new-password"
                                 type={showPassword ? "text" : "password"}
-                                placeholder="Enter new password"
+                                placeholder={t("userSettings.enterNewPassword", "Enter new password")}
                                 value={newPassword}
                                 onChange={(e) => setNewPasswordState(e.target.value)}
                                 className="pl-10 pr-10 text-foreground"
@@ -330,13 +334,13 @@ function PasswordSection() {
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="settings-confirm-password" className="text-foreground">Confirm Password</Label>
+                        <Label htmlFor="settings-confirm-password" className="text-foreground">{t("userSettings.confirmPassword", "Confirm Password")}</Label>
                         <div className="relative">
                             <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 id="settings-confirm-password"
                                 type={showPassword ? "text" : "password"}
-                                placeholder="Confirm new password"
+                                placeholder={t("userSettings.confirmNewPassword", "Confirm new password")}
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 className="pl-10 text-foreground"
@@ -352,12 +356,12 @@ function PasswordSection() {
                         {isLoading ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Sending Verification...
+                                {t("userSettings.sendingVerification", "Sending Verification...")}
                             </>
                         ) : (
                             <>
                                 <KeyRound className="mr-2 h-4 w-4" />
-                                Change Password
+                                {t("userSettings.changePassword", "Change Password")}
                             </>
                         )}
                     </Button>
@@ -378,6 +382,7 @@ function PasswordSection() {
 // =============================================================================
 
 function EmailSection({ currentEmail }: { currentEmail: string }) {
+    const { t } = useTranslation()
     const [newEmail, setNewEmail] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -437,28 +442,28 @@ function EmailSection({ currentEmail }: { currentEmail: string }) {
                     <Mail className="h-5 w-5 text-blue-500" />
                 </div>
                 <div>
-                    <h3 className="text-lg font-semibold text-foreground">Email Address</h3>
+                    <h3 className="text-lg font-semibold text-foreground">{t("userSettings.emailAddress", "Email Address")}</h3>
                     <p className="text-sm text-muted-foreground">
-                        Change your email (requires dual verification)
+                        {t("userSettings.changeEmailDesc", "Change your email (requires dual verification)")}
                     </p>
                 </div>
             </div>
 
             <div className="rounded-lg bg-muted/50 p-3">
                 <p className="text-sm text-muted-foreground">
-                    Current email: <span className="font-medium text-foreground">{currentEmail}</span>
+                    {t("userSettings.currentEmail", "Current email:")} <span className="font-medium text-foreground">{currentEmail}</span>
                 </p>
             </div>
 
             {step === "success" ? (
                 <div className="rounded-lg bg-green-500/10 border border-green-500/50 p-4 text-center space-y-2">
                     <CheckCircle className="h-8 w-8 text-green-500 mx-auto" />
-                    <p className="font-medium text-green-600">Email Updated!</p>
+                    <p className="font-medium text-green-600">{t("userSettings.emailUpdated", "Email Updated!")}</p>
                     <p className="text-sm text-muted-foreground">
                         Your email has been changed to <strong>{newEmail}</strong>.
                     </p>
                     <Button variant="outline" size="sm" onClick={() => { setStep("form"); setNewEmail("") }}>
-                        Done
+                        {t("common.done", "Done")}
                     </Button>
                 </div>
             ) : step === "polling" || step === "polling_new" ? (
@@ -473,13 +478,13 @@ function EmailSection({ currentEmail }: { currentEmail: string }) {
             ) : (
                 <>
                     <div className="space-y-2">
-                        <Label htmlFor="settings-new-email" className="text-foreground">New Email Address</Label>
+                        <Label htmlFor="settings-new-email" className="text-foreground">{t("userSettings.newEmail", "New Email Address")}</Label>
                         <div className="relative">
                             <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 id="settings-new-email"
                                 type="email"
-                                placeholder="Enter new email address"
+                                placeholder={t("userSettings.enterNewEmail", "Enter new email address")}
                                 value={newEmail}
                                 onChange={(e) => setNewEmail(e.target.value)}
                                 className="pl-10 text-foreground"
@@ -495,18 +500,18 @@ function EmailSection({ currentEmail }: { currentEmail: string }) {
                         {isLoading ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Sending...
+                                {t("common.sending", "Sending...")}
                             </>
                         ) : (
                             <>
                                 <Mail className="mr-2 h-4 w-4" />
-                                Change Email
+                                {t("userSettings.changeEmail", "Change Email")}
                             </>
                         )}
                     </Button>
 
                     <p className="text-xs text-muted-foreground">
-                        A verification link will be sent to your <strong>current email first</strong>, then to the new email.
+                        {t("userSettings.dualVerificationEmailHint", "A verification link will be sent to your current email first, then to the new email.")}
                     </p>
                 </>
             )}
@@ -525,6 +530,7 @@ function EmailSection({ currentEmail }: { currentEmail: string }) {
 // =============================================================================
 
 function BackupEmailSection({ currentBackupEmail }: { currentBackupEmail: string }) {
+    const { t } = useTranslation()
     const [newBackupEmail, setNewBackupEmail] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -579,18 +585,18 @@ function BackupEmailSection({ currentBackupEmail }: { currentBackupEmail: string
                     <ShieldCheck className="h-5 w-5 text-purple-500" />
                 </div>
                 <div>
-                    <h3 className="text-lg font-semibold text-foreground">Backup Email</h3>
+                    <h3 className="text-lg font-semibold text-foreground">{t("userSettings.backupEmail", "Backup Email")}</h3>
                     <p className="text-sm text-muted-foreground">
-                        Used for account recovery if you lose access to your primary email
+                        {t("userSettings.backupEmailDesc", "Used for account recovery if you lose access to your primary email")}
                     </p>
                 </div>
             </div>
 
             <div className="rounded-lg bg-muted/50 p-3">
                 <p className="text-sm text-muted-foreground">
-                    Current backup email:{" "}
+                    {t("userSettings.currentBackupEmail", "Current backup email:")}{" "}
                     <span className="font-medium text-foreground">
-                        {currentBackupEmail || "Not set"}
+                        {currentBackupEmail || t("common.notSet", "Not set")}
                     </span>
                 </p>
             </div>
@@ -598,12 +604,12 @@ function BackupEmailSection({ currentBackupEmail }: { currentBackupEmail: string
             {step === "success" ? (
                 <div className="rounded-lg bg-green-500/10 border border-green-500/50 p-4 text-center space-y-2">
                     <CheckCircle className="h-8 w-8 text-green-500 mx-auto" />
-                    <p className="font-medium text-green-600">Backup Email Updated!</p>
+                    <p className="font-medium text-green-600">{t("userSettings.backupEmailUpdated", "Backup Email Updated!")}</p>
                     <p className="text-sm text-muted-foreground">
                         Your backup email has been changed to <strong>{newBackupEmail}</strong>.
                     </p>
                     <Button variant="outline" size="sm" onClick={() => { setStep("form"); setNewBackupEmail("") }}>
-                        Done
+                        {t("common.done", "Done")}
                     </Button>
                 </div>
             ) : step === "polling" || step === "polling_new" ? (
@@ -619,14 +625,14 @@ function BackupEmailSection({ currentBackupEmail }: { currentBackupEmail: string
                 <>
                     <div className="space-y-2">
                         <Label htmlFor="settings-new-backup-email" className="text-foreground">
-                            New Backup Email Address
+                            {t("userSettings.backupEmailAddress", "New Backup Email Address")}
                         </Label>
                         <div className="relative">
                             <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 id="settings-new-backup-email"
                                 type="email"
-                                placeholder="Enter new backup email"
+                                placeholder={t("userSettings.enterBackupEmail", "Enter new backup email")}
                                 value={newBackupEmail}
                                 onChange={(e) => setNewBackupEmail(e.target.value)}
                                 className="pl-10 text-foreground"
@@ -642,18 +648,18 @@ function BackupEmailSection({ currentBackupEmail }: { currentBackupEmail: string
                         {isLoading ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Sending...
+                                {t("common.sending", "Sending...")}
                             </>
                         ) : (
                             <>
                                 <ShieldCheck className="mr-2 h-4 w-4" />
-                                Change Backup Email
+                                {t("userSettings.changeBackupEmail", "Change Backup Email")}
                             </>
                         )}
                     </Button>
 
                     <p className="text-xs text-muted-foreground">
-                        A verification link will be sent to your <strong>official email first</strong>, then to the new backup email.
+                        {t("userSettings.dualVerificationBackupHint", "A verification link will be sent to your official email first, then to the new backup email.")}
                     </p>
                 </>
             )}
@@ -672,6 +678,7 @@ function BackupEmailSection({ currentBackupEmail }: { currentBackupEmail: string
 // =============================================================================
 
 function QuickLinks() {
+    const { t } = useTranslation()
     return (
         <div className="rounded-xl border border-border bg-card p-6 space-y-4">
             <div className="flex items-center gap-3 mb-2">
@@ -679,9 +686,9 @@ function QuickLinks() {
                     <KeyRound className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div>
-                    <h3 className="text-lg font-semibold text-foreground">Account Recovery</h3>
+                    <h3 className="text-lg font-semibold text-foreground">{t("userSettings.securityRecovery", "Account Recovery")}</h3>
                     <p className="text-sm text-muted-foreground">
-                        Lost access to your email or forgot your password?
+                        {t("userSettings.quickAccessDesc", "Lost access to your email or forgot your password?")}
                     </p>
                 </div>
             </div>
@@ -695,7 +702,7 @@ function QuickLinks() {
                 >
                     <div className="flex items-center gap-2">
                         <Lock className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
-                        <span className="text-sm font-medium text-foreground">Forgot Password</span>
+                        <span className="text-sm font-medium text-foreground">{t("userSettings.lostPassword", "Forgot Password")}</span>
                     </div>
                     <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
                 </a>
@@ -708,7 +715,7 @@ function QuickLinks() {
                 >
                     <div className="flex items-center gap-2">
                         <Mail className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
-                        <span className="text-sm font-medium text-foreground">Lost Access to Email</span>
+                        <span className="text-sm font-medium text-foreground">{t("userSettings.lostEmail", "Lost Access to Email")}</span>
                     </div>
                     <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
                 </a>
@@ -722,14 +729,15 @@ function QuickLinks() {
 // =============================================================================
 
 export default function UserSettingsPage() {
+    const { t } = useTranslation()
     const { user } = useAuth()
 
     if (!user || !user.is_manager) {
         return (
             <div className="flex items-center justify-center h-64">
                 <div className="text-center">
-                    <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
-                    <p className="text-muted-foreground">Only managers can access user settings.</p>
+                    <h1 className="text-2xl font-bold text-foreground mb-2">{t("common.accessDenied", "Access Denied")}</h1>
+                    <p className="text-muted-foreground">{t("userSettings.onlyManagers", "Only managers can access user settings.")}</p>
                 </div>
             </div>
         )
@@ -740,9 +748,9 @@ export default function UserSettingsPage() {
             {/* Page Header */}
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 dark:border-border pb-2">
                 <div>
-                    <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground">User Settings</h1>
+                    <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground">{t("userSettings.title", "User Settings")}</h1>
                     <p className="text-xs text-muted-foreground">
-                        Manage your account credentials and security settings
+                        {t("userSettings.subtitle", "Manage your account credentials and security settings")}
                     </p>
                 </div>
             </div>

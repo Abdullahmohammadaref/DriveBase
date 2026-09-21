@@ -64,13 +64,25 @@ def get_user_business(request) -> Business:
     return request.user.business
 
 
+VEHICLE_STATUS_MAP_DE = {
+    'available': 'Verfügbar',
+    'reserved': 'Reserviert',
+    'sold': 'Verkauft',
+    'purchased': 'Gekauft',
+    'in_preparation': 'In Aufbereitung',
+    'in_stock': 'Auf Lager',
+    'offer': 'Angebot',
+    'inactive': 'Inaktiv',
+}
+
+
 def log_activity(
     request,
     action: str,
     entity_type: str,
     entity_id: int = None,
     entity_name: str = "",
-    details: str = ""
+    details = ""
 ):
     """
     Log a user activity.
@@ -81,14 +93,20 @@ def log_activity(
         entity_type: One of 'vehicle', 'transaction', 'legal_entity', 'user', 'business_settings', 'choice'
         entity_id: Internal ID of the affected entity (optional)
         entity_name: Display name for the entity (e.g., "BMW X5", "Transaction #123")
-        details: Additional details about the action
+        details: Additional details about the action (str or dict for bilingual {en, de})
     """
+    import json
+    if isinstance(details, dict):
+        details_str = json.dumps(details, ensure_ascii=False)
+    else:
+        details_str = str(details or "")
+
     print(f"[ActivityLog] ========== LOGGING ACTIVITY ==========")
     print(f"[ActivityLog] Action: {action}")
     print(f"[ActivityLog] Entity Type: {entity_type}")
     print(f"[ActivityLog] Entity ID: {entity_id}")
     print(f"[ActivityLog] Entity Name: {entity_name}")
-    print(f"[ActivityLog] Details: {details}")
+    print(f"[ActivityLog] Details: {details_str}")
     
     try:
         # Check user context
@@ -116,7 +134,7 @@ def log_activity(
             entity_type=entity_type,
             entity_id=entity_id,
             entity_name=entity_name,
-            details=details
+            details=details_str
         )
         print(f"[ActivityLog] SUCCESS! Created log entry with ID: {log_entry.id}")
         print(f"[ActivityLog] =========================================")
@@ -853,13 +871,17 @@ def delete_vehicle(request, internal_id: int):
     
     # Log the delete action
     vehicle_name = f"{vehicle.make.name if vehicle.make else ''} {vehicle.model.name if vehicle.model else ''}".strip() or f"Vehicle #{vehicle.internal_id}"
+    old_status_de = VEHICLE_STATUS_MAP_DE.get(old_status, old_status)
     log_activity(
         request,
         action='delete',
         entity_type='vehicle',
         entity_id=vehicle.internal_id,
         entity_name=vehicle_name,
-        details=f"Status changed from {old_status} to inactive"
+        details={
+            "en": f"Status changed from {old_status} to inactive",
+            "de": f"Status geändert von {old_status_de} auf Inaktiv"
+        }
     )
     
     return {"success": True, "message": "Vehicle deactivated successfully"}
@@ -887,7 +909,10 @@ def activate_vehicle(request, internal_id: int):
         entity_type='vehicle',
         entity_id=vehicle.internal_id,
         entity_name=vehicle_name,
-        details="Reactivated (inactive → purchased)"
+        details={
+            "en": "Reactivated (inactive → purchased)",
+            "de": "Reaktiviert (Inaktiv → Gekauft)"
+        }
     )
     
     return {"success": True, "message": "Vehicle activated successfully"}
@@ -937,13 +962,18 @@ def change_vehicle_status(request, internal_id: int, status: str = Form(...)):
     
     # Log the status change
     vehicle_name = f"{vehicle.make.name if vehicle.make else ''} {vehicle.model.name if vehicle.model else ''}".strip() or f"Vehicle #{vehicle.internal_id}"
+    old_status_de = VEHICLE_STATUS_MAP_DE.get(old_status, old_status)
+    new_status_de = VEHICLE_STATUS_MAP_DE.get(status, status)
     log_activity(
         request,
         action='status_change',
         entity_type='vehicle',
         entity_id=vehicle.internal_id,
         entity_name=vehicle_name,
-        details=f"Status changed: {old_status} → {status}"
+        details={
+            "en": f"Status changed: {old_status} → {status}",
+            "de": f"Status geändert: {old_status_de} → {new_status_de}"
+        }
     )
     
     vehicle = Vehicle.objects.select_related(*VEHICLE_DETAIL_RELATIONS).get(id=vehicle.id)
@@ -980,7 +1010,10 @@ def upload_vehicle_image(request, internal_id: int, image: UploadedFile = File(.
         entity_type='vehicle',
         entity_id=vehicle.internal_id,
         entity_name=vehicle_name,
-        details="Vehicle image updated"
+        details={
+            "en": "Vehicle image updated",
+            "de": "Fahrzeugbild aktualisiert"
+        }
     )
 
     return build_vehicle_detail_response(business, vehicle)
@@ -1047,13 +1080,18 @@ def create_vehicle_expense_earning(
         amount=payload.amount,
     )
 
+    type_de = "Ausgabe" if payload.type == "expense" else "Einnahme"
+    type_en = payload.type.title()
     log_activity(
         request,
         action='create',
         entity_type='vehicle',
         entity_id=vehicle.internal_id,
         entity_name=str(vehicle),
-        details=f"{payload.type.title()} of {payload.amount} added ({category.name} / {subcategory.name})"
+        details={
+            "en": f"{type_en} of {payload.amount} added ({category.name} / {subcategory.name})",
+            "de": f"{type_de} in Höhe von {payload.amount} hinzugefügt ({category.name} / {subcategory.name})"
+        }
     )
 
     return 201, {
@@ -1083,13 +1121,18 @@ def delete_vehicle_expense_earning(request, internal_id: int, ee_id: int):
     ee.is_active = False
     ee.save(update_fields=['is_active'])
 
+    type_de = "Ausgabe" if ee.type == "expense" else "Einnahme"
+    type_en = ee.type.title()
     log_activity(
         request,
         action='delete',
         entity_type='vehicle',
         entity_id=vehicle.internal_id,
         entity_name=str(vehicle),
-        details=f"{ee.type.title()} of {ee.amount} removed"
+        details={
+            "en": f"{type_en} of {ee.amount} removed",
+            "de": f"{type_de} in Höhe von {ee.amount} entfernt"
+        }
     )
 
     return {"success": True, "message": "Entry deleted"}
@@ -2059,7 +2102,10 @@ def activate_legal_entity(request, internal_id: int):
         entity_type='legal_entity',
         entity_id=entity.internal_id,
         entity_name=entity.name,
-        details="Reactivated (inactive → active)"
+        details={
+            "en": "Reactivated (inactive → active)",
+            "de": "Reaktiviert (Inaktiv → Aktiv)"
+        }
     )
     
     return {"success": True, "message": "Legal entity activated successfully"}

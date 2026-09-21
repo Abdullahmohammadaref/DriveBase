@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { Car, FileText } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -30,6 +31,7 @@ export function VehicleCard({
     onDelete,
     onGenerateContract,
 }: VehicleCardProps) {
+    const { t } = useTranslation()
     const status = vehicle.status || "unknown"
     const vehicleImageUrl = withMediaCacheKey(vehicle.image_url, "vehicle-photo")
 
@@ -90,7 +92,7 @@ export function VehicleCard({
                                 {vehicle.year_of_construction && ` • ${vehicle.year_of_construction}`}
                             </h4>
                             <div className="text-sm font-bold text-gray-900 dark:text-foreground mt-0.5 truncate">
-                                #{vehicle.internal_id} <span className="text-xs font-normal text-muted-foreground">• Branch: {vehicle.branch_name || "—"}</span>
+                                #{vehicle.internal_id} <span className="text-xs font-normal text-muted-foreground">• {t("vehicles.branch", "Branch")}: {vehicle.branch_name || "—"}</span>
                             </div>
                         </div>
 
@@ -107,7 +109,7 @@ export function VehicleCard({
                                 <div className="text-xs text-muted-foreground font-mono">—</div>
                             )}
                             <div className="text-[11px] text-muted-foreground mt-0.5">
-                                Active for: {vehicle.active_for ?? 0} days
+                                {t("vehicles.activeFor", "Active for")}: {vehicle.active_for ?? 0} {t("vehicles.days", "days")}
                             </div>
                             {/* Compact Financial Indicators */}
                             {hasBothPrices && (
@@ -140,19 +142,19 @@ export function VehicleCard({
                         {/* Column 1: Buy & Sale */}
                         <div className="space-y-1">
                             <div className="truncate">
-                                <strong>Buy (Gross):</strong>{" "}
+                                <strong>{t("vehicles.buyGross", "Buy (Gross):")}</strong>{" "}
                                 {formatPrice(vehicle.buy_price)}
                             </div>
                             <div className="truncate">
-                                <strong>Buy date:</strong>{" "}
+                                <strong>{t("vehicles.buyDate", "Buy date:")}</strong>{" "}
                                 {vehicle.buy_date || "—"}
                             </div>
                             <div className="mt-2 truncate">
-                                <strong>Sale (Gross):</strong>{" "}
+                                <strong>{t("vehicles.saleGross", "Sale (Gross):")}</strong>{" "}
                                 {formatPrice(vehicle.sale_price)}
                             </div>
                             <div className="truncate">
-                                <strong>Sale date:</strong>{" "}
+                                <strong>{t("vehicles.saleDate", "Sale date:")}</strong>{" "}
                                 {vehicle.sale_date || "—"}
                             </div>
                         </div>
@@ -160,15 +162,15 @@ export function VehicleCard({
                         {/* Column 2: Identifiers */}
                         <div className="space-y-1">
                             <div className="truncate">
-                                <strong>Chassis:</strong>{" "}
+                                <strong>{t("vehicles.chassis", "Chassis:")}</strong>{" "}
                                 {vehicle.chassis_number || "—"}
                             </div>
                             <div className="truncate">
-                                <strong>Reg:</strong>{" "}
+                                <strong>{t("vehicles.regDoc", "Reg:")}</strong>{" "}
                                 {vehicle.motor_vehicle_registration_number || "—"}
                             </div>
                             <div className="truncate">
-                                <strong>Plate:</strong>{" "}
+                                <strong>{t("vehicles.plate", "Plate:")}</strong>{" "}
                                 {vehicle.official_license_plate || "—"}
                             </div>
                         </div>
@@ -176,15 +178,15 @@ export function VehicleCard({
                         {/* Column 3: Specs */}
                         <div className="space-y-1">
                             <div className="truncate">
-                                <strong>Damage:</strong>{" "}
+                                <strong>{t("vehicles.damage", "Damage:")}</strong>{" "}
                                 {vehicle.damage_type_name || "—"}
                             </div>
                             <div className="truncate">
-                                <strong>Year:</strong>{" "}
+                                <strong>{t("vehicles.year", "Year:")}</strong>{" "}
                                 {vehicle.year_of_construction || "—"}
                             </div>
                             <div className="truncate">
-                                <strong>KM:</strong>{" "}
+                                <strong>{t("vehicles.km", "KM:")}</strong>{" "}
                                 {vehicle.kilometer?.toLocaleString() || "—"}
                             </div>
                         </div>
@@ -192,19 +194,19 @@ export function VehicleCard({
                         {/* Column 4: More Details */}
                         <div className="space-y-1">
                             <div className="truncate">
-                                <strong>Type:</strong> {vehicle.vehicle_type_name || "—"}
+                                <strong>{t("vehicles.type", "Type:")}</strong> {vehicle.vehicle_type_name || "—"}
                             </div>
                             <div className="truncate">
-                                <strong>Body:</strong> {vehicle.body_type_name || "—"}
+                                <strong>{t("vehicles.body", "Body:")}</strong> {vehicle.body_type_name || "—"}
                             </div>
                             <div className="truncate">
-                                <strong>Color:</strong> {vehicle.color_name || "—"}
+                                <strong>{t("vehicles.color", "Color:")}</strong> {vehicle.color_name || "—"}
                             </div>
                             <div className="truncate">
-                                <strong>Fuel:</strong> {vehicle.fuel_type_name || "—"}
+                                <strong>{t("vehicles.fuel", "Fuel:")}</strong> {vehicle.fuel_type_name || "—"}
                             </div>
                             <div className="truncate">
-                                <strong>Power:</strong> {vehicle.power_kw || "—"} KW
+                                <strong>{t("vehicles.power", "Power:")}</strong> {vehicle.power_kw || "—"} KW
                             </div>
                         </div>
                     </div>
@@ -234,10 +236,10 @@ export function VehicleCard({
                             e.stopPropagation()
                             onGenerateContract?.(vehicle)
                         }}
-                        title="Generate documents"
+                        title={t("vehicles.generateDocuments", "Generate documents")}
                     >
                         <FileText className="h-4 w-4" />
-                        Documents
+                        {t("vehicles.documents", "Documents")}
                     </Button>
 
                     {/* Delete/Activate */}
@@ -251,7 +253,7 @@ export function VehicleCard({
                                     onStatusChange?.(vehicle, "purchased")
                                 }}
                             >
-                                Activate
+                                {t("common.activate", "Activate")}
                             </Button>
                         ) : (
                             <Button
@@ -263,7 +265,7 @@ export function VehicleCard({
                                     onDelete?.(vehicle)
                                 }}
                             >
-                                Delete
+                                {t("common.delete", "Delete")}
                             </Button>
                         )}
                     </div>

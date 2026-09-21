@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { useForm } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query"
 import { Loader2, Save, ArrowLeft, AlertTriangle, X, FileText } from "lucide-react"
@@ -105,6 +106,7 @@ interface ModelSelectProps {
 }
 
 function ModelSelect({ makeId, value, onChange, error }: ModelSelectProps) {
+    const { t } = useTranslation()
     const { data: models, isLoading } = useModels(makeId)
 
     const options = models?.map((model) => ({
@@ -113,7 +115,7 @@ function ModelSelect({ makeId, value, onChange, error }: ModelSelectProps) {
     })) ?? []
 
     return (
-        <FieldWrapper label="Model" required error={error}>
+        <FieldWrapper label={t("vehicleForm.model", "Model")} required error={error}>
             <DynamicSelect
                 choiceType="vehicle_model"
                 options={options}
@@ -121,14 +123,14 @@ function ModelSelect({ makeId, value, onChange, error }: ModelSelectProps) {
                 onChange={onChange}
                 placeholder={
                     !makeId
-                        ? "Select make first"
+                        ? t("vehicleForm.selectMakeFirst", "Select make first")
                         : isLoading
-                            ? "Loading..."
-                            : "Select model"
+                            ? t("common.loading", "Loading...")
+                            : t("vehicleForm.selectModel", "Select model")
                 }
                 disabled={!makeId || isLoading}
                 allowCreate={Boolean(makeId)}
-                createLabel="Model"
+                createLabel={t("vehicleForm.model", "Model")}
                 parentId={makeId}
             />
         </FieldWrapper>
@@ -192,6 +194,7 @@ export function VehicleForm({
     const navigate = useNavigate()
     const { business_slug } = useParams<{ business_slug: string }>()
     const queryClient = useQueryClient()
+    const { t } = useTranslation()
 
     // --- Core Helpers ---
     const toNum = (val: unknown): number | undefined => {
@@ -535,13 +538,13 @@ export function VehicleForm({
     // --- Validation & Mutation ---
     const validateSaleFields = (): boolean => {
         const errorsList: string[] = []
-        if (!watch("sale_price") || Number(watch("sale_price")) <= 0) errorsList.push("Sale price")
-        if (!watch("sale_date")) errorsList.push("Sale date")
-        if (!watch("buyer_id")) errorsList.push("Buyer")
-        if (!watch("sale_payment_method_id")) errorsList.push("Payment method")
+        if (!watch("sale_price") || Number(watch("sale_price")) <= 0) errorsList.push(t("vehicleForm.salePriceGross", "Sale price"))
+        if (!watch("sale_date")) errorsList.push(t("vehicleForm.saleDate", "Sale date"))
+        if (!watch("buyer_id")) errorsList.push(t("vehicleForm.buyer", "Buyer"))
+        if (!watch("sale_payment_method_id")) errorsList.push(t("vehicleForm.salePaymentMethod", "Payment method"))
 
         if (errorsList.length > 0) {
-            alert(`Please fill in required fields for Sold status:\n• ${errorsList.join("\n• ")}`)
+            alert(`${t("vehicleForm.allFieldsRequiredForSold", "Please fill in required fields for Sold status:")}\n• ${errorsList.join("\n• ")}`)
             return false
         }
         return true
@@ -671,17 +674,17 @@ export function VehicleForm({
                             <div>
                                 <div className="flex items-center gap-2">
                                     <h1 className="text-xs font-semibold text-heading">
-                                        Add New Vehicle
+                                        {t("vehicleForm.addNewVehicle", "Add New Vehicle")}
                                     </h1>
                                     <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-medium bg-[#F9FAFB] dark:bg-secondary text-muted-foreground border border-gray-200 dark:border-border">
                                         {nextIdLoading ? (
                                             <Loader2 className="size-2.5 animate-spin mr-1" />
                                         ) : null}
-                                        Next ID: #{nextId ?? "..."}
+                                        {t("vehicleForm.nextId", "Next ID")}: #{nextId ?? "..."}
                                     </span>
                                 </div>
                                 <p className="text-[10px] text-muted-foreground">
-                                    Fill in the details to add a vehicle
+                                    {t("vehicleForm.subtitle", "Fill in the details to add a vehicle")}
                                 </p>
                             </div>
                         </div>
@@ -693,7 +696,7 @@ export function VehicleForm({
                     <div className="flex items-start gap-2 rounded-md border border-danger/30 bg-danger-bg p-2 text-danger" role="alert">
                         <AlertTriangle className="size-3.5 mt-0.5 shrink-0" />
                         <div className="flex-1 text-xs">
-                            <p className="font-semibold">Failed to save vehicle</p>
+                            <p className="font-semibold">{t("vehicleForm.failedToSave", "Failed to save vehicle")}</p>
                             <p className="mt-0.5 text-muted-foreground text-[11px]">{mutationError}</p>
                         </div>
                         <button
@@ -708,23 +711,23 @@ export function VehicleForm({
 
                 {/* SECTION 1: VEHICLE DETAILS */}
                 <section>
-                    <SectionTitle title="Vehicle Details" />
+                    <SectionTitle title={t("vehicleForm.vehicleDetails", "Vehicle Details")} />
                     <div className="grid grid-cols-2 gap-x-2.5 gap-y-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-9">
                         {/* Branch */}
-                        <FieldWrapper label="Branch" required error={errors.branch_id?.message}>
+                        <FieldWrapper label={t("vehicleForm.branch", "Branch")} required error={errors.branch_id?.message}>
                             <DynamicSelect
                                 choiceType="branch"
                                 options={toOptions(choices?.branches)}
                                 value={watch("branch_id") ?? null}
                                 onChange={(val) => handleDropdownChange("branch_id", val ?? 0)}
-                                placeholder="Select branch"
-                                createLabel="Branch"
+                                placeholder={t("vehicleForm.selectBranch", "Select branch")}
+                                createLabel={t("vehicleForm.branch", "Branch")}
                                 allowCreate={false}
                             />
                         </FieldWrapper>
 
                         {/* Make */}
-                        <FieldWrapper label="Make" required error={errors.make_id?.message}>
+                        <FieldWrapper label={t("vehicleForm.make", "Make")} required error={errors.make_id?.message}>
                             <DynamicSelect
                                 choiceType="make"
                                 options={toOptions(choices?.makes)}
@@ -736,8 +739,8 @@ export function VehicleForm({
                                         onAutoSave({ make_id: val ?? 0, model_id: undefined })
                                     }
                                 }}
-                                placeholder="Select make"
-                                createLabel="Make"
+                                placeholder={t("vehicleForm.selectMake", "Select make")}
+                                createLabel={t("vehicleForm.make", "Make")}
                             />
                         </FieldWrapper>
 
@@ -750,80 +753,80 @@ export function VehicleForm({
                         />
 
                         {/* Vehicle Type */}
-                        <FieldWrapper label="Vehicle Type" required error={errors.vehicle_type_id?.message}>
+                        <FieldWrapper label={t("vehicleForm.vehicleType", "Vehicle Type")} required error={errors.vehicle_type_id?.message}>
                             <DynamicSelect
                                 choiceType="vehicle_type"
                                 options={toOptions(choices?.vehicle_types)}
                                 value={watch("vehicle_type_id") ?? null}
                                 onChange={(val) => handleDropdownChange("vehicle_type_id", val ?? 0)}
-                                placeholder="Select type"
-                                createLabel="Vehicle Type"
+                                placeholder={t("vehicleForm.selectType", "Select type")}
+                                createLabel={t("vehicleForm.vehicleType", "Vehicle Type")}
                             />
                         </FieldWrapper>
 
                         {/* Body Type */}
-                        <FieldWrapper label="Body Type" required error={errors.body_type_id?.message}>
+                        <FieldWrapper label={t("vehicleForm.bodyType", "Body Type")} required error={errors.body_type_id?.message}>
                             <DynamicSelect
                                 choiceType="body_type"
                                 options={toOptions(choices?.body_types)}
                                 value={watch("body_type_id") ?? null}
                                 onChange={(val) => handleDropdownChange("body_type_id", val ?? 0)}
-                                placeholder="Select body type"
-                                createLabel="Body Type"
+                                placeholder={t("vehicleForm.selectBodyType", "Select body type")}
+                                createLabel={t("vehicleForm.bodyType", "Body Type")}
                             />
                         </FieldWrapper>
 
                         {/* Color */}
-                        <FieldWrapper label="Color" required error={errors.color_id?.message}>
+                        <FieldWrapper label={t("vehicleForm.color", "Color")} required error={errors.color_id?.message}>
                             <DynamicSelect
                                 choiceType="color"
                                 options={toOptions(choices?.colors)}
                                 value={watch("color_id") ?? null}
                                 onChange={(val) => handleDropdownChange("color_id", val ?? 0)}
-                                placeholder="Select color"
-                                createLabel="Color"
+                                placeholder={t("vehicleForm.selectColor", "Select color")}
+                                createLabel={t("vehicleForm.color", "Color")}
                             />
                         </FieldWrapper>
 
                         {/* Doors */}
-                        <FieldWrapper label="Doors" required error={errors.doors_id?.message}>
+                        <FieldWrapper label={t("vehicleForm.doors", "Doors")} required error={errors.doors_id?.message}>
                             <DynamicSelect
                                 choiceType="doors"
                                 options={toOptions(choices?.doors)}
                                 value={watch("doors_id") ?? null}
                                 onChange={(val) => handleDropdownChange("doors_id", val ?? 0)}
-                                placeholder="Select doors"
-                                createLabel="Doors"
+                                placeholder={t("vehicleForm.selectDoors", "Select doors")}
+                                createLabel={t("vehicleForm.doors", "Doors")}
                             />
                         </FieldWrapper>
 
                         {/* Fuel Type */}
-                        <FieldWrapper label="Fuel Type" required error={errors.fuel_type_id?.message}>
+                        <FieldWrapper label={t("vehicleForm.fuelType", "Fuel Type")} required error={errors.fuel_type_id?.message}>
                             <DynamicSelect
                                 choiceType="fuel_type"
                                 options={toOptions(choices?.fuel_types)}
                                 value={watch("fuel_type_id") ?? null}
                                 onChange={(val) => handleDropdownChange("fuel_type_id", val ?? 0)}
-                                placeholder="Select fuel type"
-                                createLabel="Fuel Type"
+                                placeholder={t("vehicleForm.selectFuel", "Select fuel")}
+                                createLabel={t("vehicleForm.fuelType", "Fuel Type")}
                             />
                         </FieldWrapper>
 
                         {/* Damage Type */}
-                        <FieldWrapper label="Damage Type" required error={errors.damage_type_id?.message}>
+                        <FieldWrapper label={t("vehicleForm.damageType", "Damage Type")} required error={errors.damage_type_id?.message}>
                             <DynamicSelect
                                 choiceType="damage_type"
                                 options={toOptions(choices?.damage_types)}
                                 value={watch("damage_type_id") ?? null}
                                 onChange={(val) => handleDropdownChange("damage_type_id", val ?? 0)}
-                                placeholder="Select damage type"
-                                createLabel="Damage Type"
+                                placeholder={t("vehicleForm.selectDamage", "Select damage")}
+                                createLabel={t("vehicleForm.damageType", "Damage Type")}
                             />
                         </FieldWrapper>
 
                         {/* Chassis Number (VIN) */}
                         <FieldWrapper
-                            label="Chassis No. (VIN)"
+                            label={t("vehicleForm.chassisNumberVin", "Chassis No. (VIN)")}
                             required
                             error={errors.chassis_number?.message}
                         >
@@ -837,7 +840,7 @@ export function VehicleForm({
                         </FieldWrapper>
 
                         {/* License Plate */}
-                        <FieldWrapper label="License Plate">
+                        <FieldWrapper label={t("vehicleForm.licensePlate", "License Plate")}>
                             <Input
                                 value={watch("official_license_plate") ?? ""}
                                 onChange={(e) => handleTextChange("official_license_plate", e.target.value)}
@@ -846,7 +849,7 @@ export function VehicleForm({
                         </FieldWrapper>
 
                         {/* Registration Number */}
-                        <FieldWrapper label="Registration No.">
+                        <FieldWrapper label={t("vehicleForm.registrationDocNumber", "Registration No.")}>
                             <Input
                                 value={watch("motor_vehicle_registration_number") ?? ""}
                                 onChange={(e) => handleTextChange("motor_vehicle_registration_number", e.target.value)}
@@ -856,20 +859,20 @@ export function VehicleForm({
 
                         {/* Key Number */}
                         {isKeyFieldVisible && (
-                            <FieldWrapper label="Key Number" required error={errors.key_number_id?.message}>
+                            <FieldWrapper label={t("vehicleForm.keyNumber", "Key Number")} required error={errors.key_number_id?.message}>
                                 <DynamicSelect
                                     choiceType="key_number"
                                     options={keyNumberOptions}
                                     value={watchedKeyNumberId ?? null}
                                     onChange={(val) => handleDropdownChange("key_number_id", val ?? null)}
-                                    placeholder="Select key"
-                                    createLabel="Key Number"
+                                    placeholder={t("vehicleForm.selectKey", "Select key")}
+                                    createLabel={t("vehicleForm.keyNumber", "Key Number")}
                                 />
                             </FieldWrapper>
                         )}
 
                         {/* Year of Construction */}
-                        <FieldWrapper label="Year" required error={errors.year_of_construction?.message}>
+                        <FieldWrapper label={t("vehicleForm.yearOfConstruction", "Year")} required error={errors.year_of_construction?.message}>
                             <Input
                                 type="number"
                                 value={watch("year_of_construction") ?? ""}
@@ -879,7 +882,7 @@ export function VehicleForm({
                         </FieldWrapper>
 
                         {/* First Registration Date */}
-                        <FieldWrapper label="First Reg.">
+                        <FieldWrapper label={t("vehicleForm.firstReg", "First Reg.")}>
                             <Input
                                 type="date"
                                 value={watch("first_registration_date") ?? ""}
@@ -889,7 +892,7 @@ export function VehicleForm({
                         </FieldWrapper>
 
                         {/* Kilometer */}
-                        <FieldWrapper label="Kilometer" required error={errors.kilometer?.message}>
+                        <FieldWrapper label={t("vehicleForm.kilometers", "Kilometer")} required error={errors.kilometer?.message}>
                             <Input
                                 type="number"
                                 value={watch("kilometer") ?? ""}
@@ -899,7 +902,7 @@ export function VehicleForm({
                         </FieldWrapper>
 
                         {/* Power (kW) */}
-                        <FieldWrapper label="Power (kW)" required error={errors.power_kw?.message}>
+                        <FieldWrapper label={t("vehicleForm.powerKw", "Power (kW)")} required error={errors.power_kw?.message}>
                             <Input
                                 type="number"
                                 value={watch("power_kw") ?? ""}
@@ -912,8 +915,8 @@ export function VehicleForm({
 
                 {/* SECTION 2: MEDIA & NOTES */}
                 <section>
-                    <SectionTitle title="Media & Notes" />
-                    <div className="grid grid-cols-4 gap-2.5">
+                    <SectionTitle title={t("vehicleForm.mediaNotes", "Media & Notes")} />
+                    <div className={`grid gap-2.5 ${isEditing && vehicle?.internal_id ? "grid-cols-4" : "grid-cols-3"}`}>
                         {/* Vehicle Photo */}
                         <VehicleImageUpload
                             imageUrl={vehicle?.image_url}
@@ -925,45 +928,34 @@ export function VehicleForm({
                         />
 
                         {/* Description */}
-                        <FieldWrapper label="Description" className="flex flex-col">
+                        <FieldWrapper label={t("vehicleForm.description", "Description")} className="flex flex-col">
                             <textarea
                                 value={watch("description") ?? ""}
                                 onChange={(e) => handleTextChange("description", e.target.value)}
-                                placeholder="Public description of the vehicle"
+                                placeholder={t("vehicleForm.publicDescriptionPlaceholder", "Public description of the vehicle")}
                                 rows={5}
                                 className="h-[115px] min-h-[110px] w-full resize-none rounded-md border border-gray-200 dark:border-border bg-[#F3F3F3] dark:bg-secondary px-2.5 py-1.5 text-xs text-gray-800 dark:text-foreground outline-none transition-[background-color,border-color] placeholder:text-muted-foreground hover:border-gray-300 dark:hover:border-gray-600 focus:border-gray-400 focus:bg-white dark:focus:bg-background focus:ring-1 focus:ring-gray-200 dark:focus:ring-ring"
                             />
                         </FieldWrapper>
 
                         {/* Internal Comments */}
-                        <FieldWrapper label="Internal Comments" className="flex flex-col">
+                        <FieldWrapper label={t("vehicleForm.internalComments", "Internal Comments")} className="flex flex-col">
                             <textarea
                                 value={watch("internal_comments") ?? ""}
                                 onChange={(e) => handleTextChange("internal_comments", e.target.value)}
-                                placeholder="Private notes (not visible to customers)"
+                                placeholder={t("vehicleForm.privateNotesPlaceholder", "Private notes (not visible to customers)")}
                                 rows={5}
                                 className="h-[115px] min-h-[110px] w-full resize-none rounded-md border border-gray-200 dark:border-border bg-[#F3F3F3] dark:bg-secondary px-2.5 py-1.5 text-xs text-gray-800 dark:text-foreground outline-none transition-[background-color,border-color] placeholder:text-muted-foreground hover:border-gray-300 dark:hover:border-gray-600 focus:border-gray-400 focus:bg-white dark:focus:bg-background focus:ring-1 focus:ring-gray-200 dark:focus:ring-ring"
                             />
                         </FieldWrapper>
 
-                        {/* Expenses & Earnings */}
-                        {isEditing && vehicle?.internal_id ? (
+                        {/* Expenses & Earnings - only shown when editing existing vehicle */}
+                        {isEditing && vehicle?.internal_id && (
                             <VehicleExpensesEarningsCard
                                 vehicleInternalId={vehicle.internal_id}
                                 entries={vehicle.expenses_earnings ?? []}
                                 choices={choices}
                             />
-                        ) : (
-                            <div className="min-w-0 flex flex-col">
-                                <div className="flex items-center justify-between mb-1">
-                                    <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300 truncate">
-                                        Expenses &amp; Earnings
-                                    </span>
-                                </div>
-                                <div className="flex h-[115px] min-h-[110px] items-center justify-center rounded-md border border-gray-200 dark:border-border bg-[#F3F3F3] dark:bg-secondary/30 p-2 text-center text-xs text-muted-foreground">
-                                    Available after saving vehicle
-                                </div>
-                            </div>
                         )}
                     </div>
                 </section>
@@ -973,21 +965,21 @@ export function VehicleForm({
                     {/* Buy Details */}
                     <section className="min-w-0">
                         <SectionTitle
-                            title="Buy Details"
+                            title={t("vehicleForm.purchaseDetails", "Buy Details")}
                             action={
                                 buyBreakdown.hasValue ? (
                                     <span className="shrink-0 text-xs normal-case tracking-normal text-gray-600 dark:text-muted-foreground font-mono font-medium">
-                                        Net <span className="font-bold text-[#318d6c]">{formatMoneyOrDash(buyBreakdown.net)}</span> = Gross {formatMoneyOrDash(buyBreakdown.gross)} − Tax {formatMoneyOrDash(buyBreakdown.taxAmount)} ({buyBreakdown.taxRate.toFixed(1)}%)
+                                        {t("vehicleForm.net", "Net")} <span className="font-bold text-[#318d6c]">{formatMoneyOrDash(buyBreakdown.net)}</span> = {t("vehicles.buyGross", "Gross")} {formatMoneyOrDash(buyBreakdown.gross)} − {t("vehicleForm.tax", "Tax")} {formatMoneyOrDash(buyBreakdown.taxAmount)} ({buyBreakdown.taxRate.toFixed(1)}%)
                                     </span>
                                 ) : (
                                     <span className="shrink-0 text-xs normal-case tracking-normal text-gray-400 dark:text-muted-foreground font-mono">
-                                        Net: — Gross (—) − Tax —
+                                        {t("vehicleForm.net", "Net")}: — {t("vehicles.buyGross", "Gross")} (—) − {t("vehicleForm.tax", "Tax")} —
                                     </span>
                                 )
                             }
                         />
                         <div className="grid grid-cols-2 gap-x-2.5 gap-y-2 sm:grid-cols-4">
-                            <FieldWrapper label="Buy Price (Gross)" required error={errors.buy_price?.message}>
+                            <FieldWrapper label={t("vehicleForm.buyPriceGross", "Buy Price (Gross)")} required error={errors.buy_price?.message}>
                                 <Input
                                     type="number"
                                     step="0.01"
@@ -998,19 +990,19 @@ export function VehicleForm({
                                 />
                             </FieldWrapper>
 
-                            <FieldWrapper label="Tax" required>
+                            <FieldWrapper label={t("vehicleForm.tax", "Tax")} required>
                                 <DynamicSelect
                                     choiceType="tax_percentage"
                                     options={taxToOptions(choices?.tax_percentages)}
                                     value={watch("buy_tax_id") ?? null}
                                     onChange={(val) => handleDropdownChange("buy_tax_id", val)}
-                                    placeholder="Select tax"
-                                    createLabel="Tax Rate"
+                                    placeholder={t("vehicleForm.selectTax", "Select tax")}
+                                    createLabel={t("vehicleForm.taxRate", "Tax Rate")}
                                     showPercentage
                                 />
                             </FieldWrapper>
 
-                            <FieldWrapper label="Buy Date" required error={errors.buy_date?.message}>
+                            <FieldWrapper label={t("vehicleForm.buyDate", "Buy Date")} required error={errors.buy_date?.message}>
                                 <Input
                                     type="date"
                                     value={watch("buy_date") ?? ""}
@@ -1019,7 +1011,7 @@ export function VehicleForm({
                                 />
                             </FieldWrapper>
 
-                            <FieldWrapper label="Delivery Date">
+                            <FieldWrapper label={t("vehicleForm.deliveryDate", "Delivery Date")}>
                                 <Input
                                     type="date"
                                     value={watch("buy_delivery_collection_date") ?? ""}
@@ -1028,26 +1020,26 @@ export function VehicleForm({
                                 />
                             </FieldWrapper>
 
-                            <FieldWrapper label="Payment Method" required error={errors.buy_payment_method_id?.message}>
+                            <FieldWrapper label={t("vehicleForm.buyPaymentMethod", "Payment Method")} required error={errors.buy_payment_method_id?.message}>
                                 <DynamicSelect
                                     choiceType="payment_method"
                                     options={toOptions(choices?.payment_methods)}
                                     value={watch("buy_payment_method_id") ?? null}
                                     onChange={(val) => handleDropdownChange("buy_payment_method_id", val ?? 0)}
-                                    placeholder="Select method"
-                                    createLabel="Payment Method"
+                                    placeholder={t("vehicleForm.selectPaymentMethod", "Select method")}
+                                    createLabel={t("vehicleForm.buyPaymentMethod", "Payment Method")}
                                 />
                             </FieldWrapper>
 
-                            <FieldWrapper label="Seller" required error={errors.seller_id?.message}>
+                            <FieldWrapper label={t("vehicleForm.seller", "Seller")} required error={errors.seller_id?.message}>
                                 <DynamicSelect
                                     choiceType="legal_entity"
                                     options={choices?.legal_entities?.map((e) => ({ id: e.id, name: `#${e.internal_id} - ${e.name}` })) ?? []}
                                     value={watch("seller_id") ?? null}
                                     onChange={(val) => handleDropdownChange("seller_id", val ?? 0)}
-                                    placeholder="Select seller"
+                                    placeholder={t("vehicleForm.selectSeller", "Select seller")}
                                     allowCreate={true}
-                                    createLabel="Seller / Entity"
+                                    createLabel={t("vehicleForm.seller", "Seller / Entity")}
                                     onAddClick={() => handleOpenEntityModal("seller_id")}
                                 />
                             </FieldWrapper>
@@ -1058,21 +1050,21 @@ export function VehicleForm({
                     {isSaleTabVisible && (
                         <section className="min-w-0">
                             <SectionTitle
-                                title="Sale Details"
+                                title={t("vehicleForm.saleDetails", "Sale Details")}
                                 action={
                                     saleBreakdown.hasValue ? (
                                         <span className="shrink-0 text-xs normal-case tracking-normal text-gray-600 dark:text-muted-foreground font-mono font-medium">
-                                            Net <span className="font-bold text-[#318d6c]">{formatMoneyOrDash(saleBreakdown.net)}</span> = Gross {formatMoneyOrDash(saleBreakdown.gross)} − Tax {formatMoneyOrDash(saleBreakdown.taxAmount)} ({saleBreakdown.taxRate.toFixed(1)}%)
+                                            {t("vehicleForm.net", "Net")} <span className="font-bold text-[#318d6c]">{formatMoneyOrDash(saleBreakdown.net)}</span> = {t("vehicles.saleGross", "Gross")} {formatMoneyOrDash(saleBreakdown.gross)} − {t("vehicleForm.tax", "Tax")} {formatMoneyOrDash(saleBreakdown.taxAmount)} ({saleBreakdown.taxRate.toFixed(1)}%)
                                         </span>
                                     ) : (
                                         <span className="shrink-0 text-xs normal-case tracking-normal text-gray-400 dark:text-muted-foreground font-mono">
-                                            Net: — Gross (—) − Tax —
+                                            {t("vehicleForm.net", "Net")}: — {t("vehicles.saleGross", "Gross")} (—) − {t("vehicleForm.tax", "Tax")} —
                                         </span>
                                     )
                                 }
                             />
                             <div className="grid grid-cols-2 gap-x-2.5 gap-y-2 sm:grid-cols-4">
-                                <FieldWrapper label="Sale Price (Gross)" required>
+                                <FieldWrapper label={t("vehicleForm.salePriceGross", "Sale Price (Gross)")} required>
                                     <Input
                                         type="number"
                                         step="0.01"
@@ -1083,19 +1075,19 @@ export function VehicleForm({
                                     />
                                 </FieldWrapper>
 
-                                <FieldWrapper label="Tax" required>
+                                <FieldWrapper label={t("vehicleForm.tax", "Tax")} required>
                                     <DynamicSelect
                                         choiceType="tax_percentage"
                                         options={taxToOptions(choices?.tax_percentages)}
                                         value={watch("sale_tax_id") ?? null}
                                         onChange={(val) => handleDropdownChange("sale_tax_id", val)}
-                                        placeholder="Select tax"
-                                        createLabel="Tax Rate"
+                                        placeholder={t("vehicleForm.selectTax", "Select tax")}
+                                        createLabel={t("vehicleForm.taxRate", "Tax Rate")}
                                         showPercentage
                                     />
                                 </FieldWrapper>
 
-                                <FieldWrapper label="Invoice Number">
+                                <FieldWrapper label={t("vehicleForm.invoiceNumber", "Invoice Number")}>
                                     <Input
                                         value={watch("sale_invoice_number") ?? ""}
                                         onChange={(e) => handleTextChange("sale_invoice_number", e.target.value)}
@@ -1104,7 +1096,7 @@ export function VehicleForm({
                                     />
                                 </FieldWrapper>
 
-                                <FieldWrapper label="Sale Date" required>
+                                <FieldWrapper label={t("vehicleForm.saleDate", "Sale Date")} required>
                                     <Input
                                         type="date"
                                         value={watch("sale_date") ?? ""}
@@ -1113,7 +1105,7 @@ export function VehicleForm({
                                     />
                                 </FieldWrapper>
 
-                                <FieldWrapper label="Delivery Date">
+                                <FieldWrapper label={t("vehicleForm.deliveryDate", "Delivery Date")}>
                                     <Input
                                         type="date"
                                         value={watch("sale_delivery_collection_date") ?? ""}
@@ -1122,26 +1114,26 @@ export function VehicleForm({
                                     />
                                 </FieldWrapper>
 
-                                <FieldWrapper label="Payment Method" required>
+                                <FieldWrapper label={t("vehicleForm.salePaymentMethod", "Payment Method")} required>
                                     <DynamicSelect
                                         choiceType="payment_method"
                                         options={toOptions(choices?.payment_methods)}
                                         value={watch("sale_payment_method_id") ?? null}
                                         onChange={(val) => handleDropdownChange("sale_payment_method_id", val)}
-                                        placeholder="Select method"
-                                        createLabel="Payment Method"
+                                        placeholder={t("vehicleForm.selectPaymentMethod", "Select method")}
+                                        createLabel={t("vehicleForm.salePaymentMethod", "Payment Method")}
                                     />
                                 </FieldWrapper>
 
-                                <FieldWrapper label="Buyer" required error={(errors as any).buyer_id?.message}>
+                                <FieldWrapper label={t("vehicleForm.buyer", "Buyer")} required error={(errors as any).buyer_id?.message}>
                                     <DynamicSelect
                                         choiceType="legal_entity"
                                         options={choices?.legal_entities?.map((e) => ({ id: e.id, name: `#${e.internal_id} - ${e.name}` })) ?? []}
                                         value={watch("buyer_id") ?? null}
                                         onChange={(val) => handleDropdownChange("buyer_id", val)}
-                                        placeholder="Select buyer"
+                                        placeholder={t("vehicleForm.selectBuyer", "Select buyer")}
                                         allowCreate={true}
-                                        createLabel="Buyer / Entity"
+                                        createLabel={t("vehicleForm.buyer", "Buyer / Entity")}
                                         onAddClick={() => handleOpenEntityModal("buyer_id")}
                                     />
                                 </FieldWrapper>
@@ -1180,7 +1172,7 @@ export function VehicleForm({
                             onClick={handleBack}
                         >
                             <ArrowLeft className="size-3" />
-                            {isEditing ? "Back" : "Cancel"}
+                            {isEditing ? t("common.back", "Back") : t("common.cancel", "Cancel")}
                         </Button>
                         {isEditing && (
                             <span className="hidden sm:inline-block truncate text-xs font-semibold text-heading max-w-[180px]">
@@ -1201,7 +1193,7 @@ export function VehicleForm({
                             {vehicleFinancials.daysOnStock !== null && (
                                 <span className="hidden md:inline-flex h-5 shrink-0 items-center gap-1 rounded border border-amber-200 bg-amber-50 px-1.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800">
                                     <span className="size-1 shrink-0 rounded-full bg-current" />
-                                    {vehicleFinancials.daysOnStock}d on Stock
+                                    {vehicleFinancials.daysOnStock}d {t("vehicles.daysOnStock", "on Stock")}
                                 </span>
                             )}
                         </div>
@@ -1224,10 +1216,10 @@ export function VehicleForm({
                                     size="sm"
                                     className={`h-7 text-xs gap-1 ${canGenerateAnyContract ? "" : "opacity-75"}`}
                                     onClick={() => setContractModalOpen(true)}
-                                    title="Generate documents"
+                                    title={t("vehicles.generateDocuments", "Generate documents")}
                                 >
                                     <FileText className="size-3" />
-                                    Docs
+                                    {t("vehicles.documents", "Docs")}
                                 </Button>
 
                                 <div className="hidden sm:block">
@@ -1236,7 +1228,7 @@ export function VehicleForm({
                                         prevId={prevVehicleId}
                                         nextId={nextVehicleId}
                                         pathSuffix="/edit"
-                                        label="Vehicle"
+                                        label={t("vehicles.title", "Vehicle")}
                                     />
                                 </div>
 
@@ -1249,10 +1241,10 @@ export function VehicleForm({
                                     {mutation.isPending ? (
                                         <>
                                             <Loader2 className="mr-1 size-3 animate-spin" />
-                                            Saving...
+                                            {t("common.saving", "Saving...")}
                                         </>
                                     ) : (
-                                        "Save Changes"
+                                        t("common.saveChanges", "Save Changes")
                                     )}
                                 </Button>
                             </>
@@ -1266,12 +1258,12 @@ export function VehicleForm({
                                 {mutation.isPending ? (
                                     <>
                                         <Loader2 className="mr-1 size-3 animate-spin" />
-                                        Creating...
+                                        {t("common.creating", "Creating...")}
                                     </>
                                 ) : (
                                     <>
                                         <Save className="mr-1 size-3" />
-                                        Create Vehicle
+                                        {t("vehicleForm.createVehicle", "Create Vehicle")}
                                     </>
                                 )}
                             </Button>
@@ -1285,10 +1277,10 @@ export function VehicleForm({
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="text-base font-semibold text-heading">
-                            Add New Person / Entity
+                            {t("legalEntities.addNew", "Add New Person / Entity")}
                         </DialogTitle>
                         <DialogDescription className="text-xs text-muted-foreground">
-                            Fill in all required details. This person will be immediately available as a {createEntityTarget === "seller_id" ? "Seller" : "Buyer"}.
+                            {t("legalEntities.addDescription", "Fill in the details to create a new legal entity.")}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -1312,7 +1304,7 @@ export function VehicleForm({
                             size="sm"
                             onClick={() => setEntityModalOpen(false)}
                         >
-                            Cancel
+                            {t("common.cancel", "Cancel")}
                         </Button>
                         <Button
                             type="button"
@@ -1320,7 +1312,7 @@ export function VehicleForm({
                             onClick={handleCreateEntity}
                             disabled={createEntityMutation.isPending}
                         >
-                            {createEntityMutation.isPending ? "Creating..." : "Create Legal Entity"}
+                            {createEntityMutation.isPending ? t("common.creating", "Creating...") : t("legalEntities.create", "Create Legal Entity")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

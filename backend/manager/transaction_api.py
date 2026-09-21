@@ -43,17 +43,30 @@ def get_user_business(request):
     return request.user.business
 
 
+TX_STATUS_MAP_DE = {
+    'confirmed': 'Bestätigt',
+    'review_required': 'Prüfung erforderlich',
+    'inactive': 'Inaktiv',
+}
+
+
 def log_activity(
     request,
     action: str,
     entity_type: str,
     entity_id: int = None,
     entity_name: str = "",
-    details: str = ""
+    details = ""
 ):
     """
     Log a user activity.
     """
+    import json
+    if isinstance(details, dict):
+        details_str = json.dumps(details, ensure_ascii=False)
+    else:
+        details_str = str(details or "")
+
     print(f"[ActivityLog-TX] ========== LOGGING ACTIVITY ==========")
     print(f"[ActivityLog-TX] Action: {action}, Entity: {entity_type}, ID: {entity_id}, Name: {entity_name}")
     
@@ -73,7 +86,7 @@ def log_activity(
             entity_type=entity_type,
             entity_id=entity_id,
             entity_name=entity_name,
-            details=details
+            details=details_str
         )
         print(f"[ActivityLog-TX] SUCCESS! Created log ID: {log_entry.id}")
     except Exception as e:
@@ -725,13 +738,18 @@ def update_transaction_status(request, internal_id: int, payload: TransactionSta
     tx.save()
     
     # Log the status change
+    old_status_de = TX_STATUS_MAP_DE.get(old_status, old_status)
+    new_status_de = TX_STATUS_MAP_DE.get(new_status, new_status)
     log_activity(
         request,
         action='status_change',
         entity_type='transaction',
         entity_id=tx.internal_id,
         entity_name=f"Transaction #{tx.internal_id}",
-        details=f"Status changed from {old_status} to {new_status}"
+        details={
+            "en": f"Status changed from {old_status} to {new_status}",
+            "de": f"Status geändert von {old_status_de} auf {new_status_de}"
+        }
     )
     
     return 200, serialize_transaction_detail(tx, business)
@@ -774,7 +792,10 @@ def activate_transaction(request, internal_id: int):
         entity_type='transaction',
         entity_id=tx.internal_id,
         entity_name=f"Transaction #{tx.internal_id}",
-        details="Reactivated (inactive → review_required)"
+        details={
+            "en": "Reactivated (inactive → review_required)",
+            "de": "Reaktiviert (Inaktiv → Prüfung erforderlich)"
+        }
     )
     
     return 200, SuccessResponse(message="Transaction activated successfully")

@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react"
 import { Link, useSearchParams, useParams } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { Plus, Search, X, Upload, CheckCircle2, Download, Loader2, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -29,6 +30,7 @@ import type { TransactionFilters, TransactionListItem } from "@/types/transactio
  * Standardized for professional, high-quality management.
  */
 export function TransactionsPage() {
+    const { t } = useTranslation()
     const { business_slug } = useParams()
     const [searchParams] = useSearchParams()
 
@@ -242,9 +244,9 @@ export function TransactionsPage() {
             {/* Page Header */}
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 dark:border-border pb-2">
                 <div>
-                    <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground">Transactions</h1>
+                    <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground">{t("transactions.title", "Transactions")}</h1>
                     <p className="text-xs text-muted-foreground">
-                        Manage your financial transactions and summaries
+                        {t("transactions.subtitle", "Manage your financial transactions and summaries")}
                     </p>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -255,7 +257,7 @@ export function TransactionsPage() {
                         onClick={() => setImportModalOpen(true)}
                     >
                         <Upload className="h-3.5 w-3.5 text-muted-foreground" />
-                        Import CSV
+                        {t("transactions.importCsv", "Import CSV")}
                     </Button>
                     <Button
                         variant="outline"
@@ -269,14 +271,14 @@ export function TransactionsPage() {
                         ) : (
                             <Download className="h-3.5 w-3.5 text-muted-foreground" />
                         )}
-                        {pdfLoading ? "Generating..." : "Export PDF"}
+                        {pdfLoading ? t("transactions.generating", "Generating...") : t("transactions.exportPdf", "Export PDF")}
                     </Button>
                     <Link
                         to={`/${business_slug}/transactions/new`}
                         className="inline-flex items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-xs hover:bg-primary/90"
                     >
                         <Plus className="h-3.5 w-3.5" />
-                        Add Transaction
+                        {t("transactions.addNew", "Add Transaction")}
                     </Link>
                 </div>
             </div>
@@ -337,7 +339,7 @@ export function TransactionsPage() {
                             <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 type="text"
-                                placeholder="Search across ID, vehicle, category, amount, partner..."
+                                placeholder={t("transactions.searchPlaceholder", "Search across ID, vehicle, category, amount, partner...")}
                                 className="pl-8 pr-8 h-8 text-xs"
                                 value={searchValue}
                                 onChange={(e) => setSearchValue(e.target.value)}
@@ -373,7 +375,7 @@ export function TransactionsPage() {
                                     }}
                                 >
                                     <RefreshCw className="mr-1.5 h-3 w-3" />
-                                    Reset
+                                    {t("transactions.reset", "Reset")}
                                 </Button>
                             )}
                         </div>
@@ -398,13 +400,15 @@ export function TransactionsPage() {
             {/* Pagination Sticky Footer */}
             <StickyFooter>
                 <div className="flex items-center gap-1.5 text-sm text-muted-foreground font-medium">
-                    Showing
+                    {t("common.showing", "Showing")}
                     <PerPageInput
                         value={filters.per_page || 20}
                         onChange={handlePerPageChange}
                         label=""
                     />
-                    of <span className="text-foreground">{data?.transactions?.total || 0}</span> transactions
+                    {t("common.of", "of")}{" "}
+                    <span className="text-foreground">{data?.transactions?.total || 0}</span>{" "}
+                    {t("transactions.transactionsLabel", "transactions")}
                 </div>
                 <div className="flex items-center gap-2">
                     <Button
@@ -413,17 +417,18 @@ export function TransactionsPage() {
                         disabled={!data?.transactions || data.transactions.page <= 1}
                         onClick={() => handlePageChange((data?.transactions?.page || 1) - 1)}
                     >
-                        Previous
+                        {t("common.previous", "Previous")}
                     </Button>
                     <span className="text-sm text-muted-foreground px-2 font-medium flex items-center gap-1.5">
-                        Page
+                        {t("common.page", "Page")}{" "}
                         <PageInput
                             currentPage={data?.transactions?.page || 1}
                             totalPages={data?.transactions?.total ? Math.ceil(data.transactions.total / (filters.per_page || 20)) : 1}
                             onPageChange={handlePageChange}
                             disabled={isFetching}
                         />
-                        of <span className="text-foreground">{data?.transactions?.total ? Math.ceil(data.transactions.total / (filters.per_page || 20)) : 1}</span>
+                        {" "}{t("common.of", "of")}{" "}
+                        <span className="text-foreground">{data?.transactions?.total ? Math.ceil(data.transactions.total / (filters.per_page || 20)) : 1}</span>
                     </span>
                     <Button
                         variant="outline"
@@ -431,7 +436,7 @@ export function TransactionsPage() {
                         disabled={!data?.transactions || data.transactions.page >= Math.ceil(data.transactions.total / (filters.per_page || 20))}
                         onClick={() => handlePageChange((data?.transactions?.page || 1) + 1)}
                     >
-                        Next
+                        {t("common.next", "Next")}
                     </Button>
                 </div>
             </StickyFooter>
@@ -452,7 +457,7 @@ export function TransactionsPage() {
             <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle className="text-red-500">Delete Transaction</DialogTitle>
+                        <DialogTitle className="text-red-500">{t("transactions.confirmDelete", "Delete transaction?")}</DialogTitle>
                         <DialogDescription className="py-4 text-base">
                             Are you sure you want to delete transaction <span className="font-bold underline">#{transactionToDelete?.internal_id}</span>?
                             This will mark it as inactive.
@@ -463,14 +468,14 @@ export function TransactionsPage() {
                             variant="ghost"
                             onClick={() => setDeleteDialogOpen(false)}
                         >
-                            Cancel
+                            {t("common.cancel", "Cancel")}
                         </Button>
                         <Button
                             variant="destructive"
                             onClick={handleConfirmDelete}
                             disabled={deleteMutation.isPending}
                         >
-                            {deleteMutation.isPending ? "Deleting..." : "Delete Transaction"}
+                            {deleteMutation.isPending ? t("common.deleting", "Deleting...") : t("common.delete", "Delete")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

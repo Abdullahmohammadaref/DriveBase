@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from "react"
+import { useTranslation } from "react-i18next"
 import { Plus, Trash2, TrendingUp, TrendingDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,6 +21,7 @@ export function VehicleExpensesEarningsCard({
     entries,
     choices,
 }: VehicleExpensesEarningsCardProps) {
+    const { t } = useTranslation()
     // -- State --
     const [showDialog, setShowDialog] = useState(false)
     const [entryType, setEntryType] = useState<"expense" | "earning">("expense")
@@ -58,8 +60,14 @@ export function VehicleExpensesEarningsCard({
                     ?.filter((s) => s.category_id === categoryId)
                     .map((s) => ({ id: s.id, name: s.name })) ?? []
                 : [],
-        [categoryId, choices?.subcategories]
+        [choices?.subcategories, categoryId]
     )
+
+    // Validation
+    const isFormValid = useMemo(() => {
+        const numAmount = parseFloat(amount)
+        return categoryId !== null && !isNaN(numAmount) && numAmount > 0
+    }, [categoryId, amount])
 
     // -- Handlers --
     const resetForm = useCallback(() => {
@@ -70,62 +78,67 @@ export function VehicleExpensesEarningsCard({
         setShowDialog(false)
     }, [])
 
-    const isFormValid = Boolean(
-        categoryId &&
-        subcategoryId &&
-        entryType &&
-        amount &&
-        parseFloat(amount) > 0
-    )
-
-    const handleSubmit = useCallback(async () => {
+    const handleSubmit = async () => {
         setFormError(null)
-        const parsedAmount = parseFloat(amount)
-        if (!isFormValid) return
+        const numAmount = parseFloat(amount)
+
+        if (!categoryId) {
+            setFormError("Category is required")
+            return
+        }
+        if (!subcategoryId) {
+            setFormError("Subcategory is required")
+            return
+        }
+        if (isNaN(numAmount) || numAmount <= 0) {
+            setFormError("Amount must be greater than 0")
+            return
+        }
 
         try {
             await createMutation.mutateAsync({
                 vehicleInternalId,
                 payload: {
                     type: entryType,
-                    amount: parsedAmount,
-                    category_id: categoryId!,
-                    subcategory_id: subcategoryId!,
+                    category_id: categoryId,
+                    subcategory_id: subcategoryId,
+                    amount: numAmount,
                 },
             })
             resetForm()
-        } catch (error: unknown) {
-            const err = error as { response?: { data?: { detail?: string } }; message?: string }
-            setFormError(
-                err.response?.data?.detail || err.message || "Failed to save entry"
-            )
+        } catch (err: any) {
+            const msg =
+                err?.response?.data?.error ||
+                err?.response?.data?.detail ||
+                "Failed to create entry"
+            setFormError(typeof msg === "string" ? msg : JSON.stringify(msg))
         }
-    }, [amount, categoryId, subcategoryId, entryType, vehicleInternalId, createMutation, resetForm, isFormValid])
+    }
 
-    const handleDelete = useCallback(
-        async (entryId: number) => {
-            try {
-                await deleteMutation.mutateAsync({ vehicleInternalId, entryId })
-            } catch {
-                // silently fail
-            }
-        },
-        [vehicleInternalId, deleteMutation]
-    )
+    const handleDelete = async (entryId: number) => {
+        try {
+            await deleteMutation.mutateAsync({
+                vehicleInternalId,
+                entryId,
+            })
+        } catch (err: any) {
+            console.error("Failed to delete entry:", err)
+        }
+    }
 
     return (
         <div className="min-w-0 flex flex-col">
             {/* Section Header with Title and Add Button */}
             <div className="flex items-center justify-between mb-1">
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300 truncate">
-                    Expenses &amp; Earnings
+                    {t("expensesEarnings.title", "Expenses & Earnings")}
                 </span>
                 <button
                     type="button"
                     onClick={() => setShowDialog(true)}
-                    className="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 flex items-center gap-0.5"
+                    className="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 flex items-center gap-0.5 cursor-pointer"
                 >
-                    <Plus className="size-3" /> Add
+                    <Plus className="size-3" /> {t("expensesEarnings.add", "Add")}
                 </button>
             </div>
 
@@ -134,7 +147,7 @@ export function VehicleExpensesEarningsCard({
                 <div className="flex items-center pb-1 border-b border-gray-200 dark:border-border">
                     <div className="flex items-center gap-1.5 min-w-0">
                         <span className="text-[10px] font-semibold uppercase tracking-tight text-gray-400 dark:text-muted-foreground">
-                            NET:
+                            {t("expensesEarnings.net", "NET:")}
                         </span>
                         <span
                             className={
@@ -155,7 +168,7 @@ export function VehicleExpensesEarningsCard({
                 <div className="flex-1 overflow-y-auto min-h-0 divide-y divide-gray-200 dark:divide-border">
                     {entries.length === 0 ? (
                         <div className="flex h-full items-center justify-center text-xs text-gray-400 dark:text-muted-foreground">
-                            No expenses or earnings recorded
+                            {t("expensesEarnings.noEntries", "No expenses or earnings recorded")}
                         </div>
                     ) : (
                         entries.map((entry) => {
@@ -189,7 +202,7 @@ export function VehicleExpensesEarningsCard({
                                             onClick={() => handleDelete(entry.id)}
                                             disabled={deleteMutation.isPending}
                                             className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded text-destructive hover:bg-rose-50 dark:hover:bg-rose-950/40"
-                                            title="Delete entry"
+                                            title={t("expensesEarnings.delete", "Delete entry")}
                                         >
                                             <Trash2 className="size-3" />
                                         </button>
@@ -206,14 +219,14 @@ export function VehicleExpensesEarningsCard({
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle className="text-base font-semibold text-heading">
-                            Add Expense / Earning
+                            {t("expensesEarnings.addTitle", "Add Expense or Earning")}
                         </DialogTitle>
                     </DialogHeader>
 
                     <div className="space-y-3 py-2">
                         {/* Type Toggle */}
                         <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Type</Label>
+                            <Label className="text-xs text-muted-foreground">{t("expensesEarnings.type", "Type")}</Label>
                             <div className="grid grid-cols-2 gap-1 rounded-md border border-border bg-secondary p-0.5">
                                 <button
                                     type="button"
@@ -225,7 +238,7 @@ export function VehicleExpensesEarningsCard({
                                     }`}
                                 >
                                     <TrendingDown className="size-3" />
-                                    Expense
+                                    {t("expensesEarnings.expense", "Expense")}
                                 </button>
                                 <button
                                     type="button"
@@ -237,7 +250,7 @@ export function VehicleExpensesEarningsCard({
                                     }`}
                                 >
                                     <TrendingUp className="size-3" />
-                                    Earning
+                                    {t("expensesEarnings.earning", "Earning")}
                                 </button>
                             </div>
                         </div>
@@ -245,7 +258,7 @@ export function VehicleExpensesEarningsCard({
                         {/* Category */}
                         <div className="space-y-1">
                             <Label className="text-xs text-muted-foreground">
-                                Category <span className="text-destructive">*</span>
+                                {t("expensesEarnings.category", "Category")} <span className="text-destructive">*</span>
                             </Label>
                             <DynamicSelect
                                 choiceType="category"
@@ -255,7 +268,7 @@ export function VehicleExpensesEarningsCard({
                                     setCategoryId(val)
                                     setSubcategoryId(null)
                                 }}
-                                placeholder="Select category"
+                                placeholder={t("expensesEarnings.selectCategory", "Select category")}
                                 createLabel="Category"
                             />
                         </div>
@@ -263,14 +276,14 @@ export function VehicleExpensesEarningsCard({
                         {/* Subcategory */}
                         <div className="space-y-1">
                             <Label className="text-xs text-muted-foreground">
-                                Subcategory <span className="text-destructive">*</span>
+                                {t("expensesEarnings.subcategory", "Subcategory")}
                             </Label>
                             <DynamicSelect
                                 choiceType="subcategory"
                                 options={subcategoryOptions}
                                 value={subcategoryId}
                                 onChange={(val) => setSubcategoryId(val)}
-                                placeholder={categoryId ? "Select subcategory" : "Select category first"}
+                                placeholder={categoryId ? t("expensesEarnings.selectSubcategory", "Select subcategory (optional)") : t("transactions.selectCategoryFirst", "Select category first")}
                                 disabled={!categoryId}
                                 createLabel="Subcategory"
                                 parentId={categoryId ?? undefined}
@@ -280,7 +293,7 @@ export function VehicleExpensesEarningsCard({
                         {/* Amount */}
                         <div className="space-y-1">
                             <Label className="text-xs text-muted-foreground">
-                                Amount (€) <span className="text-destructive">*</span>
+                                {t("expensesEarnings.amount", "Amount (€)")} <span className="text-destructive">*</span>
                             </Label>
                             <Input
                                 type="number"
@@ -307,7 +320,7 @@ export function VehicleExpensesEarningsCard({
                             size="sm"
                             onClick={resetForm}
                         >
-                            Cancel
+                            {t("common.cancel", "Cancel")}
                         </Button>
                         <Button
                             type="button"
@@ -315,7 +328,7 @@ export function VehicleExpensesEarningsCard({
                             onClick={handleSubmit}
                             disabled={!isFormValid || createMutation.isPending}
                         >
-                            {createMutation.isPending ? "Adding..." : "Add Entry"}
+                            {createMutation.isPending ? t("common.adding", "Adding...") : t("expensesEarnings.save", "Save")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

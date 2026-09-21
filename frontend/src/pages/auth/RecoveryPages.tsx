@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { ArrowLeft, Loader2, Mail, User, Lock, KeyRound, CheckCircle, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,6 +24,8 @@ function PollingUI({
     message: string
     onTryAgain?: () => void
 }) {
+    const { t } = useTranslation()
+
     return (
         <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5 text-center">
             {status === "approved" ? (
@@ -31,7 +34,7 @@ function PollingUI({
                         <CheckCircle className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Verified!</h1>
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{t("auth.verified", "Verified!")}</h1>
                         <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">{message}</p>
                     </div>
                 </>
@@ -41,11 +44,11 @@ function PollingUI({
                         <KeyRound className="h-8 w-8 text-amber-600 dark:text-amber-400" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Request Expired</h1>
+                        <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{t("auth.requestExpired", "Request Expired")}</h1>
                         <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">{message}</p>
                     </div>
                     {onTryAgain && (
-                        <Button onClick={onTryAgain} className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8">Try Again</Button>
+                        <Button onClick={onTryAgain} className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8">{t("auth.tryAgain", "Try Again")}</Button>
                     )}
                 </>
             ) : (
@@ -70,7 +73,7 @@ function PollingUI({
 
                     <div className="rounded-lg bg-[#F8F9FA] dark:bg-muted/40 border border-gray-200 dark:border-border p-3 text-xs text-gray-600 dark:text-muted-foreground">
                         <p>
-                            {message || "Waiting for you to click the link..."}
+                            {message || t("auth.waitingForLinkClick", "Waiting for you to click the link...")}
                         </p>
                     </div>
                 </>
@@ -90,6 +93,7 @@ function NewPasswordForm({
     resetToken: string
     onSuccess: () => void
 }) {
+    const { t } = useTranslation()
     const { setNewPassword } = useAuth()
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
@@ -102,12 +106,12 @@ function NewPasswordForm({
         setError(null)
 
         if (password !== confirmPassword) {
-            setError("Passwords do not match")
+            setError(t("auth.passwordsDoNotMatch", "Passwords do not match"))
             return
         }
 
         if (password.length < 4) {
-            setError("Password must be at least 4 characters")
+            setError(t("auth.passwordMin4Chars", "Password must be at least 4 characters"))
             return
         }
 
@@ -121,7 +125,7 @@ function NewPasswordForm({
                 setError(result.message)
             }
         } catch (err) {
-            setError("An unexpected error occurred")
+            setError(t("auth.unexpectedError", "An unexpected error occurred"))
         } finally {
             setIsLoading(false)
         }
@@ -134,22 +138,22 @@ function NewPasswordForm({
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/30 mx-auto mb-2">
                     <CheckCircle className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
                 </div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Email Verified!</h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{t("auth.emailVerifiedTitle", "Email Verified!")}</h1>
                 <p className="mt-0.5 text-xs text-gray-500 dark:text-muted-foreground">
-                    Now set your new password below
+                    {t("auth.nowSetNewPassword", "Now set your new password below")}
                 </p>
             </div>
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                    <Label htmlFor="password" className="text-xs font-medium text-gray-700 dark:text-foreground">New Password <span className="text-destructive ml-0.5">*</span></Label>
+                    <Label htmlFor="password" className="text-xs font-medium text-gray-700 dark:text-foreground">{t("auth.newPassword", "New Password")} <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
                         <Lock className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="password"
                             type={showPassword ? "text" : "password"}
-                            placeholder="Enter new password"
+                            placeholder={t("auth.enterNewPasswordPlaceholder", "Enter new password")}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className="pl-8 pr-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
@@ -167,13 +171,13 @@ function NewPasswordForm({
                 </div>
 
                 <div className="space-y-1.5">
-                    <Label htmlFor="confirm-password" className="text-xs font-medium text-gray-700 dark:text-foreground">Confirm Password <span className="text-destructive ml-0.5">*</span></Label>
+                    <Label htmlFor="confirm-password" className="text-xs font-medium text-gray-700 dark:text-foreground">{t("auth.confirmPassword", "Confirm Password")} <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
                         <Lock className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="confirm-password"
                             type={showPassword ? "text" : "password"}
-                            placeholder="Confirm new password"
+                            placeholder={t("auth.confirmNewPasswordPlaceholder", "Confirm new password")}
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
@@ -192,10 +196,10 @@ function NewPasswordForm({
                     {isLoading ? (
                         <>
                             <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                            Updating...
+                            {t("auth.updating", "Updating...")}
                         </>
                     ) : (
-                        "Set New Password"
+                        t("auth.setNewPassword", "Set New Password")
                     )}
                 </Button>
             </form>
@@ -208,19 +212,21 @@ function NewPasswordForm({
  * Success Screen - Shown after password is updated
  */
 function PasswordUpdatedSuccess() {
+    const { t } = useTranslation()
+
     return (
         <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/30 mx-auto">
                 <CheckCircle className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Password Updated!</h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{t("auth.passwordUpdated", "Password Updated!")}</h1>
                 <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">
-                    Your password has been changed successfully. You can now log in with your new password.
+                    {t("auth.passwordUpdatedDesc", "Your password has been changed successfully. You can now log in with your new password.")}
                 </p>
             </div>
             <Link to="/login/manager" className="block pt-1">
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs h-8">Continue to Login</Button>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs h-8">{t("auth.continueToLogin", "Continue to Login")}</Button>
             </Link>
         </div>
     )
@@ -238,6 +244,7 @@ function PasswordUpdatedSuccess() {
  * 4. Show success
  */
 export function ForgotPasswordPage() {
+    const { t } = useTranslation()
     const { requestPasswordReset } = useAuth()
 
     const [method, setMethod] = useState<"email" | "username">("email")
@@ -284,7 +291,7 @@ export function ForgotPasswordPage() {
                 setError(result.message)
             }
         } catch (err) {
-            setError("An unexpected error occurred")
+            setError(t("auth.unexpectedError", "An unexpected error occurred"))
         } finally {
             setIsLoading(false)
         }
@@ -314,8 +321,8 @@ export function ForgotPasswordPage() {
     if (step === "polling") {
         return (
             <PollingUI
-                title="Check Your Email"
-                description="We've sent a password reset link to your email. Click it to continue."
+                title={t("auth.checkYourEmail", "Check Your Email")}
+                description={t("auth.passwordResetSentDesc", "We've sent a password reset link to your email. Click it to continue.")}
                 status={status}
                 message={message}
                 onTryAgain={handleTryAgain}
@@ -332,14 +339,14 @@ export function ForgotPasswordPage() {
                 className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 dark:text-muted-foreground dark:hover:text-foreground transition-colors"
             >
                 <ArrowLeft className="h-3.5 w-3.5" />
-                Back to manager login
+                {t("auth.backToManagerLogin", "Back to manager login")}
             </Link>
 
             {/* Header */}
             <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Reset Password</h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{t("auth.resetPasswordTitle", "Reset Password")}</h1>
                 <p className="mt-0.5 text-xs text-gray-500 dark:text-muted-foreground">
-                    Enter your email or username to receive a password reset link
+                    {t("auth.resetPasswordSubtitle", "Enter your email or username to receive a password reset link")}
                 </p>
             </div>
 
@@ -355,7 +362,7 @@ export function ForgotPasswordPage() {
                     }`}
                 >
                     <Mail className="h-3.5 w-3.5" />
-                    Email
+                    {t("auth.email", "Email")}
                 </button>
                 <button
                     type="button"
@@ -367,7 +374,7 @@ export function ForgotPasswordPage() {
                     }`}
                 >
                     <User className="h-3.5 w-3.5" />
-                    Username
+                    {t("auth.username", "Username")}
                 </button>
             </div>
 
@@ -375,13 +382,13 @@ export function ForgotPasswordPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
                 {method === "email" ? (
                     <div className="space-y-1.5">
-                        <Label htmlFor="email" className="text-xs font-medium text-gray-700 dark:text-foreground">Email <span className="text-destructive ml-0.5">*</span></Label>
+                        <Label htmlFor="email" className="text-xs font-medium text-gray-700 dark:text-foreground">{t("auth.email", "Email")} <span className="text-destructive ml-0.5">*</span></Label>
                         <div className="relative">
                             <Mail className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="Enter your email"
+                                placeholder={t("auth.enterEmailPlaceholder", "Enter your email")}
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
@@ -392,13 +399,13 @@ export function ForgotPasswordPage() {
                     </div>
                 ) : (
                     <div className="space-y-1.5">
-                        <Label htmlFor="username" className="text-xs font-medium text-gray-700 dark:text-foreground">Username <span className="text-destructive ml-0.5">*</span></Label>
+                        <Label htmlFor="username" className="text-xs font-medium text-gray-700 dark:text-foreground">{t("auth.username", "Username")} <span className="text-destructive ml-0.5">*</span></Label>
                         <div className="relative">
                             <User className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                             <Input
                                 id="username"
                                 type="text"
-                                placeholder="Enter your username"
+                                placeholder={t("auth.enterUsernamePlaceholder", "Enter your username")}
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
@@ -419,10 +426,10 @@ export function ForgotPasswordPage() {
                     {isLoading ? (
                         <>
                             <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                            Sending...
+                            {t("auth.sending", "Sending...")}
                         </>
                     ) : (
-                        "Send Reset Link"
+                        t("auth.sendResetLink", "Send Reset Link")
                     )}
                 </Button>
             </form>
@@ -441,6 +448,7 @@ export function ForgotPasswordPage() {
  * 3. Show success (email is updated on backend when backup is verified)
  */
 export function ForgotEmailPage() {
+    const { t } = useTranslation()
     const { requestEmailChange } = useAuth()
 
     const [username, setUsername] = useState("")
@@ -488,7 +496,7 @@ export function ForgotEmailPage() {
                 setError(result.message)
             }
         } catch (err) {
-            setError("An unexpected error occurred")
+            setError(t("auth.unexpectedError", "An unexpected error occurred"))
         } finally {
             setIsLoading(false)
         }
@@ -507,13 +515,13 @@ export function ForgotEmailPage() {
                     <CheckCircle className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                    <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Email Updated!</h1>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{t("auth.emailUpdatedTitle", "Email Updated!")}</h1>
                     <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">
-                        Your email has been changed to <strong className="text-gray-900 dark:text-foreground font-semibold">{newEmail}</strong>.
+                        {t("auth.emailUpdatedDesc", "Your email has been changed to {{email}}.", { email: newEmail })}
                     </p>
                 </div>
                 <Link to="/login/manager" className="block pt-1">
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs h-8">Continue to Login</Button>
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs h-8">{t("auth.continueToLogin", "Continue to Login")}</Button>
                 </Link>
             </div>
         )
@@ -523,8 +531,8 @@ export function ForgotEmailPage() {
     if (step === "polling") {
         return (
             <PollingUI
-                title="Check Your Backup Email"
-                description={`We've sent a verification link to ${backupEmail}. Click it to verify your identity.`}
+                title={t("auth.checkYourBackupEmail", "Check Your Backup Email")}
+                description={t("auth.backupVerificationSentDesc", "We've sent a verification link to {{email}}. Click it to verify your identity.", { email: backupEmail })}
                 status={status}
                 message={message}
                 onTryAgain={handleTryAgain}
@@ -536,8 +544,8 @@ export function ForgotEmailPage() {
     if (step === "polling_new_email") {
         return (
             <PollingUI
-                title="Check Your NEW Email"
-                description={`Backup verified! Now check ${newEmail} for the confirmation link.`}
+                title={t("auth.checkYourNewEmail", "Check Your NEW Email")}
+                description={t("auth.newEmailVerificationSentDesc", "Backup verified! Now check {{email}} for the confirmation link.", { email: newEmail })}
                 status={status}
                 message={message}
                 onTryAgain={handleTryAgain}
@@ -554,27 +562,27 @@ export function ForgotEmailPage() {
                 className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 dark:text-muted-foreground dark:hover:text-foreground transition-colors"
             >
                 <ArrowLeft className="h-3.5 w-3.5" />
-                Back to manager login
+                {t("auth.backToManagerLogin", "Back to manager login")}
             </Link>
 
             {/* Header */}
             <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Change Email</h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{t("auth.changeEmailTitle", "Change Email")}</h1>
                 <p className="mt-0.5 text-xs text-gray-500 dark:text-muted-foreground">
-                    Verify your identity using your backup email
+                    {t("auth.changeEmailSubtitle", "Verify your identity using your backup email")}
                 </p>
             </div>
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                    <Label htmlFor="username" className="text-xs font-medium text-gray-700 dark:text-foreground">Username <span className="text-destructive ml-0.5">*</span></Label>
+                    <Label htmlFor="username" className="text-xs font-medium text-gray-700 dark:text-foreground">{t("auth.username", "Username")} <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
                         <User className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="username"
                             type="text"
-                            placeholder="Enter your username"
+                            placeholder={t("auth.enterUsernamePlaceholder", "Enter your username")}
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
@@ -585,13 +593,13 @@ export function ForgotEmailPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                    <Label htmlFor="password" className="text-xs font-medium text-gray-700 dark:text-foreground">Password <span className="text-destructive ml-0.5">*</span></Label>
+                    <Label htmlFor="password" className="text-xs font-medium text-gray-700 dark:text-foreground">{t("auth.password", "Password")} <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
                         <Lock className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="password"
                             type="password"
-                            placeholder="Enter your password"
+                            placeholder={t("auth.enterPasswordPlaceholder", "Enter your password")}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
@@ -601,13 +609,13 @@ export function ForgotEmailPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                    <Label htmlFor="backup-email" className="text-xs font-medium text-gray-700 dark:text-foreground">Backup Email <span className="text-destructive ml-0.5">*</span></Label>
+                    <Label htmlFor="backup-email" className="text-xs font-medium text-gray-700 dark:text-foreground">{t("auth.backupEmail", "Backup Email")} <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
                         <Mail className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="backup-email"
                             type="email"
-                            placeholder="Your registered backup email"
+                            placeholder={t("auth.registeredBackupPlaceholder", "Your registered backup email")}
                             value={backupEmail}
                             onChange={(e) => setBackupEmail(e.target.value)}
                             className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
@@ -615,18 +623,18 @@ export function ForgotEmailPage() {
                         />
                     </div>
                     <p className="text-[11px] text-gray-500 dark:text-muted-foreground mt-1">
-                        We'll send a verification link to this email
+                        {t("auth.backupEmailHelper", "We'll send a verification link to this email")}
                     </p>
                 </div>
 
                 <div className="space-y-1.5">
-                    <Label htmlFor="new-email" className="text-xs font-medium text-gray-700 dark:text-foreground">New Email <span className="text-destructive ml-0.5">*</span></Label>
+                    <Label htmlFor="new-email" className="text-xs font-medium text-gray-700 dark:text-foreground">{t("auth.newEmail", "New Email")} <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
                         <Mail className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="new-email"
                             type="email"
-                            placeholder="Your new email address"
+                            placeholder={t("auth.newEmailPlaceholder", "Your new email address")}
                             value={newEmail}
                             onChange={(e) => setNewEmail(e.target.value)}
                             className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
@@ -645,10 +653,10 @@ export function ForgotEmailPage() {
                     {isLoading ? (
                         <>
                             <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                            Sending...
+                            {t("auth.sending", "Sending...")}
                         </>
                     ) : (
-                        "Send Verification Link"
+                        t("auth.sendVerificationLink", "Send Verification Link")
                     )}
                 </Button>
             </form>
@@ -656,7 +664,7 @@ export function ForgotEmailPage() {
             {/* Info */}
             <div className="rounded-lg bg-[#F8F9FA] dark:bg-muted/40 border border-gray-200 dark:border-border p-3 text-xs text-gray-600 dark:text-muted-foreground">
                 <p>
-                    <strong className="text-gray-900 dark:text-foreground">How it works:</strong> Click the verification link sent to your backup email. Once verified, your email will be updated automatically.
+                    {t("auth.changeEmailHowItWorks", "How it works: Click the verification link sent to your backup email. Once verified, your email will be updated automatically.")}
                 </p>
             </div>
         </div>

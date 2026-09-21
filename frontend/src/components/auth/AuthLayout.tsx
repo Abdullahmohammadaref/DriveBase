@@ -2,8 +2,7 @@ import { useState, useEffect } from "react"
 import { Link, Outlet } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Moon, Sun, Car, ZoomIn, ZoomOut } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, type SupportedLocale } from "@/lib/i18n"
+import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, type SupportedLocale, type AnyLocale } from "@/lib/i18n"
 
 // SVG Flag components matching the legacy design
 const GermanFlag = () => (
@@ -38,18 +37,25 @@ const ArabicFlag = () => (
     </svg>
 )
 
-const FLAGS: Record<SupportedLocale, React.ComponentType> = {
+const FLAGS: Record<AnyLocale, React.ComponentType> = {
     de: GermanFlag,
     en: EnglishFlag,
     tr: TurkishFlag,
     ar: ArabicFlag,
 }
 
-// Get the next locale in cycle: DE → TR → EN → AR → DE
+// ============================================================================
+// DEACTIVATED FEATURE: Arabic ('ar') and Turkish ('tr') in language cycle
+// WARNING: DO NOT DELETE THIS COMMENTED CODE!
+// Preserved for future reactivation. See deactivated_features_docs.md.
+// Previous 4-language cycle:
+// const order: SupportedLocale[] = ['de', 'tr', 'en', 'ar']
+// const currentIndex = order.indexOf(current)
+// return order[(currentIndex + 1) % order.length]
+// ============================================================================
+// Toggle exclusively between German ('de', primary) and English ('en', secondary)
 const getNextLocale = (current: SupportedLocale): SupportedLocale => {
-    const order: SupportedLocale[] = ['de', 'tr', 'en', 'ar']
-    const currentIndex = order.indexOf(current)
-    return order[(currentIndex + 1) % order.length]
+    return current === 'de' ? 'en' : 'de'
 }
 
 /**
@@ -59,14 +65,14 @@ const getNextLocale = (current: SupportedLocale): SupportedLocale => {
 export function AuthLayout() {
     const [darkMode, setDarkMode] = useState(false)
     const [uiScale, setUiScale] = useState<number>(0.7)
-    const { i18n, t } = useTranslation()
+    const { t, i18n } = useTranslation()
 
-    const currentLocale = (SUPPORTED_LOCALES.includes(i18n.language as SupportedLocale))
+    const currentLocale = ((SUPPORTED_LOCALES as readonly string[]).includes(i18n.language))
         ? i18n.language as SupportedLocale
         : DEFAULT_LOCALE
 
     const nextLocale = getNextLocale(currentLocale)
-    const NextFlag = FLAGS[nextLocale]
+    const CurrentFlag = FLAGS[currentLocale]
 
     // Initialize states from localStorage
     useEffect(() => {
@@ -92,10 +98,13 @@ export function AuthLayout() {
         localStorage.setItem("theme", newDarkMode ? "dark" : "light")
     }
 
+    // Keep references to prevent TypeScript unused variable errors while dark mode button is deactivated
+    void darkMode; void toggleDarkMode; void Sun; void Moon;
+
     const handleLanguageSwitch = () => {
         i18n.changeLanguage(nextLocale)
         // Update document direction for RTL languages (Arabic)
-        document.documentElement.dir = nextLocale === 'ar' ? 'rtl' : 'ltr'
+        document.documentElement.dir = (nextLocale as string) === 'ar' ? 'rtl' : 'ltr'
         document.documentElement.lang = nextLocale
     }
 
@@ -134,14 +143,14 @@ export function AuthLayout() {
                         <button
                             onClick={handleZoomOut}
                             className="flex h-8 w-8 items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-accent dark:text-muted-foreground transition-colors"
-                            title="Zoom Out"
+                            title={t("common.zoomOut", "Zoom Out")}
                         >
                             <ZoomOut className="h-3.5 w-3.5" />
                         </button>
                         <div className="h-3.5 w-[1px] bg-gray-200 dark:bg-border" />
                         <span
                             className="px-2 text-xs font-semibold text-gray-700 dark:text-foreground select-none min-w-[38px] text-center"
-                            title={`Current Zoom: ${Math.round(uiScale * 100)}%`}
+                            title={t("common.currentZoom", "Current Zoom: {{zoom}}%", { zoom: Math.round(uiScale * 100) })}
                         >
                             {Math.round(uiScale * 100)}%
                         </span>
@@ -149,24 +158,31 @@ export function AuthLayout() {
                         <button
                             onClick={handleZoomIn}
                             className="flex h-8 w-8 items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-accent dark:text-muted-foreground transition-colors"
-                            title="Zoom In"
+                            title={t("common.zoomIn", "Zoom In")}
                         >
                             <ZoomIn className="h-3.5 w-3.5" />
                         </button>
                     </div>
 
                     {/* Language Switcher - Flag button matching legacy design */}
-                    <Button
-                        variant="ghost"
-                        size="icon"
+                    <button
                         onClick={handleLanguageSwitch}
                         title={`Switch to ${LOCALE_CONFIG[nextLocale].name}`}
-                        className="flex items-center justify-center h-8 w-8"
+                        className="h-8 px-2.5 border border-gray-200 dark:border-border rounded-md text-xs text-gray-700 dark:text-foreground bg-white dark:bg-card hover:bg-gray-50 dark:hover:bg-muted/50 flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                     >
-                        <NextFlag />
-                    </Button>
+                        <CurrentFlag />
+                        <span className="text-[11px] font-semibold uppercase">{currentLocale}</span>
+                    </button>
 
-                    {/* Theme Toggle */}
+                    {/* 
+                      ============================================================================
+                      DEACTIVATED FEATURE: Dark Mode Toggle Button
+                      WARNING: DO NOT DELETE THIS COMMENTED CODE!
+                      This button is temporarily deactivated per user request and will be reactivated later.
+                      See deactivated_features_docs.md for details and reactivation instructions.
+                      ============================================================================
+                    */}
+                    {/*
                     <Button
                         variant="ghost"
                         size="icon"
@@ -180,6 +196,7 @@ export function AuthLayout() {
                             <Moon className="h-4 w-4" />
                         )}
                     </Button>
+                    */}
                 </div>
             </header>
 
@@ -190,7 +207,7 @@ export function AuthLayout() {
 
             {/* Footer */}
             <footer className="fixed bottom-0 left-0 right-0 py-3 text-center text-xs text-gray-500 dark:text-muted-foreground bg-[#F8F9FA]/90 dark:bg-background/80 backdrop-blur-sm border-t border-gray-200 dark:border-border">
-                © {new Date().getFullYear()} ACAR Vehicle Management
+                {t("auth.footerCopyright", "© {{year}} ACAR Vehicle Management", { year: new Date().getFullYear() })}
             </footer>
         </div>
     )

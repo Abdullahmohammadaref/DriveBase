@@ -1,6 +1,6 @@
 import { useNavigate, useParams, useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { SUPPORTED_LOCALES, DEFAULT_LOCALE, type SupportedLocale } from "@/lib/i18n"
+import { SUPPORTED_LOCALES, DEFAULT_LOCALE, type SupportedLocale, type AnyLocale } from "@/lib/i18n"
 
 // SVG Flag components matching the legacy design
 const GermanFlag = () => (
@@ -42,18 +42,25 @@ const ArabicFlag = () => (
     </svg>
 )
 
-const FLAGS: Record<SupportedLocale, React.ComponentType> = {
+const FLAGS: Record<AnyLocale, React.ComponentType> = {
     de: GermanFlag,
     en: EnglishFlag,
     tr: TurkishFlag,
     ar: ArabicFlag,
 }
 
-// Get the next locale in cycle: DE → TR → EN → AR → DE
+// ============================================================================
+// DEACTIVATED FEATURE: Arabic ('ar') and Turkish ('tr') in language cycle
+// WARNING: DO NOT DELETE THIS COMMENTED CODE!
+// Preserved for future reactivation. See deactivated_features_docs.md.
+// Previous 4-language cycle:
+// const order: SupportedLocale[] = ['de', 'tr', 'en', 'ar']
+// const currentIndex = order.indexOf(current)
+// return order[(currentIndex + 1) % order.length]
+// ============================================================================
+// Toggle exclusively between German ('de', primary) and English ('en', secondary)
 const getNextLocale = (current: SupportedLocale): SupportedLocale => {
-    const order: SupportedLocale[] = ['de', 'tr', 'en', 'ar']
-    const currentIndex = order.indexOf(current)
-    return order[(currentIndex + 1) % order.length]
+    return current === 'de' ? 'en' : 'de'
 }
 
 export function LanguageSwitcher() {
@@ -62,12 +69,12 @@ export function LanguageSwitcher() {
     const location = useLocation()
     const { business_slug, locale } = useParams<{ business_slug: string; locale?: string }>()
 
-    const currentLocale = (locale && SUPPORTED_LOCALES.includes(locale as SupportedLocale))
+    const currentLocale = (locale && (SUPPORTED_LOCALES as readonly string[]).includes(locale))
         ? locale as SupportedLocale
         : DEFAULT_LOCALE
 
     const nextLocale = getNextLocale(currentLocale)
-    const NextFlag = FLAGS[nextLocale]
+    const CurrentFlag = FLAGS[currentLocale]
 
     const handleSwitch = () => {
         // Get the current path after locale
@@ -79,7 +86,7 @@ export function LanguageSwitcher() {
         }
 
         // Remove current locale prefix if present
-        if (locale && SUPPORTED_LOCALES.includes(locale as SupportedLocale)) {
+        if (locale && (SUPPORTED_LOCALES as readonly string[]).includes(locale)) {
             pathAfterLocale = pathAfterLocale.replace(`/${locale}`, '')
         }
 
@@ -113,10 +120,10 @@ export function LanguageSwitcher() {
     return (
         <button
             onClick={handleSwitch}
-            className="h-7 px-2 border border-gray-200 dark:border-border rounded-md text-xs text-gray-700 dark:text-foreground bg-white dark:bg-card hover:bg-gray-50 dark:hover:bg-muted/50 flex items-center gap-1.5 shadow-xs transition-colors"
-            title={`Switch to ${nextLocale.toUpperCase()}`}
+            className="h-7 px-2 border border-gray-200 dark:border-border rounded-md text-xs text-gray-700 dark:text-foreground bg-white dark:bg-card hover:bg-gray-50 dark:hover:bg-muted/50 flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+            title={currentLocale === 'de' ? "Switch to English" : "Zu Deutsch wechseln"}
         >
-            <NextFlag />
+            <CurrentFlag />
             <span className="text-[11px] font-semibold uppercase">{currentLocale}</span>
         </button>
     )

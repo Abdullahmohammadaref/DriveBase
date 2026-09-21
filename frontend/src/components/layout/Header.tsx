@@ -22,7 +22,7 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
     const [uiScale, setUiScale] = useState<number>(0.7)
 
     // Determine current locale
-    const currentLocale = (locale && SUPPORTED_LOCALES.includes(locale as SupportedLocale))
+    const currentLocale = (locale && (SUPPORTED_LOCALES as readonly string[]).includes(locale))
         ? locale as SupportedLocale
         : DEFAULT_LOCALE
 
@@ -73,6 +73,9 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
         document.documentElement.classList.toggle("dark", newDarkMode)
         localStorage.setItem("theme", newDarkMode ? "dark" : "light")
     }
+
+    // Keep references to prevent TypeScript unused variable errors while dark mode button is deactivated
+    void darkMode; void toggleDarkMode; void Sun; void Moon;
 
     const handleLogout = () => {
         setUserMenuOpen(false)
@@ -130,7 +133,15 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
                     </button>
                 </div>
 
-                {/* Theme Toggle */}
+                {/* 
+                  ============================================================================
+                  DEACTIVATED FEATURE: Dark Mode Toggle Button
+                  WARNING: DO NOT DELETE THIS COMMENTED CODE!
+                  This button is temporarily deactivated per user request and will be reactivated later.
+                  See deactivated_features_docs.md for details and reactivation instructions.
+                  ============================================================================
+                */}
+                {/*
                 <button
                     onClick={toggleDarkMode}
                     className="h-7 px-2 border border-gray-200 dark:border-border rounded-md text-xs text-gray-700 dark:text-foreground bg-white dark:bg-card hover:bg-gray-50 dark:hover:bg-muted/50 flex items-center justify-center gap-1.5 shadow-xs transition-colors"
@@ -142,6 +153,7 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
                         <Moon className="h-3.5 w-3.5 text-gray-600 dark:text-muted-foreground" />
                     )}
                 </button>
+                */}
 
                 {/* Language Switcher */}
                 <LanguageSwitcher />

@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { Mail, ArrowLeft, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -13,6 +14,7 @@ import { Button } from "@/components/ui/button"
  * - email-change: "Verification email sent"
  */
 export function CheckEmailPage() {
+    const { t } = useTranslation()
     const location = useLocation()
     const state = location.state as {
         message?: string
@@ -20,20 +22,20 @@ export function CheckEmailPage() {
         email?: string
     } | null
 
-    const message = state?.message || "Please check your email for the next step."
+    const message = state?.message || t("auth.checkEmailDefaultMessage", "Please check your email for the next step.")
     const type = state?.type || "manager"
 
     // Determine back link based on type
     const getBackLink = () => {
         switch (type) {
             case "employee":
-                return { href: "/login/employee", label: "Back to employee login" }
+                return { href: "/login/employee", label: t("auth.backToEmployeeLogin", "Back to employee login") }
             case "password-reset":
-                return { href: "/login/forgot-password", label: "Try again" }
+                return { href: "/login/forgot-password", label: t("auth.tryAgain", "Try again") }
             case "email-change":
-                return { href: "/login/forgot-email", label: "Try again" }
+                return { href: "/login/forgot-email", label: t("auth.tryAgain", "Try again") }
             default:
-                return { href: "/login/manager", label: "Back to manager login" }
+                return { href: "/login/manager", label: t("auth.backToManagerLogin", "Back to manager login") }
         }
     }
 
@@ -43,11 +45,11 @@ export function CheckEmailPage() {
     const getTitle = () => {
         switch (type) {
             case "password-reset":
-                return "Password Reset Sent"
+                return t("auth.passwordResetSentTitle", "Password Reset Sent")
             case "email-change":
-                return "Verification Started"
+                return t("auth.verificationStartedTitle", "Verification Started")
             default:
-                return "Check Your Email"
+                return t("auth.checkEmailGenericTitle", "Check Your Email")
         }
     }
 
@@ -74,24 +76,23 @@ export function CheckEmailPage() {
 
             {/* Info Box */}
             <div className="rounded-lg bg-[#F8F9FA] dark:bg-muted/40 border border-gray-200 dark:border-border p-3.5 text-left">
-                <h3 className="text-xs font-semibold text-gray-900 dark:text-foreground mb-1.5">What happens next?</h3>
+                <h3 className="text-xs font-semibold text-gray-900 dark:text-foreground mb-1.5">{t("auth.whatHappensNext", "What happens next?")}</h3>
                 {type === "employee" ? (
                     <p className="text-xs text-gray-500 dark:text-muted-foreground">
-                        Your manager will receive a login link. Once they click it,
-                        you'll be logged in automatically. This usually takes a few minutes.
+                        {t("auth.employeeExplanation", "Your manager will receive a login link. Once they click it, you'll be logged in automatically. This usually takes a few minutes.")}
                     </p>
                 ) : type === "email-change" ? (
                     <ol className="text-xs text-gray-500 dark:text-muted-foreground list-decimal list-inside space-y-1">
-                        <li>Check your backup email for a verification link</li>
-                        <li>Click the link to verify your identity</li>
-                        <li>A second link will be sent to your new email</li>
-                        <li>Click that link to complete the change</li>
+                        <li>{t("auth.emailChangeStep1", "Check your backup email for a verification link")}</li>
+                        <li>{t("auth.emailChangeStep2", "Click the link to verify your identity")}</li>
+                        <li>{t("auth.emailChangeStep3", "A second link will be sent to your new email")}</li>
+                        <li>{t("auth.emailChangeStep4", "Click that link to complete the change")}</li>
                     </ol>
                 ) : (
                     <ul className="text-xs text-gray-500 dark:text-muted-foreground space-y-1">
-                        <li>• Check your inbox (and spam folder)</li>
-                        <li>• The link expires in 1 minute</li>
-                        <li>• Click the link to continue</li>
+                        <li>• {t("auth.generalEmailStep1", "Check your inbox (and spam folder)")}</li>
+                        <li>• {t("auth.generalEmailStep2", "The link expires in 1 minute")}</li>
+                        <li>• {t("auth.generalEmailStep3", "Click the link to continue")}</li>
                     </ul>
                 )}
             </div>
@@ -106,7 +107,7 @@ export function CheckEmailPage() {
                 </Link>
 
                 <Link to="/login" className="text-xs text-blue-600 dark:text-blue-400 hover:underline transition-colors">
-                    Return to login options
+                    {t("auth.returnToLoginOptions", "Return to login options")}
                 </Link>
             </div>
         </div>

@@ -1,4 +1,5 @@
 import { ArrowUpDown } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
@@ -30,6 +31,7 @@ export function SortMenuButton({
     onSortChange,
     onOrderChange,
 }: SortMenuButtonProps) {
+    const { t } = useTranslation()
     const activeOption = options.find((option) => option.value === sort)
 
     return (
@@ -37,7 +39,7 @@ export function SortMenuButton({
             <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="gap-2">
                     <ArrowUpDown className="h-4 w-4" />
-                    Sort
+                    {t("sort.sort", "Sort")}
                     {activeOption && (
                         <span className="hidden text-muted-foreground lg:inline">
                             {activeOption.label}
@@ -47,7 +49,7 @@ export function SortMenuButton({
             </DropdownMenuTrigger>
 
             <DropdownMenuContent align="end" className="w-64">
-                <DropdownMenuLabel>Sort By</DropdownMenuLabel>
+                <DropdownMenuLabel>{t("sort.sortBy", "Sort By")}</DropdownMenuLabel>
                 <DropdownMenuRadioGroup value={sort} onValueChange={onSortChange}>
                     {options.map((option) => (
                         <DropdownMenuRadioItem key={option.value} value={option.value}>
@@ -58,13 +60,13 @@ export function SortMenuButton({
 
                 <DropdownMenuSeparator />
 
-                <DropdownMenuLabel>Order</DropdownMenuLabel>
+                <DropdownMenuLabel>{t("sort.order", "Order")}</DropdownMenuLabel>
                 <DropdownMenuRadioGroup
                     value={order}
                     onValueChange={(value) => onOrderChange(value as "asc" | "desc")}
                 >
-                    <DropdownMenuRadioItem value="desc">Descending</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="asc">Ascending</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="desc">{t("sort.descending", "Descending")}</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="asc">{t("sort.ascending", "Ascending")}</DropdownMenuRadioItem>
                 </DropdownMenuRadioGroup>
             </DropdownMenuContent>
         </DropdownMenu>

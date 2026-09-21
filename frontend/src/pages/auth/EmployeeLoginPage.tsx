@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { ArrowLeft, Loader2, User, Lock, CheckCircle, Clock, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,6 +19,7 @@ import { useAuthPolling } from "@/hooks/useAuthPolling"
  * 4. This page polls until approved, then auto-logs in
  */
 export function EmployeeLoginPage() {
+    const { t } = useTranslation()
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
     const [isLoading, setIsLoading] = useState(false)
@@ -25,7 +27,7 @@ export function EmployeeLoginPage() {
 
     const { status: pollStatus, message: pollMessage, startPolling } = useAuthPolling({
         onExpired: () => {
-            setError("Approval request expired. Please try again.")
+            setError(t("auth.approvalRequestExpired", "Approval request expired. Please try again."))
         },
     })
 
@@ -62,7 +64,7 @@ export function EmployeeLoginPage() {
                 </div>
 
                 <div>
-                    <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Waiting for Approval</h1>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{t("auth.waitingForApproval", "Waiting for Approval")}</h1>
                     <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">{pollMessage}</p>
                 </div>
 
@@ -77,11 +79,11 @@ export function EmployeeLoginPage() {
                 </div>
 
                 <div className="rounded-lg bg-[#F8F9FA] dark:bg-muted/40 border border-gray-200 dark:border-border p-3.5 text-left">
-                    <h3 className="text-xs font-semibold text-gray-900 dark:text-foreground mb-1.5">What's happening?</h3>
+                    <h3 className="text-xs font-semibold text-gray-900 dark:text-foreground mb-1.5">{t("auth.whatsHappening", "What's happening?")}</h3>
                     <ul className="text-xs text-gray-500 dark:text-muted-foreground space-y-1">
-                        <li>✉️ Your manager received an approval request</li>
-                        <li>⏳ Once they click "Approve", you'll be logged in</li>
-                        <li>🔄 This page is checking every 2 seconds...</li>
+                        <li>{t("auth.employeeReceivedStep", "✉️ Your manager received an approval request")}</li>
+                        <li>{t("auth.onceApprovedStep", "⏳ Once they click \"Approve\", you'll be logged in")}</li>
+                        <li>{t("auth.checkingEvery2SecStep", "🔄 This page is checking every 2 seconds...")}</li>
                     </ul>
                 </div>
             </div>
@@ -96,7 +98,7 @@ export function EmployeeLoginPage() {
                     <CheckCircle className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                    <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Login Approved!</h1>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{t("auth.loginApproved", "Login Approved!")}</h1>
                     <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">{pollMessage}</p>
                 </div>
                 <Loader2 className="h-5 w-5 animate-spin mx-auto text-blue-600 dark:text-blue-400" />
@@ -112,10 +114,10 @@ export function EmployeeLoginPage() {
                     <XCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
                 </div>
                 <div>
-                    <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Request Failed</h1>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{t("auth.requestFailed", "Request Failed")}</h1>
                     <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">{pollMessage}</p>
                 </div>
-                <Button onClick={() => window.location.reload()} className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8">Try Again</Button>
+                <Button onClick={() => window.location.reload()} className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8">{t("auth.tryAgain", "Try Again")}</Button>
             </div>
         )
     }
@@ -128,25 +130,25 @@ export function EmployeeLoginPage() {
                 className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 dark:text-muted-foreground dark:hover:text-foreground transition-colors"
             >
                 <ArrowLeft className="h-3.5 w-3.5" />
-                Back to login options
+                {t("auth.backToLoginOptions", "Back to login options")}
             </Link>
 
             <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Employee Login</h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{t("auth.employeeLoginTitle", "Employee Login")}</h1>
                 <p className="mt-0.5 text-xs text-gray-500 dark:text-muted-foreground">
-                    Enter your credentials. Your manager will approve the login.
+                    {t("auth.employeeLoginSubtitle", "Enter your credentials. Your manager will approve the login.")}
                 </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                    <Label htmlFor="username" className="text-xs font-medium text-gray-700 dark:text-foreground">Username <span className="text-destructive ml-0.5">*</span></Label>
+                    <Label htmlFor="username" className="text-xs font-medium text-gray-700 dark:text-foreground">{t("auth.username", "Username")} <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
                         <User className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="username"
                             type="text"
-                            placeholder="Enter your username"
+                            placeholder={t("auth.enterUsernamePlaceholder", "Enter your username")}
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
@@ -158,13 +160,13 @@ export function EmployeeLoginPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                    <Label htmlFor="password" className="text-xs font-medium text-gray-700 dark:text-foreground">Password <span className="text-destructive ml-0.5">*</span></Label>
+                    <Label htmlFor="password" className="text-xs font-medium text-gray-700 dark:text-foreground">{t("auth.password", "Password")} <span className="text-destructive ml-0.5">*</span></Label>
                     <div className="relative">
                         <Lock className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <Input
                             id="password"
                             type="password"
-                            placeholder="Enter your password"
+                            placeholder={t("auth.enterPasswordPlaceholder", "Enter your password")}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className="pl-8 bg-[#F3F3F3] dark:bg-muted/40 border-gray-200 dark:border-border h-8 text-xs rounded-md text-foreground"
@@ -184,18 +186,17 @@ export function EmployeeLoginPage() {
                     {isLoading ? (
                         <>
                             <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                            Submitting...
+                            {t("auth.submitting", "Submitting...")}
                         </>
                     ) : (
-                        "Request Login"
+                        t("auth.requestLogin", "Request Login")
                     )}
                 </Button>
             </form>
 
             <div className="rounded-lg bg-[#F8F9FA] dark:bg-muted/40 border border-gray-200 dark:border-border p-3 text-xs text-gray-600 dark:text-muted-foreground">
                 <p>
-                    <strong className="text-gray-900 dark:text-foreground">How it works:</strong> After submitting, your manager will receive a
-                    notification. Once they approve, you'll be logged in automatically.
+                    {t("auth.employeeHowItWorks", "How it works: After submitting, your manager will receive a notification. Once they approve, you'll be logged in automatically.")}
                 </p>
             </div>
         </div>

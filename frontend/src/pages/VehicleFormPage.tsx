@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { useQuery } from "@tanstack/react-query"
 import { Loader2, ArrowLeft } from "lucide-react"
 import { VehicleForm } from "@/components/vehicles/VehicleForm"
@@ -13,6 +14,7 @@ import type { VehicleUpdateInput } from "@/lib/validations"
 import { RecordNavigation } from "@/components/RecordNavigation"
 
 export function VehicleFormPage() {
+    const { t } = useTranslation()
     const navigate = useNavigate()
     const { user } = useAuth()
     const { business_slug, id } = useParams<{ business_slug: string; id: string }>()
@@ -63,13 +65,13 @@ export function VehicleFormPage() {
         return (
             <div className="space-y-4 rounded-md border border-border bg-background p-6">
                 <div className="flex items-center gap-3">
-                    <Button variant="outline" size="icon" className="size-7" onClick={handleBack}>
+                    <Button variant="outline" size="icon" className="size-7" onClick={handleBack} aria-label={t("common.back", "Back")}>
                         <ArrowLeft className="size-3.5" />
                     </Button>
-                    <h1 className="text-base font-semibold text-heading">Vehicle Not Found</h1>
+                    <h1 className="text-base font-semibold text-heading">{t("vehicles.notFound", "Vehicle Not Found")}</h1>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                    The vehicle with ID #{id} could not be found or has been removed.
+                    {t("vehicles.notFoundDesc", "The vehicle with ID #{{id}} could not be found or has been removed.", { id })}
                 </p>
             </div>
         )
@@ -90,7 +92,7 @@ export function VehicleFormPage() {
                             size="icon"
                             className="size-7 shrink-0"
                             onClick={handleBack}
-                            aria-label="Back"
+                            aria-label={t("common.back", "Back")}
                         >
                             <ArrowLeft className="size-3.5" />
                         </Button>
@@ -99,7 +101,7 @@ export function VehicleFormPage() {
                                 {vehicleTitle} <span className="text-muted-foreground font-normal">#{vehicle.internal_id}</span>
                             </h1>
                             <span className="hidden sm:inline text-[11px] text-muted-foreground truncate">
-                                Vehicles / {vehicle.make_name} #{vehicle.internal_id}
+                                {t("nav.vehicles", "Vehicles")} / {vehicle.make_name} #{vehicle.internal_id}
                             </span>
                         </div>
                     </div>
@@ -110,7 +112,7 @@ export function VehicleFormPage() {
                             prevId={prevVehicleId}
                             nextId={nextVehicleId}
                             pathSuffix="/edit"
-                            label="Vehicle"
+                            label={t("vehicles.vehicleLabel", "Vehicle")}
                         />
                     </div>
                 </div>

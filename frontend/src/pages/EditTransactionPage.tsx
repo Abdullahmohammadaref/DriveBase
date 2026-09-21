@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { ArrowLeft, Loader2 } from "lucide-react"
 // import { Columns2, Rows2 } from "lucide-react" // DEACTIVATED: Split view toggle icons
 import { Button } from "@/components/ui/button"
@@ -20,6 +21,7 @@ import { RecordNavigation, ReviewQueueNavigation } from "@/components/RecordNavi
  * - Cache invalidation ensures fresh data on navigation
  */
 export function EditTransactionPage() {
+    const { t } = useTranslation()
     const navigate = useNavigate()
     const { business_slug, id } = useParams()
     const transactionId = id ? parseInt(id) : 0
@@ -124,13 +126,13 @@ export function EditTransactionPage() {
         return (
             <div className="space-y-6">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={handleBack}>
+                    <Button variant="ghost" size="icon" onClick={handleBack} aria-label={t("common.back", "Back")}>
                         <ArrowLeft className="h-5 w-5" />
                     </Button>
-                    <h1 className="text-2xl font-bold text-foreground">Transaction Not Found</h1>
+                    <h1 className="text-2xl font-bold text-foreground">{t("transactions.form.notFoundTitle", "Transaction Not Found")}</h1>
                 </div>
                 <p className="text-muted-foreground">
-                    The transaction with ID {id} could not be found.
+                    {t("transactions.form.notFoundDesc", "The transaction with ID {{id}} could not be found.", { id })}
                 </p>
             </div>
         )
@@ -141,15 +143,15 @@ export function EditTransactionPage() {
     const headerNode = (
         <div className="flex items-center justify-between gap-2 border-b border-gray-200 dark:border-border pb-1.5 mb-2.5">
             <div className="flex min-w-0 items-center gap-2">
-                <Button variant="outline" size="icon" className="size-7 shrink-0" onClick={handleBack} type="button">
+                <Button variant="outline" size="icon" className="size-7 shrink-0" onClick={handleBack} type="button" aria-label={t("common.back", "Back")}>
                     <ArrowLeft className="size-3.5" />
                 </Button>
                 <div className="flex items-baseline gap-2 min-w-0">
                     <h1 className="text-sm font-semibold tracking-tight text-heading">
-                        Edit Transaction <span className="text-muted-foreground font-normal">#{transaction.internal_id}</span>
+                        {t("transactions.form.editTitle", "Edit Transaction")} <span className="text-muted-foreground font-normal">#{transaction.internal_id}</span>
                     </h1>
                     <span className="hidden sm:inline text-[11px] text-muted-foreground truncate">
-                        Transactions / #{transaction.internal_id}
+                        {t("nav.transactions", "Transactions")} / #{transaction.internal_id}
                     </span>
                 </div>
             </div>
@@ -160,7 +162,7 @@ export function EditTransactionPage() {
                     prevId={transaction.prev_transaction_internal_id}
                     nextId={transaction.next_transaction_internal_id}
                     pathSuffix="/edit"
-                    label="Transaction"
+                    label={t("transactions.form.transactionLabel", "Transaction")}
                 />
                 <ReviewQueueNavigation
                     basePath={`/${business_slug}/transactions`}

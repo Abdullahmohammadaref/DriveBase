@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react"
 import { Link, useSearchParams } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { Plus, Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,22 +26,13 @@ import { getPagePref, savePagePref } from "@/lib/paginationPrefs"
 // import { SplitViewDivider } from "@/components/SplitViewDivider" // DEACTIVATED: SplitViewDivider
 import type { VehicleFilters, VehicleListItem } from "@/types/vehicle"
 
-const VEHICLE_SORT_OPTIONS = [
-    { value: "internal_id", label: "Vehicle ID" },
-    { value: "make", label: "Make" },
-    { value: "status", label: "Status" },
-    { value: "buy_price", label: "Buy Price" },
-    { value: "sale_price", label: "Sale Price" },
-    { value: "buy_date", label: "Buy Date" },
-    { value: "sale_date", label: "Sale Date" },
-    { value: "kilometer", label: "Kilometers" },
-    { value: "year_of_construction", label: "Year" },
-]
+
 
 /**
  * Vehicles list page with cards, filters, and financial summary
  */
 export function VehiclesPage() {
+    const { t } = useTranslation()
     const [searchParams] = useSearchParams()
 
     // Filter state - initialize from URL
@@ -185,14 +177,28 @@ export function VehiclesPage() {
         }
     }, [vehicleToDelete, deleteMutation])
 
+    const sortOptions = [
+        { value: "internal_id", label: t("sort.vehicleId", "Vehicle ID") },
+        { value: "make", label: t("sort.make", "Make") },
+        { value: "status", label: t("sort.status", "Status") },
+        { value: "buy_price", label: t("sort.buyPrice", "Buy Price") },
+        { value: "sale_price", label: t("sort.salePrice", "Sale Price") },
+        { value: "buy_date", label: t("sort.buyDate", "Buy Date") },
+        { value: "sale_date", label: t("sort.saleDate", "Sale Date") },
+        { value: "kilometer", label: t("sort.kilometers", "Kilometers") },
+        { value: "year_of_construction", label: t("sort.year", "Year") },
+    ]
+
     return (
         <div className="space-y-3">
             {/* Page Header */}
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 dark:border-border pb-2">
                 <div>
-                    <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground">Vehicles</h1>
+                    <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground">
+                        {t("vehicles.title", "Vehicles")}
+                    </h1>
                     <p className="text-xs text-muted-foreground">
-                        Manage your vehicle inventory and performance metrics
+                        {t("vehicles.subtitle", "Manage your vehicle inventory and performance metrics")}
                     </p>
                 </div>
                 <Link
@@ -200,7 +206,7 @@ export function VehiclesPage() {
                     className="inline-flex items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-xs hover:bg-primary/90"
                 >
                     <Plus className="h-3.5 w-3.5" />
-                    Add Vehicle
+                    {t("vehicles.addVehicle", "Add Vehicle")}
                 </Link>
             </div>
 
@@ -246,7 +252,7 @@ export function VehiclesPage() {
                             <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 type="text"
-                                placeholder="Search by Make, Model, ID, VIN..."
+                                placeholder={t("vehicles.searchPlaceholder", "Search by Make, Model, ID, VIN...")}
                                 className="pl-8 pr-8 h-8 text-xs"
                                 value={searchValue}
                                 onChange={(e) => setSearchValue(e.target.value)}
@@ -263,7 +269,7 @@ export function VehiclesPage() {
 
                         <div className="flex flex-wrap items-center gap-2">
                             <SortMenuButton
-                                options={VEHICLE_SORT_OPTIONS}
+                                options={sortOptions}
                                 sort={filters.sort || "internal_id"}
                                 order={filters.order || "desc"}
                                 onSortChange={handleSortChange}
@@ -284,7 +290,7 @@ export function VehiclesPage() {
                     ))
                 ) : data?.vehicles?.items?.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-border p-12 text-center">
-                        <p className="text-muted-foreground">No vehicles found</p>
+                        <p className="text-muted-foreground">{t("vehicles.noVehiclesFound", "No vehicles found")}</p>
                     </div>
                 ) : (
                     data?.vehicles?.items?.map((vehicle) => (
@@ -314,13 +320,15 @@ export function VehiclesPage() {
             {/* Pagination Sticky Footer */}
             <StickyFooter>
                 <div className="flex items-center gap-1.5 text-sm text-muted-foreground font-medium">
-                    Showing
+                    {t("common.showing", "Showing")}
                     <PerPageInput
                         value={filters.per_page || 20}
                         onChange={handlePerPageChange}
                         label=""
                     />
-                    of <span className="text-foreground">{data?.vehicles?.total || 0}</span> vehicles
+                    {t("common.of", "of")}{" "}
+                    <span className="text-foreground">{data?.vehicles?.total || 0}</span>{" "}
+                    {t("vehicles.vehicles", "vehicles")}
                 </div>
                 <div className="flex items-center gap-2">
                     <Button
@@ -329,25 +337,26 @@ export function VehiclesPage() {
                         disabled={!data?.vehicles || data.vehicles.page <= 1}
                         onClick={() => handlePageChange((data?.vehicles?.page || 1) - 1)}
                     >
-                        Previous
+                        {t("common.previous", "Previous")}
                     </Button>
                     <span className="text-sm text-muted-foreground px-2 font-medium flex items-center gap-1.5">
-                        Page
+                        {t("common.page", "Page")}{" "}
                         <PageInput
                             currentPage={data?.vehicles?.page || 1}
                             totalPages={data?.vehicles?.total ? Math.ceil(data.vehicles.total / (filters.per_page || 20)) : 1}
                             onPageChange={handlePageChange}
                             disabled={isFetching}
                         />
-                        of <span className="text-foreground">{data?.vehicles?.total ? Math.ceil(data.vehicles.total / (filters.per_page || 20)) : 1}</span>
+                        {" "}{t("common.of", "of")}{" "}
+                        <span className="text-foreground">{data?.vehicles?.total ? Math.ceil(data.vehicles.total / (filters.per_page || 20)) : 1}</span>
                     </span>
                     <Button
                         variant="outline"
                         size="sm"
-                        disabled={!data?.vehicles || data.vehicles.page >= Math.ceil(data.vehicles.total / (filters.per_page || 20))}
+                        disabled={!data?.vehicles || data.vehicles.page >= Math.ceil((data?.vehicles?.total || 1) / (filters.per_page || 20))}
                         onClick={() => handlePageChange((data?.vehicles?.page || 1) + 1)}
                     >
-                        Next
+                        {t("common.next", "Next")}
                     </Button>
                 </div>
             </StickyFooter>
@@ -355,7 +364,7 @@ export function VehiclesPage() {
             {/* Loading overlay */}
             {isFetching && !isLoading && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/50">
-                    <div className="text-sm text-muted-foreground">Updating...</div>
+                    <div className="text-sm text-muted-foreground">{t("vehicles.updating", "Updating...")}</div>
                 </div>
             )}
 
@@ -365,11 +374,14 @@ export function VehiclesPage() {
             <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Delete Vehicle</DialogTitle>
+                        <DialogTitle>{t("vehicles.deleteVehicle", "Delete Vehicle")}</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to delete vehicle #{vehicleToDelete?.internal_id} (
-                            {vehicleToDelete?.make_name}{" "}
-                            {vehicleToDelete?.model_name})?
+                            {t("vehicles.deleteConfirmWithVehicle", {
+                                id: vehicleToDelete?.internal_id,
+                                make: vehicleToDelete?.make_name || "",
+                                model: vehicleToDelete?.model_name || "",
+                                defaultValue: `Are you sure you want to delete vehicle #${vehicleToDelete?.internal_id} (${vehicleToDelete?.make_name} ${vehicleToDelete?.model_name})?`
+                            })}
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
@@ -377,14 +389,14 @@ export function VehiclesPage() {
                             variant="outline"
                             onClick={() => setDeleteDialogOpen(false)}
                         >
-                            Cancel
+                            {t("common.cancel", "Cancel")}
                         </Button>
                         <Button
                             variant="destructive"
                             onClick={handleConfirmDelete}
                             disabled={deleteMutation.isPending}
                         >
-                            {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                            {deleteMutation.isPending ? t("common.deleting", "Deleting...") : t("common.delete", "Delete")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

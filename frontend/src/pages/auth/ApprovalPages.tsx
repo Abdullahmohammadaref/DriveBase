@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useParams, Link } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { CheckCircle, XCircle, Loader2, ArrowLeft, Key, Mail, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import axios from "axios"
@@ -26,6 +27,7 @@ interface ApprovalData {
  * - Email change verification
  */
 export function ApprovalPage() {
+    const { t } = useTranslation()
     const { token } = useParams<{ token: string }>()
 
     const [status, setStatus] = useState<ApprovalStatus>("loading")
@@ -83,7 +85,7 @@ export function ApprovalPage() {
         return (
             <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5 text-center">
                 <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600 dark:text-blue-400" />
-                <p className="text-xs text-gray-500 dark:text-muted-foreground">Processing...</p>
+                <p className="text-xs text-gray-500 dark:text-muted-foreground">{t("auth.processing", "Processing...")}</p>
             </div>
         )
     }
@@ -108,30 +110,30 @@ export function ApprovalPage() {
         const getTitle = () => {
             switch (data.action_type) {
                 case "employee_login":
-                    return "Login Approved!"
+                    return t("auth.loginApproved", "Login Approved!")
                 case "manager_login":
-                    return "Login Verified!"
+                    return t("auth.loginSuccessful", "Login Verified!")
                 case "password_reset":
-                    return "Password Reset Verified!"
+                    return t("auth.passwordResetVerified", "Password Reset Verified!")
                 case "verify_email":
-                    return "Email Verified!"
+                    return t("auth.emailVerified", "Email Verified!")
                 default:
-                    return "Approved!"
+                    return t("auth.approved", "Approved!")
             }
         }
 
         const getDescription = () => {
             switch (data.action_type) {
                 case "employee_login":
-                    return `${data.username}'s device will now log in automatically.`
+                    return t("auth.approval.employeeDeviceApproved", "{{username}}'s device will now log in automatically.", { username: data.username })
                 case "manager_login":
-                    return "Your other device will now log in automatically."
+                    return t("auth.approval.managerDeviceApproved", "Your other device will now log in automatically.")
                 case "password_reset":
-                    return "You can now set a new password on your original device."
+                    return t("auth.approval.passwordResetApproved", "You can now set a new password on your original device.")
                 case "verify_email":
                     return data.new_email
-                        ? `Your email has been changed to ${data.new_email}.`
-                        : "Your email has been verified."
+                        ? t("auth.approval.emailChangedApproved", "Your email has been changed to {{email}}.", { email: data.new_email })
+                        : t("auth.approval.emailVerifiedApproved", "Your email has been verified.")
                 default:
                     return data.message
             }
@@ -150,14 +152,14 @@ export function ApprovalPage() {
 
                 <div className="rounded-lg bg-[#F8F9FA] dark:bg-muted/40 border border-gray-200 dark:border-border p-3.5 text-xs text-gray-600 dark:text-muted-foreground">
                     <p>
-                        You can close this page. The original browser will continue automatically.
+                        {t("auth.approval.closePageNotice", "You can close this page. The original browser will continue automatically.")}
                     </p>
                 </div>
 
                 <Link to="/login" className="block pt-1">
                     <Button variant="outline" className="w-full h-8 text-xs font-medium">
                         <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
-                        Back to Login
+                        {t("auth.backToLogin", "Back to Login")}
                     </Button>
                 </Link>
             </div>
@@ -172,14 +174,14 @@ export function ApprovalPage() {
             </div>
 
             <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Request Failed</h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{t("auth.requestFailed", "Request Failed")}</h1>
                 <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">{data?.message || "An error occurred"}</p>
             </div>
 
             <Link to="/login" className="block pt-1">
                 <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs h-8">
                     <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
-                    Back to Login
+                    {t("auth.backToLogin", "Back to Login")}
                 </Button>
             </Link>
         </div>
@@ -194,16 +196,17 @@ export function ApprovalPage() {
  * For direct magic link logins (if we keep them in the future)
  */
 export function VerifyPage() {
+    const { t } = useTranslation()
     useParams<{ uid: string; token: string }>()
 
     return (
         <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-5 text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600 dark:text-blue-400" />
             <p className="text-xs text-gray-500 dark:text-muted-foreground">
-                Legacy link detected. Please use the new approval flow.
+                {t("auth.legacyLinkDetected", "Legacy link detected. Please use the new approval flow.")}
             </p>
             <Link to="/login" className="block pt-1">
-                <Button variant="outline" className="w-full h-8 text-xs font-medium">Go to Login</Button>
+                <Button variant="outline" className="w-full h-8 text-xs font-medium">{t("auth.goToLogin", "Go to Login")}</Button>
             </Link>
         </div>
     )

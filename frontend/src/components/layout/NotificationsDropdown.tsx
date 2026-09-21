@@ -49,6 +49,7 @@ function formatRelativeTime(timestamp: string): string {
  * Action badge styling mapping
  */
 function ActionBadge({ action, label }: { action: string; label: string }) {
+    const { t } = useTranslation()
     let colorClass = "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
     if (action === "create") {
         colorClass = "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
@@ -59,7 +60,7 @@ function ActionBadge({ action, label }: { action: string; label: string }) {
     }
     return (
         <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0 ${colorClass}`}>
-            {label}
+            {t(`activityLogs.actions.${action}`, label || action)}
         </span>
     )
 }
@@ -68,6 +69,7 @@ function ActionBadge({ action, label }: { action: string; label: string }) {
  * Single notification item component
  */
 function NotificationItem({ log }: { log: ActivityLogItem }) {
+    const { t } = useTranslation()
     return (
         <div className="px-3.5 py-2 border-b border-gray-50 dark:border-border/50 hover:bg-gray-50/60 dark:hover:bg-muted/40 transition-colors flex items-start gap-2.5 text-xs cursor-pointer">
             <div className="flex-1 min-w-0">
@@ -75,7 +77,9 @@ function NotificationItem({ log }: { log: ActivityLogItem }) {
                     <ActionBadge action={log.action} label={log.action_display} />
                     <span className="inline-flex items-center gap-1 text-gray-500 dark:text-muted-foreground text-[11px]">
                         <EntityIcon type={log.entity_type} />
-                        <span className="truncate max-w-[140px] font-medium text-gray-700 dark:text-foreground">{log.entity_name || log.entity_type_display}</span>
+                        <span className="truncate max-w-[140px] font-medium text-gray-700 dark:text-foreground">
+                            {log.entity_name || t(`activityLogs.entities.${log.entity_type}`, log.entity_type_display || log.entity_type)}
+                        </span>
                     </span>
                 </div>
                 <p className="text-xs text-gray-600 dark:text-muted-foreground truncate">
@@ -99,7 +103,7 @@ export function NotificationsDropdown() {
     const { data, isLoading } = useRecentActivityLogs()
 
     // Determine current locale
-    const currentLocale = (locale && SUPPORTED_LOCALES.includes(locale as SupportedLocale))
+    const currentLocale = (locale && (SUPPORTED_LOCALES as readonly string[]).includes(locale))
         ? locale as SupportedLocale
         : DEFAULT_LOCALE
 

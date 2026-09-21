@@ -64,8 +64,8 @@ export function RelatedTransactionsTable({
 
     const safeVehicleName = vehicleDisplayString.replace(new RegExp(`^#?${displayId}\\s*-\\s*`), "")
     const fullVehicleLabel = `#${displayId} - ${safeVehicleName}`
-    const tableTitle = `${fullVehicleLabel} Transactions`
-    const linkLabel = `Go to ${fullVehicleLabel} Details`
+    const tableTitle = t("transactions.vehicleTransactionsTitle", "{{vehicle}} Transactions", { vehicle: fullVehicleLabel })
+    const linkLabel = t("transactions.goToVehicleDetails", "Go to {{vehicle}} Details", { vehicle: fullVehicleLabel })
 
     return (
         <div className="space-y-1.5 pt-1">

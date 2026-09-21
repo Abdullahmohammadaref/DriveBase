@@ -97,7 +97,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     const { t } = useTranslation()
     const [expandedItems, setExpandedItems] = useState<string[]>(["nav.vehicles"])
 
-    const currentLocale = (locale && SUPPORTED_LOCALES.includes(locale as SupportedLocale))
+    const currentLocale = (locale && (SUPPORTED_LOCALES as readonly string[]).includes(locale))
         ? locale as SupportedLocale
         : DEFAULT_LOCALE
 

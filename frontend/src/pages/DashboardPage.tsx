@@ -25,6 +25,7 @@ import {
     Area,
 } from "recharts"
 import { useParams } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { useDashboard } from "@/hooks/useDashboard"
 import { formatCurrency } from "@/lib/utils"
 import {
@@ -41,6 +42,7 @@ import { FinancialSummaryTable } from "@/components/transactions/FinancialSummar
  */
 export function DashboardPage() {
     const { business_slug } = useParams<{ business_slug: string }>()
+    const { t } = useTranslation()
     const { data, isLoading, isError, error } = useDashboard()
 
     if (isLoading) {
@@ -55,14 +57,14 @@ export function DashboardPage() {
         return (
             <div className="space-y-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+                    <h1 className="text-2xl font-bold text-foreground">{t("dashboard.title", "Dashboard")}</h1>
                 </div>
                 <div className="flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-5">
                     <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0" />
                     <div>
-                        <p className="text-sm font-medium text-foreground">Unable to load dashboard data</p>
+                        <p className="text-sm font-medium text-foreground">{t("dashboard.unableToLoad", "Unable to load dashboard data")}</p>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                            {(error as Error)?.message || "Please try refreshing the page."}
+                            {(error as Error)?.message || t("dashboard.tryRefreshing", "Please try refreshing the page.")}
                         </p>
                     </div>
                 </div>
@@ -75,21 +77,21 @@ export function DashboardPage() {
         return (
             <div className="space-y-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-                    <p className="text-muted-foreground">Overview of your vehicle inventory and finances</p>
+                    <h1 className="text-2xl font-bold text-foreground">{t("dashboard.title", "Dashboard")}</h1>
+                    <p className="text-muted-foreground">{t("dashboard.subtitle", "Overview of your vehicle inventory and finances")}</p>
                 </div>
                 <div className="flex flex-col items-center justify-center h-64 rounded-xl border border-dashed border-border bg-card/50">
                     <Car className="h-12 w-12 text-muted-foreground/40 mb-3" />
-                    <p className="text-lg font-medium text-muted-foreground">No vehicles yet</p>
+                    <p className="text-lg font-medium text-muted-foreground">{t("dashboard.noVehiclesYet", "No vehicles yet")}</p>
                     <p className="text-sm text-muted-foreground/60 mt-1">
-                        Add your first vehicle to see analytics here.
+                        {t("dashboard.addFirstVehicle", "Add your first vehicle to see analytics here.")}
                     </p>
                     <a
                         href={`/${business_slug}/vehicles/new`}
                         className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                     >
                         <Car className="h-4 w-4" />
-                        Add Vehicle
+                        {t("dashboard.addVehicle", "Add Vehicle")}
                     </a>
                 </div>
             </div>
@@ -98,11 +100,11 @@ export function DashboardPage() {
 
     const d = data
     const statusConfig: Record<string, { label: string; color: string; dotColor: string }> = {
-        purchased: { label: "Purchased", color: "bg-green-500", dotColor: "bg-green-500" },
-        ready_for_sale: { label: "Ready", color: "bg-orange-500", dotColor: "bg-orange-500" },
-        reserved: { label: "Reserved", color: "bg-blue-500", dotColor: "bg-blue-500" },
-        sold: { label: "Sold", color: "bg-red-500", dotColor: "bg-red-500" },
-        inactive: { label: "Inactive", color: "bg-gray-400", dotColor: "bg-gray-400" },
+        purchased: { label: t("nav.purchased", "Purchased"), color: "bg-green-500", dotColor: "bg-green-500" },
+        ready_for_sale: { label: t("nav.readyForSale", "Ready"), color: "bg-orange-500", dotColor: "bg-orange-500" },
+        reserved: { label: t("nav.reserved", "Reserved"), color: "bg-blue-500", dotColor: "bg-blue-500" },
+        sold: { label: t("nav.sold", "Sold"), color: "bg-red-500", dotColor: "bg-red-500" },
+        inactive: { label: t("nav.inactive", "Inactive"), color: "bg-gray-400", dotColor: "bg-gray-400" },
     }
 
     const statusEntries = Object.entries(d.status_counts).filter(([, count]) => count > 0)
@@ -121,9 +123,9 @@ export function DashboardPage() {
         <div className="space-y-6">
             {/* Page Header */}
             <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">Dashboard</h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{t("dashboard.title", "Dashboard")}</h1>
                 <p className="mt-0.5 text-xs text-gray-500 dark:text-muted-foreground">
-                    Overview of your vehicle inventory and finances
+                    {t("dashboard.subtitle", "Overview of your vehicle inventory and finances")}
                 </p>
             </div>
 
@@ -131,34 +133,34 @@ export function DashboardPage() {
             <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
                 <KPICard
                     icon={Car}
-                    label="Total Vehicles"
+                    label={t("dashboard.totalVehicles", "Total Vehicles")}
                     value={String(d.total_vehicles)}
-                    subLabel={`${d.in_stock} in stock`}
+                    subLabel={`${d.in_stock} ${t("dashboard.inStock", "in stock")}`}
                     color="text-gray-900 dark:text-foreground font-mono font-bold"
                     bgColor="bg-gray-100 dark:bg-muted"
                 />
                 <KPICard
                     icon={Package}
-                    label="Vehicles Sold"
+                    label={t("dashboard.vehiclesSold", "Vehicles Sold")}
                     value={String(d.status_counts.sold)}
-                    subLabel={`of ${d.total_vehicles} total`}
+                    subLabel={t("dashboard.ofTotal", { total: d.total_vehicles, defaultValue: `of ${d.total_vehicles} total` })}
                     color="text-[#318d6c] font-mono font-bold"
                     bgColor="bg-emerald-50 dark:bg-emerald-900/30"
                 />
                 <KPICard
                     icon={DollarSign}
-                    label="Total Net Profit"
+                    label={t("dashboard.totalNetProfit", "Total Net Profit")}
                     value={formatCurrency(d.total_profit)}
-                    subLabel={`avg ${d.profit_distribution.avg_profit !== null ? formatCurrency(d.profit_distribution.avg_profit) : "—"} / vehicle`}
+                    subLabel={t("dashboard.avgPerVehicle", { val: d.profit_distribution.avg_profit !== null ? formatCurrency(d.profit_distribution.avg_profit) : "—", defaultValue: `avg ${d.profit_distribution.avg_profit !== null ? formatCurrency(d.profit_distribution.avg_profit) : "—"} / vehicle` })}
                     color={d.total_profit >= 0 ? "text-[#318d6c] font-mono font-bold" : "text-[#d23a69] font-mono font-bold"}
                     bgColor={d.total_profit >= 0 ? "bg-emerald-50 dark:bg-emerald-900/30" : "bg-rose-50 dark:bg-rose-900/30"}
                     equation="Σ (saleNet − buyNet)"
                 />
                 <KPICard
                     icon={Target}
-                    label="Overall ROI"
+                    label={t("dashboard.overallRoi", "Overall ROI")}
                     value={d.overall_roi !== null ? formatPercent(d.overall_roi) : "—"}
-                    subLabel={`Margin: ${d.overall_margin !== null ? formatPercent(d.overall_margin) : "—"}`}
+                    subLabel={`${t("dashboard.margin", "Margin:")} ${d.overall_margin !== null ? formatPercent(d.overall_margin) : "—"}`}
                     color={d.overall_roi !== null && d.overall_roi >= 0 ? "text-[#318d6c] font-mono font-bold" : "text-[#d23a69] font-mono font-bold"}
                     bgColor={d.overall_roi !== null && d.overall_roi >= 0 ? "bg-emerald-50 dark:bg-emerald-900/30" : "bg-rose-50 dark:bg-rose-900/30"}
                     equation="profit ÷ cost × 100"
@@ -169,17 +171,17 @@ export function DashboardPage() {
             <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
                 <KPICard
                     icon={TrendingUp}
-                    label="Total Revenue"
+                    label={t("dashboard.totalRevenue", "Total Revenue")}
                     value={formatCurrency(d.total_revenue)}
-                    subLabel="Net sale prices"
+                    subLabel={t("dashboard.netSalePrices", "Net sale prices")}
                     color="text-[#318d6c] font-mono font-bold"
                     bgColor="bg-emerald-50 dark:bg-emerald-900/30"
                 />
                 <KPICard
                     icon={TrendingDown}
-                    label="Total Cost"
+                    label={t("dashboard.totalCost", "Total Cost")}
                     value={formatCurrency(d.total_cost)}
-                    subLabel="Net buy prices"
+                    subLabel={t("dashboard.netBuyPrices", "Net buy prices")}
                     color="text-[#d23a69] font-mono font-bold"
                     bgColor="bg-rose-50 dark:bg-rose-900/30"
                 />
@@ -190,20 +192,20 @@ export function DashboardPage() {
                             <Timer className="h-4 w-4 text-[#d97706]" />
                         </div>
                         <div className="min-w-0 flex-1">
-                            <p className="text-xs text-gray-500 dark:text-muted-foreground">Avg Days on Stock</p>
+                            <p className="text-xs text-gray-500 dark:text-muted-foreground">{t("dashboard.avgDaysOnStock", "Avg Days on Stock")}</p>
                             <div className="flex items-center gap-4 mt-0.5">
                                 <div>
                                     <p className="text-lg font-bold font-mono text-[#d97706]">
                                         {d.days_on_stock.avg_sold !== null ? formatDays(d.days_on_stock.avg_sold) : "—"}
                                     </p>
-                                    <p className="text-[10px] text-gray-400 dark:text-muted-foreground/60">sold</p>
+                                    <p className="text-[10px] text-gray-400 dark:text-muted-foreground/60">{t("dashboard.soldDays", "sold")}</p>
                                 </div>
                                 <div className="border-l border-gray-200 dark:border-border pl-4">
                                     <p className="text-lg font-bold font-mono text-[#d97706]">
                                         {d.days_on_stock.avg_unsold !== null ? formatDays(d.days_on_stock.avg_unsold) : "—"}
                                     </p>
                                     <p className="text-[10px] text-gray-400 dark:text-muted-foreground/60">
-                                        stock ({d.days_on_stock.unsold_count})
+                                        {t("dashboard.stockDays", { count: d.days_on_stock.unsold_count, defaultValue: `stock (${d.days_on_stock.unsold_count})` })}
                                     </p>
                                 </div>
                             </div>
@@ -215,7 +217,7 @@ export function DashboardPage() {
             {/* Status Distribution Bar */}
             <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-4 shadow-xs">
                 <h3 className="text-xs font-semibold text-gray-600 dark:text-muted-foreground mb-2.5 uppercase tracking-wider">
-                    Vehicle Status Distribution
+                    {t("dashboard.statusDistribution", "Vehicle Status Distribution")}
                 </h3>
                 <div className="h-2.5 w-full rounded-full overflow-hidden flex bg-gray-100 dark:bg-muted">
                     {statusEntries.map(([status, count]) => {
@@ -254,7 +256,7 @@ export function DashboardPage() {
                     <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-4 shadow-xs">
                         <h3 className="text-xs font-semibold text-gray-600 dark:text-muted-foreground mb-3 uppercase tracking-wider flex items-center gap-1.5">
                             <BarChart3 className="h-3.5 w-3.5" />
-                            Monthly Revenue vs Cost
+                            {t("dashboard.monthlyRevenueCost", "Monthly Revenue vs Cost")}
                         </h3>
                         <div className="h-56">
                             <ResponsiveContainer width="100%" height="100%">
@@ -272,8 +274,8 @@ export function DashboardPage() {
                                         formatter={(value) => formatCurrency(Number(value))}
                                     />
                                     <Legend wrapperStyle={{ fontSize: "11px" }} />
-                                    <Bar dataKey="Revenue" fill="#318d6c" radius={[3, 3, 0, 0]} />
-                                    <Bar dataKey="Expenses" fill="#d23a69" radius={[3, 3, 0, 0]} />
+                                    <Bar dataKey="Revenue" name={t("dashboard.revenue", "Revenue")} fill="#318d6c" radius={[3, 3, 0, 0]} />
+                                    <Bar dataKey="Expenses" name={t("dashboard.expenses", "Expenses")} fill="#d23a69" radius={[3, 3, 0, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -283,7 +285,7 @@ export function DashboardPage() {
                     <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-4 shadow-xs">
                         <h3 className="text-xs font-semibold text-gray-600 dark:text-muted-foreground mb-3 uppercase tracking-wider flex items-center gap-1.5">
                             <TrendingUp className="h-3.5 w-3.5" />
-                            Profit Trend
+                            {t("dashboard.profitTrend", "Profit Trend")}
                         </h3>
                         <div className="h-56">
                             <ResponsiveContainer width="100%" height="100%">
@@ -309,6 +311,7 @@ export function DashboardPage() {
                                     <Area
                                         type="monotone"
                                         dataKey="Profit"
+                                        name={t("dashboard.profit", "Profit")}
                                         stroke="#318d6c"
                                         fill="url(#profitGrad)"
                                         strokeWidth={2}
@@ -326,7 +329,7 @@ export function DashboardPage() {
                     <div className="flex items-center gap-2">
                         <DollarSign className="h-4 w-4 text-gray-600 dark:text-muted-foreground" />
                         <h3 className="text-xs font-semibold text-gray-600 dark:text-muted-foreground uppercase tracking-wider">
-                            Financial Performance Breakdown
+                            {t("dashboard.financialBreakdown", "Financial Performance Breakdown")}
                         </h3>
                     </div>
                     <div className="h-px flex-1 mx-4 bg-gray-200 dark:border-border/40" />
@@ -341,13 +344,13 @@ export function DashboardPage() {
                 {/* Profit Distribution */}
                 <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-4 shadow-xs">
                     <h3 className="text-xs font-semibold text-gray-600 dark:text-muted-foreground mb-3 uppercase tracking-wider">
-                        Profit Distribution
+                        {t("dashboard.profitDistribution", "Profit Distribution")}
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <MiniStat label="Highest" value={d.profit_distribution.highest !== null ? formatCurrency(d.profit_distribution.highest) : "—"} color="text-[#318d6c] font-mono font-bold" />
-                        <MiniStat label="Lowest" value={d.profit_distribution.lowest !== null ? formatCurrency(d.profit_distribution.lowest) : "—"} color={d.profit_distribution.lowest !== null && d.profit_distribution.lowest >= 0 ? "text-[#318d6c] font-mono font-bold" : "text-[#d23a69] font-mono font-bold"} />
-                        <MiniStat label="Avg Profit" value={d.profit_distribution.avg_profit !== null ? formatCurrency(d.profit_distribution.avg_profit) : "—"} color={d.profit_distribution.avg_profit !== null && d.profit_distribution.avg_profit >= 0 ? "text-[#318d6c] font-mono font-bold" : "text-[#d23a69] font-mono font-bold"} />
-                        <MiniStat label="Avg Margin" value={d.profit_distribution.avg_margin !== null ? formatPercent(d.profit_distribution.avg_margin) : "—"} color="text-blue-600 dark:text-blue-400 font-mono font-bold" />
+                        <MiniStat label={t("dashboard.highest", "Highest")} value={d.profit_distribution.highest !== null ? formatCurrency(d.profit_distribution.highest) : "—"} color="text-[#318d6c] font-mono font-bold" />
+                        <MiniStat label={t("dashboard.lowest", "Lowest")} value={d.profit_distribution.lowest !== null ? formatCurrency(d.profit_distribution.lowest) : "—"} color={d.profit_distribution.lowest !== null && d.profit_distribution.lowest >= 0 ? "text-[#318d6c] font-mono font-bold" : "text-[#d23a69] font-mono font-bold"} />
+                        <MiniStat label={t("dashboard.avgProfit", "Avg Profit")} value={d.profit_distribution.avg_profit !== null ? formatCurrency(d.profit_distribution.avg_profit) : "—"} color={d.profit_distribution.avg_profit !== null && d.profit_distribution.avg_profit >= 0 ? "text-[#318d6c] font-mono font-bold" : "text-[#d23a69] font-mono font-bold"} />
+                        <MiniStat label={t("dashboard.avgMargin", "Avg Margin")} value={d.profit_distribution.avg_margin !== null ? formatPercent(d.profit_distribution.avg_margin) : "—"} color="text-blue-600 dark:text-blue-400 font-mono font-bold" />
                     </div>
                 </div>
 
@@ -356,7 +359,7 @@ export function DashboardPage() {
                     <div className="rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card p-4 shadow-xs">
                         <h3 className="text-xs font-semibold text-gray-600 dark:text-muted-foreground mb-3 uppercase tracking-wider flex items-center gap-1.5">
                             <Trophy className="h-3.5 w-3.5 text-amber-500" />
-                            Top Performers
+                            {t("dashboard.topPerformers", "Top Performers")}
                         </h3>
                         <div className="space-y-1">
                             {d.top_vehicles.slice(0, 5).map((v, i) => (
