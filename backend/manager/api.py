@@ -1939,6 +1939,11 @@ def list_legal_entities(request, filters: LegalEntityFilters = Query(...)):
     
     # Apply sorting
     sort_field = filters.sort or 'name'
+    # Map FK sort fields to their related name for alphabetical ordering
+    sort_field_mapping = {
+        'address_city': 'address_city__name',
+    }
+    sort_field = sort_field_mapping.get(sort_field, sort_field)
     if filters.order == 'desc':
         sort_field = f'-{sort_field}'
     qs = qs.order_by(sort_field)

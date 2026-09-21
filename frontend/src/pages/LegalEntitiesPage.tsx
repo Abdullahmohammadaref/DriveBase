@@ -438,11 +438,11 @@ export function LegalEntitiesPage() {
                                         </TableHead>
                                         <TableHead
                                             className="h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:text-foreground transition-colors"
-                                            onClick={() => handleSort('address_city_id')}
+                                            onClick={() => handleSort('address_city')}
                                         >
                                             <span className="flex items-center">
                                                 {t("legalEntities.city", "City")}
-                                                {getSortIndicator("address_city_id")}
+                                                {getSortIndicator("address_city")}
                                             </span>
                                         </TableHead>
                                         <TableHead

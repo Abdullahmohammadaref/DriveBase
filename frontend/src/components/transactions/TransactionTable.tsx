@@ -207,7 +207,7 @@ export function TransactionTable({
                         <TableHead className="sticky top-0 z-20 bg-gray-50 dark:bg-secondary h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">{t("transactions.table.transaction")}</TableHead>
                         {renderSortableHeader("amount", t("transactions.table.amount"), "h-7 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-right w-28 md:w-32 px-3 py-0.5")}
                         {renderSortableHeader("date", t("transactions.table.date"), "h-7 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider px-3 py-0.5")}
-                        <TableHead className="sticky top-0 z-20 bg-gray-50 dark:bg-secondary h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">{t("transactions.table.method")}</TableHead>
+                        {renderSortableHeader("method", t("transactions.table.method"), "h-7 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider px-3 py-0.5")}
                         {renderSortableHeader("status", t("transactions.table.status"), "h-7 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider px-3 py-0.5")}
                         <TableHead className="sticky top-0 z-20 bg-gray-50 dark:bg-secondary h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-20 text-right">{t("transactions.table.actions")}</TableHead>
                     </TableRow>

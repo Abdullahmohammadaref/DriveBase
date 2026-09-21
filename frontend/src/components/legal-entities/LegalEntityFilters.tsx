@@ -29,13 +29,15 @@ export function LegalEntityFiltersSidebar({
         <div className="flex flex-col bg-white dark:bg-card rounded-lg border border-gray-200 dark:border-border shadow-xs overflow-hidden">
             <div className="px-3 py-2 border-b border-gray-200 dark:border-border bg-gray-50/50 dark:bg-muted/30 flex items-center justify-between">
                 <h2 className="text-[12px] font-semibold uppercase tracking-wider text-gray-700 dark:text-foreground">{t("common.filters", "Filters")}</h2>
-                <button
-                    type="button"
+                <Button
+                    variant="outline"
+                    size="sm"
                     onClick={onResetFilters}
-                    className="text-[11px] font-medium text-muted-foreground hover:text-foreground flex items-center gap-1"
+                    className="h-6 px-2 text-[11px] font-medium gap-1"
                 >
-                    <RotateCcw className="size-3" /> {t("common.reset", "Reset")}
-                </button>
+                    <RotateCcw className="size-3" />
+                    {t("common.reset", "Reset")}
+                </Button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-3 space-y-3.5">
@@ -111,14 +113,6 @@ export function LegalEntityFiltersSidebar({
                 </div>
             </div>
 
-            {(filters.type || filters.status || filters.country_id || filters.city_id) && (
-                <div className="p-3 border-t border-gray-200 dark:border-border bg-gray-50/50 dark:bg-muted/30 flex gap-2">
-                    <Button variant="outline" size="sm" onClick={onResetFilters} className="w-full h-7.5 text-xs text-foreground">
-                        <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-                        {t("common.reset", "Reset")}
-                    </Button>
-                </div>
-            )}
         </div>
     )
 }

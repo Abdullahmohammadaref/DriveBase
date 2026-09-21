@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useTranslation } from "react-i18next"
 import { RotateCcw } from "lucide-react"
 
@@ -23,15 +23,16 @@ export function VehicleFiltersSidebar({
     const { data: choices } = useChoices()
     const [localFilters, setLocalFilters] = useState<VehicleFilters>(filters)
 
+    // Debounce timer for text/number inputs
+    const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+    // Sync local state when parent resets filters externally
     useEffect(() => {
         setLocalFilters(filters)
     }, [filters])
 
-    const handleApply = () => {
-        onApplyFilters(localFilters)
-    }
-
     const handleReset = () => {
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
         const resetFilters: VehicleFilters = {
             page: 1,
             per_page: filters.per_page || 20,
@@ -40,16 +41,36 @@ export function VehicleFiltersSidebar({
         onApplyFilters(resetFilters)
     }
 
-    // Update a single filter value
-    const updateFilter = <K extends keyof VehicleFilters>(
+    /**
+     * Update a filter field.
+     * - immediate=true (selects, date pickers): fires onApplyFilters right away.
+     * - immediate=false (text/number inputs): debounces 400 ms.
+     */
+    const updateFilter = useCallback(<K extends keyof VehicleFilters>(
         key: K,
-        value: VehicleFilters[K]
+        value: VehicleFilters[K],
+        immediate = false
     ) => {
-        setLocalFilters((prev) => ({
-            ...prev,
-            [key]: value || undefined,
-        }))
-    }
+        setLocalFilters((prev) => {
+            const newFilters: VehicleFilters = {
+                ...prev,
+                [key]: value || undefined,
+                page: 1,
+            }
+
+            if (immediate) {
+                onApplyFilters(newFilters)
+            } else {
+                if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+                debounceTimerRef.current = setTimeout(() => {
+                    onApplyFilters(newFilters)
+                }, 400)
+            }
+
+            return newFilters
+        })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [onApplyFilters])
 
     return (
         <div className="flex flex-col bg-white dark:bg-card rounded-lg border border-gray-200 dark:border-border shadow-xs overflow-hidden">
@@ -57,13 +78,15 @@ export function VehicleFiltersSidebar({
                 <h2 className="text-[12px] font-semibold uppercase tracking-wider text-gray-700 dark:text-foreground">
                     {t("vehicles.filters", "Filters")}
                 </h2>
-                <button
-                    type="button"
+                <Button
+                    variant="outline"
+                    size="sm"
                     onClick={handleReset}
-                    className="text-[11px] font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 cursor-pointer"
+                    className="h-6 px-2 text-[11px] font-medium gap-1"
                 >
-                    <RotateCcw className="size-3" /> {t("vehicles.reset", "Reset")}
-                </button>
+                    <RotateCcw className="size-3" />
+                    {t("vehicles.reset", "Reset")}
+                </Button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-3 space-y-4">
@@ -142,7 +165,7 @@ export function VehicleFiltersSidebar({
                                     label: t(`nav.${s.value === "ready_for_sale" ? "readyForSale" : s.value}`, s.label),
                                 })) ?? []}
                                 value={localFilters.status}
-                                onChange={(value) => updateFilter("status", value)}
+                                onChange={(value) => updateFilter("status", value, true)}
                                 placeholder={t("vehicles.allStatuses", "All statuses")}
                                 allLabel={t("vehicles.allStatuses", "All statuses")}
                                 searchPlaceholder={t("vehicles.searchStatuses", "Search statuses...")}
@@ -157,7 +180,7 @@ export function VehicleFiltersSidebar({
                                     label: kn.name,
                                 })) ?? []}
                                 value={localFilters.key_number?.toString()}
-                                onChange={(value) => updateFilter("key_number", value ? Number(value) : undefined)}
+                                onChange={(value) => updateFilter("key_number", value ? Number(value) : undefined, true)}
                                 placeholder={t("vehicles.allKeyNumbers", "All key numbers")}
                                 allLabel={t("vehicles.allKeyNumbers", "All key numbers")}
                                 searchPlaceholder={t("vehicles.searchKeyNumbers", "Search key numbers...")}
@@ -172,7 +195,7 @@ export function VehicleFiltersSidebar({
                                     label: `#${mk.id} - ${mk.name}`,
                                 })) ?? []}
                                 value={localFilters.make?.toString()}
-                                onChange={(value) => updateFilter("make", value ? Number(value) : undefined)}
+                                onChange={(value) => updateFilter("make", value ? Number(value) : undefined, true)}
                                 placeholder={t("vehicles.allMakes", "All makes")}
                                 allLabel={t("vehicles.allMakes", "All makes")}
                                 searchPlaceholder={t("vehicles.searchMakes", "Search makes...")}
@@ -187,7 +210,7 @@ export function VehicleFiltersSidebar({
                                     label: bt.name,
                                 })) ?? []}
                                 value={localFilters.body_type?.toString()}
-                                onChange={(value) => updateFilter("body_type", value ? Number(value) : undefined)}
+                                onChange={(value) => updateFilter("body_type", value ? Number(value) : undefined, true)}
                                 placeholder={t("vehicles.allBodyTypes", "All body types")}
                                 allLabel={t("vehicles.allBodyTypes", "All body types")}
                                 searchPlaceholder={t("vehicles.searchBodyTypes", "Search body types...")}
@@ -202,7 +225,7 @@ export function VehicleFiltersSidebar({
                                     label: ft.name,
                                 })) ?? []}
                                 value={localFilters.fuel_type?.toString()}
-                                onChange={(value) => updateFilter("fuel_type", value ? Number(value) : undefined)}
+                                onChange={(value) => updateFilter("fuel_type", value ? Number(value) : undefined, true)}
                                 placeholder={t("vehicles.allFuelTypes", "All fuel types")}
                                 allLabel={t("vehicles.allFuelTypes", "All fuel types")}
                                 searchPlaceholder={t("vehicles.searchFuelTypes", "Search fuel types...")}
@@ -217,7 +240,7 @@ export function VehicleFiltersSidebar({
                                     label: c.name,
                                 })) ?? []}
                                 value={localFilters.color?.toString()}
-                                onChange={(value) => updateFilter("color", value ? Number(value) : undefined)}
+                                onChange={(value) => updateFilter("color", value ? Number(value) : undefined, true)}
                                 placeholder={t("vehicles.allColors", "All colors")}
                                 allLabel={t("vehicles.allColors", "All colors")}
                                 searchPlaceholder={t("vehicles.searchColors", "Search colors...")}
@@ -325,7 +348,7 @@ export function VehicleFiltersSidebar({
                                     className="text-foreground"
                                     value={localFilters.min_buy_date ?? ""}
                                     onChange={(e) =>
-                                        updateFilter("min_buy_date", e.target.value || undefined)
+                                        updateFilter("min_buy_date", e.target.value || undefined, true)
                                     }
                                     onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { } }}
                                 />
@@ -338,7 +361,7 @@ export function VehicleFiltersSidebar({
                                     className="text-foreground"
                                     value={localFilters.max_buy_date ?? ""}
                                     onChange={(e) =>
-                                        updateFilter("max_buy_date", e.target.value || undefined)
+                                        updateFilter("max_buy_date", e.target.value || undefined, true)
                                     }
                                     onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { } }}
                                 />
@@ -354,7 +377,7 @@ export function VehicleFiltersSidebar({
                                     className="text-foreground"
                                     value={localFilters.min_sale_date ?? ""}
                                     onChange={(e) =>
-                                        updateFilter("min_sale_date", e.target.value || undefined)
+                                        updateFilter("min_sale_date", e.target.value || undefined, true)
                                     }
                                     onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { } }}
                                 />
@@ -367,7 +390,7 @@ export function VehicleFiltersSidebar({
                                     className="text-foreground"
                                     value={localFilters.max_sale_date ?? ""}
                                     onChange={(e) =>
-                                        updateFilter("max_sale_date", e.target.value || undefined)
+                                        updateFilter("max_sale_date", e.target.value || undefined, true)
                                     }
                                     onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { } }}
                                 />
@@ -456,16 +479,6 @@ export function VehicleFiltersSidebar({
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div className="p-2.5 border-t border-gray-200 dark:border-border bg-gray-50/50 dark:bg-muted/30 flex gap-2">
-                <Button variant="outline" size="sm" onClick={handleReset} className="flex-1 h-7.5 px-2 text-[11px] font-medium text-foreground whitespace-nowrap">
-                    <RotateCcw className="mr-1 h-3 w-3 shrink-0" />
-                    {t("vehicles.reset", "Reset")}
-                </Button>
-                <Button size="sm" onClick={handleApply} className="flex-1 h-7.5 px-2 text-[11px] font-medium whitespace-nowrap">
-                    {t("vehicles.applyFilters", "Apply Filters")}
-                </Button>
             </div>
         </div>
     )

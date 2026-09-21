@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { RotateCcw } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
@@ -23,6 +23,9 @@ export function TransactionFiltersSidebar({
     const { data: choices } = useTransactionChoices()
     const [localFilters, setLocalFilters] = useState<TransactionFilters>(filters)
 
+    // Debounce timer for text/number inputs
+    const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
     // Get category ID for subcategory lookup (category name -> ID)
     const categoryId = choices?.category_choices?.find(
         (c) => c.label === localFilters.category
@@ -33,16 +36,13 @@ export function TransactionFiltersSidebar({
         categoryId ? parseInt(categoryId) : undefined
     )
 
+    // Sync local state when parent resets filters externally
     useEffect(() => {
         setLocalFilters(filters)
     }, [filters])
 
-    // Apply filters
-    const handleApply = () => {
-        onApplyFilters(localFilters)
-    }
-
     const handleReset = () => {
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
         const resetFilters: TransactionFilters = {
             page: 1,
             per_page: filters.per_page || 20,
@@ -51,35 +51,54 @@ export function TransactionFiltersSidebar({
         onApplyFilters(resetFilters)
     }
 
-    // Update a single filter value
-    const updateFilter = <K extends keyof TransactionFilters>(
+    /**
+     * Update a filter field.
+     * - immediate=true (selects, date pickers): fires onApplyFilters right away.
+     * - immediate=false (text/number inputs): debounces 400 ms.
+     */
+    const updateFilter = useCallback(<K extends keyof TransactionFilters>(
         key: K,
-        value: TransactionFilters[K]
+        value: TransactionFilters[K],
+        immediate = false
     ) => {
         setLocalFilters((prev) => {
-            const newFilters = {
+            const newFilters: TransactionFilters = {
                 ...prev,
                 [key]: value || undefined,
+                page: 1,
             }
             // Clear subcategory when category changes
             if (key === "category") {
                 newFilters.subcategory = undefined
             }
+
+            if (immediate) {
+                onApplyFilters(newFilters)
+            } else {
+                if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+                debounceTimerRef.current = setTimeout(() => {
+                    onApplyFilters(newFilters)
+                }, 400)
+            }
+
             return newFilters
         })
-    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [onApplyFilters])
 
     return (
         <div className="flex flex-col bg-white dark:bg-card rounded-lg border border-gray-200 dark:border-border shadow-xs overflow-hidden">
             <div className="px-3 py-2 border-b border-gray-200 dark:border-border bg-gray-50/50 dark:bg-muted/30 flex items-center justify-between">
                 <h2 className="text-[12px] font-semibold uppercase tracking-wider text-gray-700 dark:text-foreground">{t('transactions.filterTitle')}</h2>
-                <button
-                    type="button"
+                <Button
+                    variant="outline"
+                    size="sm"
                     onClick={handleReset}
-                    className="text-[11px] font-medium text-muted-foreground hover:text-foreground flex items-center gap-1"
+                    className="h-6 px-2 text-[11px] font-medium gap-1"
                 >
-                    <RotateCcw className="size-3" /> {t('transactions.reset')}
-                </button>
+                    <RotateCcw className="size-3" />
+                    {t('transactions.reset')}
+                </Button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-3 space-y-4">
@@ -126,7 +145,7 @@ export function TransactionFiltersSidebar({
                                     label: s.label,
                                 })) ?? []}
                                 value={localFilters.status}
-                                onChange={(value) => updateFilter("status", value)}
+                                onChange={(value) => updateFilter("status", value, true)}
                                 placeholder={t('transactions.allStatuses')}
                                 allLabel={t('transactions.allStatuses')}
                                 searchPlaceholder={t('transactions.searchStatuses', 'Search statuses...')}
@@ -141,7 +160,7 @@ export function TransactionFiltersSidebar({
                                     label: cat.label,
                                 })) ?? []}
                                 value={localFilters.category}
-                                onChange={(value) => updateFilter("category", value)}
+                                onChange={(value) => updateFilter("category", value, true)}
                                 placeholder={t('transactions.allCategories')}
                                 allLabel={t('transactions.allCategories')}
                                 searchPlaceholder={t('transactions.searchCategories', 'Search categories...')}
@@ -156,7 +175,7 @@ export function TransactionFiltersSidebar({
                                     label: sub.name,
                                 })) ?? []}
                                 value={localFilters.subcategory}
-                                onChange={(value) => updateFilter("subcategory", value)}
+                                onChange={(value) => updateFilter("subcategory", value, true)}
                                 placeholder={localFilters.category ? t('transactions.selectSubcategory') : t('transactions.selectCategoryFirst')}
                                 allLabel={t('transactions.allSubcategories')}
                                 searchPlaceholder={t('transactions.searchSubcategories', 'Search subcategories...')}
@@ -172,7 +191,7 @@ export function TransactionFiltersSidebar({
                                     label: curr.label,
                                 })) ?? []}
                                 value={localFilters.currency}
-                                onChange={(value) => updateFilter("currency", value)}
+                                onChange={(value) => updateFilter("currency", value, true)}
                                 placeholder={t('transactions.allCurrencies')}
                                 allLabel={t('transactions.allCurrencies')}
                                 searchPlaceholder={t('transactions.searchCurrencies', 'Search currencies...')}
@@ -187,7 +206,7 @@ export function TransactionFiltersSidebar({
                                     label: method.label,
                                 })) ?? []}
                                 value={localFilters.method}
-                                onChange={(value) => updateFilter("method", value)}
+                                onChange={(value) => updateFilter("method", value, true)}
                                 placeholder={t('transactions.allMethods')}
                                 allLabel={t('transactions.allMethods')}
                                 searchPlaceholder={t('transactions.searchMethods', 'Search methods...')}
@@ -202,7 +221,7 @@ export function TransactionFiltersSidebar({
                                     label: `#${v.value} - ${v.label}`,
                                 })) ?? []}
                                 value={localFilters.vehicle?.toString()}
-                                onChange={(value) => updateFilter("vehicle", value ? Number(value) : undefined)}
+                                onChange={(value) => updateFilter("vehicle", value ? Number(value) : undefined, true)}
                                 placeholder={t('transactions.allVehicles')}
                                 allLabel={t('transactions.allVehicles')}
                                 searchPlaceholder={t('transactions.searchVehicles', 'Search vehicles...')}
@@ -275,7 +294,7 @@ export function TransactionFiltersSidebar({
                                     className="text-foreground"
                                     value={localFilters.min_date ?? ""}
                                     onChange={(e) =>
-                                        updateFilter("min_date", e.target.value || undefined)
+                                        updateFilter("min_date", e.target.value || undefined, true)
                                     }
                                     onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { } }}
                                 />
@@ -288,7 +307,7 @@ export function TransactionFiltersSidebar({
                                     className="text-foreground"
                                     value={localFilters.max_date ?? ""}
                                     onChange={(e) =>
-                                        updateFilter("max_date", e.target.value || undefined)
+                                        updateFilter("max_date", e.target.value || undefined, true)
                                     }
                                     onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { } }}
                                 />
@@ -296,16 +315,6 @@ export function TransactionFiltersSidebar({
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div className="p-2.5 border-t border-gray-200 dark:border-border bg-gray-50/50 dark:bg-muted/30 flex gap-2">
-                <Button variant="outline" size="sm" onClick={handleReset} className="flex-1 h-7.5 px-2 text-[11px] font-medium text-foreground whitespace-nowrap">
-                    <RotateCcw className="mr-1 h-3 w-3 shrink-0" />
-                    {t('transactions.reset')}
-                </Button>
-                <Button size="sm" onClick={handleApply} className="flex-1 h-7.5 px-2 text-[11px] font-medium whitespace-nowrap">
-                    {t('transactions.applyFilters')}
-                </Button>
             </div>
         </div>
     )
