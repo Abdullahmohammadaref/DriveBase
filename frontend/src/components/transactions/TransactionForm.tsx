@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { Loader2, CalendarDays, FileText, CheckCircle, AlertCircle, XCircle, Download, RotateCcw, Trash2 } from "lucide-react"
+import { Loader2, CalendarDays, FileText, CheckCircle, AlertCircle, Download, RotateCcw, Trash2, ArrowLeft } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 
-import { StickyFooter } from "@/components/StickyFooter"
 import { AutoSaveIndicator } from "@/components/AutoSaveIndicator"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -489,34 +488,252 @@ export function TransactionForm({
             )}>
                 {/* LEFT COLUMN */}
                 <div className={cn("space-y-5", showSplitView ? "min-w-0 flex-1" : "w-full", isDragging && "pointer-events-none")}>
-                    {header}
+                    {header ? header : (mode === "edit" && initialData && (
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 dark:border-border pb-1.5 mb-2.5">
+                            {/* Left: Back + Title + AutoSave */}
+                            <div className="flex min-w-0 items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="size-7 shrink-0"
+                                    onClick={handleCancel}
+                                    type="button"
+                                    aria-label={t("common.back", "Back")}
+                                >
+                                    <ArrowLeft className="size-3.5" />
+                                </Button>
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <h1 className="text-sm font-semibold tracking-tight text-heading truncate">
+                                        {t("transactions.form.transactionLabel", "Transaction")}{" "}
+                                        <span className="text-muted-foreground font-normal">#{initialData.internal_id}</span>
+                                    </h1>
+                                    <AutoSaveIndicator status={autoSaveStatus} errorMessage={autoSaveErrorMessage} />
+                                </div>
+                            </div>
+
+                            {/* Middle: Status Buttons */}
+                            {(() => {
+                                const hasMandatoryFields = Boolean(
+                                    formData.category?.trim() &&
+                                    formData.subcategory?.trim() &&
+                                    formData.tax !== undefined && formData.tax !== null &&
+                                    formData.date?.trim() &&
+                                    formData.method?.trim() &&
+                                    formData.from_or_to?.trim() &&
+                                    formData.amount !== undefined && formData.amount !== null &&
+                                    formData.currency?.trim()
+                                )
+
+                                const isConfirmedDisabled = !hasMandatoryFields || initialData.status === "confirmed" || statusToggleLoading
+                                const isReviewRequiredDisabled = !hasMandatoryFields || initialData.status === "review_required" || statusToggleLoading
+
+                                return (
+                                    <div className="mx-1.5 flex min-w-0 items-center gap-1.5 overflow-x-auto">
+                                        {/* Confirmed Button */}
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            disabled={isConfirmedDisabled}
+                                            title={
+                                                !hasMandatoryFields
+                                                    ? t("transactions.form.cannotConfirmTooltip", "All mandatory fields (*) must be filled to confirm")
+                                                    : initialData.status === "confirmed"
+                                                        ? t("transactions.form.alreadyConfirmedTooltip", "Transaction is already confirmed")
+                                                        : t("transactions.form.markConfirmedTooltip", "Mark status as Confirmed")
+                                            }
+                                            className={cn(
+                                                "h-7 text-xs gap-1.5 font-medium transition-colors",
+                                                initialData.status === "confirmed"
+                                                    ? "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 shadow-sm font-semibold disabled:opacity-100 disabled:pointer-events-auto cursor-default dark:bg-emerald-600 dark:text-white dark:border-emerald-600"
+                                                    : hasMandatoryFields
+                                                        ? "text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700"
+                                                        : "text-muted-foreground border-border/40 opacity-50 cursor-not-allowed"
+                                            )}
+                                            onClick={async () => {
+                                                if (!initialData.internal_id || isConfirmedDisabled) return
+                                                setStatusToggleLoading(true)
+                                                try {
+                                                    await updateTransactionStatus.mutateAsync({
+                                                        internalId: initialData.internal_id,
+                                                        status: "confirmed",
+                                                    })
+                                                } catch (err) {
+                                                    console.error("Failed to set status to confirmed:", err)
+                                                } finally {
+                                                    setStatusToggleLoading(false)
+                                                }
+                                            }}
+                                        >
+                                            {statusToggleLoading ? (
+                                                <Loader2 className="h-3 w-3 animate-spin" />
+                                            ) : (
+                                                <CheckCircle className="h-3 w-3" />
+                                            )}
+                                            {t("transactions.form.confirmed", "Confirmed")}
+                                        </Button>
+
+                                        {/* Review Required Button */}
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            disabled={isReviewRequiredDisabled}
+                                            title={
+                                                !hasMandatoryFields
+                                                    ? t("transactions.form.cannotReviewTooltip", "All mandatory fields (*) must be filled")
+                                                    : initialData.status === "review_required"
+                                                        ? t("transactions.form.alreadyReviewTooltip", "Transaction is already in Review Required status")
+                                                        : t("transactions.form.markReviewTooltip", "Mark status as Review Required")
+                                            }
+                                            className={cn(
+                                                "h-7 text-xs gap-1.5 font-medium transition-colors",
+                                                initialData.status === "review_required"
+                                                    ? "bg-amber-600 hover:bg-amber-700 text-white border-amber-600 shadow-sm font-semibold disabled:opacity-100 disabled:pointer-events-auto cursor-default dark:bg-amber-600 dark:text-white dark:border-amber-600"
+                                                    : hasMandatoryFields
+                                                        ? "text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-700"
+                                                        : "text-muted-foreground border-border/40 opacity-50 cursor-not-allowed"
+                                            )}
+                                            onClick={async () => {
+                                                if (!initialData.internal_id || isReviewRequiredDisabled) return
+                                                setStatusToggleLoading(true)
+                                                try {
+                                                    await updateTransactionStatus.mutateAsync({
+                                                        internalId: initialData.internal_id,
+                                                        status: "review_required",
+                                                    })
+                                                } catch (err) {
+                                                    console.error("Failed to set status to review required:", err)
+                                                } finally {
+                                                    setStatusToggleLoading(false)
+                                                }
+                                            }}
+                                        >
+                                            {statusToggleLoading ? (
+                                                <Loader2 className="h-3 w-3 animate-spin" />
+                                            ) : (
+                                                <AlertCircle className="h-3 w-3" />
+                                            )}
+                                            {t("transactions.form.reviewRequired", "Review Required")}
+                                        </Button>
+
+                                        {/* Activate/Deactivate Button */}
+                                        {initialData.status === "inactive" ? (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-7 text-xs gap-1.5 text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/30"
+                                                disabled={statusToggleLoading}
+                                                title={t("transactions.form.activate", "Activate")}
+                                                onClick={async () => {
+                                                    if (!initialData.internal_id) return
+                                                    setStatusToggleLoading(true)
+                                                    try {
+                                                        await activateTransaction.mutateAsync(initialData.internal_id)
+                                                    } catch (err) {
+                                                        console.error("Failed to activate transaction:", err)
+                                                    } finally {
+                                                        setStatusToggleLoading(false)
+                                                    }
+                                                }}
+                                            >
+                                                {statusToggleLoading ? (
+                                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                                ) : (
+                                                    <RotateCcw className="h-3 w-3" />
+                                                )}
+                                                {t("transactions.form.activate", "Activate")}
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-7 text-xs gap-1.5 text-red-500 border-red-300 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/30"
+                                                disabled={statusToggleLoading}
+                                                onClick={async () => {
+                                                    if (!initialData.internal_id) return
+                                                    setStatusToggleLoading(true)
+                                                    try {
+                                                        await deleteTransaction.mutateAsync(initialData.internal_id)
+                                                    } catch (err) {
+                                                        console.error("Failed to deactivate transaction:", err)
+                                                    } finally {
+                                                        setStatusToggleLoading(false)
+                                                    }
+                                                }}
+                                            >
+                                                {statusToggleLoading ? (
+                                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                                ) : (
+                                                    <Trash2 className="h-3 w-3" />
+                                                )}
+                                                {t("transactions.form.deactivate", "Deactivate")}
+                                            </Button>
+                                        )}
+                                    </div>
+                                )
+                            })()}
+
+                            {/* Right: Actions */}
+                            <div className="flex shrink-0 items-center gap-1.5">
+                                {/* Export as PDF button - placed on the left of navigation arrows */}
+                                {(() => {
+                                    const canGenerate = (
+                                        formData.amount !== undefined && formData.amount !== null &&
+                                        formData.date !== "" && formData.date !== null && formData.date !== undefined &&
+                                        (formData.category !== "" || categoryId !== null) &&
+                                        (formData.subcategory !== "" || subcategoryId !== null) &&
+                                        formData.tax !== undefined && formData.tax !== null && formData.tax >= 0
+                                    );
+
+                                    return canGenerate ? (
+                                        <a
+                                            href={`/api/transactions/${initialData.internal_id}/pdf`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background h-7 px-2.5 text-xs font-medium shadow-none hover:bg-accent hover:text-accent-foreground transition-colors"
+                                        >
+                                            <Download className="h-3.5 w-3.5" />
+                                            {t("transactions.form.exportAsPdf", "Export as PDF")}
+                                        </a>
+                                    ) : (
+                                        <span
+                                            className="inline-flex items-center gap-1.5 rounded-md border border-input bg-muted h-7 px-2.5 text-xs font-medium text-muted-foreground cursor-not-allowed opacity-50"
+                                            title={t("transactions.form.pdfRequiredFieldsTooltip", "Complete all required fields (amount, date, category, subcategory, tax) to generate PDF")}
+                                        >
+                                            <Download className="h-3.5 w-3.5" />
+                                            {t("transactions.form.exportAsPdf", "Export as PDF")}
+                                        </span>
+                                    );
+                                })()}
+
+                                {/* Standard Navigation */}
+                                <RecordNavigation
+                                    basePath={`/${business_slug}/transactions`}
+                                    prevId={initialData.prev_transaction_internal_id}
+                                    nextId={initialData.next_transaction_internal_id}
+                                    pathSuffix="/edit"
+                                    label={t("transactions.form.transactionLabel", "Transaction")}
+                                />
+
+                                <ReviewQueueNavigation
+                                    basePath={`/${business_slug}/transactions`}
+                                    prevReviewId={initialData.prev_review_required_internal_id}
+                                    nextReviewId={initialData.next_review_required_internal_id}
+                                    pathSuffix="/edit"
+                                />
+                            </div>
+                        </div>
+                    ))}
                     <div className={cn("gap-5", showSplitView ? "space-y-5" : "grid lg:grid-cols-2")}>
                         {/* Inner Column 1: Transaction Details */}
                         <div className="space-y-6">
                             {/* Transaction Details Section */}
                             <div className="rounded-xl border border-border bg-card">
-                                <div className="border-b border-border px-5 py-4 flex items-center justify-between">
+                                <div className="border-b border-border px-5 py-4">
                                     <h3 className="text-base font-medium">{t("transactions.form.transactionDetails", "Transaction Details")}</h3>
-                                    {/* Auto-computed Status Badge */}
-                                    {mode === "edit" && initialData?.status && (
-                                        <span
-                                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${initialData.status === "confirmed"
-                                                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/25"
-                                                : initialData.status === "inactive"
-                                                    ? "bg-muted text-muted-foreground ring-1 ring-inset ring-border"
-                                                    : "bg-red-500/15 text-red-600 dark:text-red-400 ring-1 ring-inset ring-red-500/25"
-                                                }`}
-                                        >
-                                            {initialData.status === "confirmed" ? (
-                                                <CheckCircle className="h-3.5 w-3.5" />
-                                            ) : initialData.status === "inactive" ? (
-                                                <XCircle className="h-3.5 w-3.5" />
-                                            ) : (
-                                                <AlertCircle className="h-3.5 w-3.5" />
-                                            )}
-                                            {t(`status.${initialData.status}`) || initialData.status_display || initialData.status}
-                                        </span>
-                                    )}
                                 </div>
                                 <div className={cn("grid gap-4 p-5", showSplitView ? "grid-cols-3" : "grid-cols-1 md:grid-cols-3")}>
                                     {/* Category - DynamicSelect with Add New */}
@@ -920,269 +1137,29 @@ export function TransactionForm({
                 </div>
             )}
 
-            {/* Form Actions - Sticky Footer */}
-            <div className="pb-24" />
-            <StickyFooter>
-                <div className="flex w-full items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <Button type="button" variant="outline" onClick={handleCancel}>
-                            {mode === "edit" ? t("transactions.form.backToList", "Back to List") : t("common.cancel", "Cancel")}
-                        </Button>
-
-                        {/* Status action buttons (edit mode only) */}
-                        {mode === "edit" && initialData && (() => {
-                            const hasMandatoryFields = Boolean(
-                                formData.category?.trim() &&
-                                formData.subcategory?.trim() &&
-                                formData.tax !== undefined && formData.tax !== null &&
-                                formData.date?.trim() &&
-                                formData.method?.trim() &&
-                                formData.from_or_to?.trim() &&
-                                formData.amount !== undefined && formData.amount !== null &&
-                                formData.currency?.trim()
-                            )
-
-                            const isConfirmedDisabled = !hasMandatoryFields || initialData.status === "confirmed" || statusToggleLoading
-                            const isReviewRequiredDisabled = !hasMandatoryFields || initialData.status === "review_required" || statusToggleLoading
-
-                            return (
-                                <div className="flex items-center gap-2">
-                                    {/* Confirmed Button */}
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={isConfirmedDisabled}
-                                        title={
-                                            !hasMandatoryFields
-                                                ? t("transactions.form.cannotConfirmTooltip", "All mandatory fields (*) must be filled to confirm")
-                                                : initialData.status === "confirmed"
-                                                    ? t("transactions.form.alreadyConfirmedTooltip", "Transaction is already confirmed")
-                                                    : t("transactions.form.markConfirmedTooltip", "Mark status as Confirmed")
-                                        }
-                                        className={cn(
-                                            "gap-1.5 font-medium transition-colors",
-                                            initialData.status === "confirmed"
-                                                ? "text-emerald-700 dark:text-emerald-400 border-emerald-400/60 dark:border-emerald-700/60 bg-emerald-500/10 dark:bg-emerald-500/15 cursor-not-allowed opacity-80"
-                                                : hasMandatoryFields
-                                                    ? "text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700"
-                                                    : "text-muted-foreground border-border/40 opacity-50 cursor-not-allowed"
-                                        )}
-                                        onClick={async () => {
-                                            if (!initialData.internal_id || isConfirmedDisabled) return
-                                            setStatusToggleLoading(true)
-                                            try {
-                                                await updateTransactionStatus.mutateAsync({
-                                                    internalId: initialData.internal_id,
-                                                    status: "confirmed",
-                                                })
-                                            } catch (err) {
-                                                console.error("Failed to set status to confirmed:", err)
-                                            } finally {
-                                                setStatusToggleLoading(false)
-                                            }
-                                        }}
-                                    >
-                                        {statusToggleLoading ? (
-                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                        ) : (
-                                            <CheckCircle className="h-3.5 w-3.5" />
-                                        )}
-                                        {t("transactions.form.confirmed", "Confirmed")}
-                                    </Button>
-
-                                    {/* Review Required Button */}
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={isReviewRequiredDisabled}
-                                        title={
-                                            !hasMandatoryFields
-                                                ? t("transactions.form.cannotReviewTooltip", "All mandatory fields (*) must be filled")
-                                                : initialData.status === "review_required"
-                                                    ? t("transactions.form.alreadyReviewTooltip", "Transaction is already in Review Required status")
-                                                    : t("transactions.form.markReviewTooltip", "Mark status as Review Required")
-                                        }
-                                        className={cn(
-                                            "gap-1.5 font-medium transition-colors",
-                                            initialData.status === "review_required"
-                                                ? "text-amber-700 dark:text-amber-400 border-amber-400/60 dark:border-amber-700/60 bg-amber-500/10 dark:bg-amber-500/15 cursor-not-allowed opacity-80"
-                                                : hasMandatoryFields
-                                                    ? "text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-700"
-                                                    : "text-muted-foreground border-border/40 opacity-50 cursor-not-allowed"
-                                        )}
-                                        onClick={async () => {
-                                            if (!initialData.internal_id || isReviewRequiredDisabled) return
-                                            setStatusToggleLoading(true)
-                                            try {
-                                                await updateTransactionStatus.mutateAsync({
-                                                    internalId: initialData.internal_id,
-                                                    status: "review_required",
-                                                })
-                                            } catch (err) {
-                                                console.error("Failed to set status to review required:", err)
-                                            } finally {
-                                                setStatusToggleLoading(false)
-                                            }
-                                        }}
-                                    >
-                                        {statusToggleLoading ? (
-                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                        ) : (
-                                            <AlertCircle className="h-3.5 w-3.5" />
-                                        )}
-                                        {t("transactions.form.reviewRequired", "Review Required")}
-                                    </Button>
-
-                                    {/* Activate/Deactivate Button */}
-                                    {initialData.status === "inactive" ? (
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            className="gap-1.5 text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/30"
-                                            disabled={statusToggleLoading}
-                                            onClick={async () => {
-                                                if (!initialData.internal_id) return
-                                                setStatusToggleLoading(true)
-                                                try {
-                                                    await activateTransaction.mutateAsync(initialData.internal_id)
-                                                } catch (err) {
-                                                    console.error("Failed to activate transaction:", err)
-                                                } finally {
-                                                    setStatusToggleLoading(false)
-                                                }
-                                            }}
-                                        >
-                                            {statusToggleLoading ? (
-                                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                            ) : (
-                                                <RotateCcw className="h-3.5 w-3.5" />
-                                            )}
-                                            {t("transactions.form.activate", "Activate")}
-                                        </Button>
-                                    ) : (
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            className="gap-1.5 text-red-500 border-red-300 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/30"
-                                            disabled={statusToggleLoading}
-                                            onClick={async () => {
-                                                if (!initialData.internal_id) return
-                                                setStatusToggleLoading(true)
-                                                try {
-                                                    await deleteTransaction.mutateAsync(initialData.internal_id)
-                                                } catch (err) {
-                                                    console.error("Failed to deactivate transaction:", err)
-                                                } finally {
-                                                    setStatusToggleLoading(false)
-                                                }
-                                            }}
-                                        >
-                                            {statusToggleLoading ? (
-                                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                            ) : (
-                                                <Trash2 className="h-3.5 w-3.5" />
-                                            )}
-                                            {t("transactions.form.deactivate", "Deactivate")}
-                                        </Button>
-                                    )}
-                                </div>
-                            )
-                        })()}
-                    </div>
-
-                    {mode === "create" ? (
-                        // Create mode: Show submit button
-                        <Button
-                            type="submit"
-                            disabled={isLoading}
-                            className="gap-2"
-                        >
-                            {isLoading ? (
-                                <>
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                    {t("transactions.form.creating", "Creating...")}
-                                </>
-                            ) : (
-                                <>
-                                    <FileText className="h-4 w-4" />
-                                    {t("transactions.form.addTransaction", "Add Transaction")}
-                                </>
-                            )}
-                        </Button>
-                    ) : (
-                        // Edit mode: Show autosave indicator, PDF button, and navigation
-                        <div className="flex items-center gap-3">
-                            {/* Layout Toggle - DEACTIVATED (see docs/DEACTIVATED_FEATURES.md) */}
-                            {/* {_splitViewToggle}
-                            {_splitViewToggle && <div className="h-6 w-px bg-border" />} */}
-
-                            {/* Auto-save status indicator */}
-                            <AutoSaveIndicator status={autoSaveStatus} errorMessage={autoSaveErrorMessage} />
-
-                            {/* Separator */}
-                            <div className="h-6 w-px bg-border" />
-
-                            {/* Generate PDF button */}
-                            {mode === "edit" && initialData && (() => {
-                                // PDF generation requires: amount, date, category, subcategory, tax (all present)
-                                // and logically evaluates properly without needing a database refresh
-                                const canGenerate = (
-                                    formData.amount !== undefined && formData.amount !== null &&
-                                    formData.date !== "" && formData.date !== null && formData.date !== undefined &&
-                                    (formData.category !== "" || categoryId !== null) &&
-                                    (formData.subcategory !== "" || subcategoryId !== null) &&
-                                    formData.tax !== undefined && formData.tax !== null && formData.tax >= 0
-                                );
-
-                                return canGenerate ? (
-                                    <a
-                                        href={`/api/transactions/${initialData.internal_id}/pdf`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background h-7 px-2.5 text-xs font-medium shadow-none hover:bg-accent hover:text-accent-foreground transition-colors"
-                                    >
-                                        <Download className="h-3.5 w-3.5" />
-                                        PDF
-                                    </a>
-                                ) : (
-                                    <span
-                                        className="inline-flex items-center gap-1.5 rounded-md border border-input bg-muted h-7 px-2.5 text-xs font-medium text-muted-foreground cursor-not-allowed opacity-50"
-                                        title={t("transactions.form.pdfRequiredFieldsTooltip", "Complete all required fields (amount, date, category, subcategory, tax) to generate PDF")}
-                                    >
-                                        <Download className="h-3.5 w-3.5" />
-                                        PDF
-                                    </span>
-                                );
-                            })()}
-
-                            {/* Separator */}
-                            <div className="h-6 w-px bg-border" />
-
-
-
-                            {/* Standard Navigation */}
-                            <RecordNavigation
-                                basePath={`/${business_slug}/transactions`}
-                                prevId={initialData?.prev_transaction_internal_id}
-                                nextId={initialData?.next_transaction_internal_id}
-                                pathSuffix="/edit"
-                                label={t("transactions.form.transactionLabel", "Transaction")}
-                            />
-
-                            <ReviewQueueNavigation
-                                basePath={`/${business_slug}/transactions`}
-                                prevReviewId={initialData?.prev_review_required_internal_id}
-                                nextReviewId={initialData?.next_review_required_internal_id}
-                                pathSuffix="/edit"
-                            />
-                        </div>
-                    )}
+            {/* Form Actions - Bottom Bar for Add Mode */}
+            {mode === "create" && (
+                <div className="flex items-center justify-end border-t border-border pt-4 mt-6">
+                    <Button
+                        type="submit"
+                        disabled={isLoading}
+                        size="sm"
+                        className="h-8 text-xs bg-primary text-primary-foreground hover:opacity-90 px-4"
+                    >
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+                                {t("transactions.form.creating", "Creating...")}
+                            </>
+                        ) : (
+                            <>
+                                <FileText className="mr-1.5 size-3.5" />
+                                {t("transactions.form.addTransaction", "Add Transaction")}
+                            </>
+                        )}
+                    </Button>
                 </div>
-            </StickyFooter>
+            )}
         </form>
     )
 }

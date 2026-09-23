@@ -478,9 +478,11 @@
             "alreadyReviewTooltip": "Transaction is already in Review Required status",
             "markReviewTooltip": "Mark status as Review Required",
             "pdfRequiredFieldsTooltip": "Complete all required fields (amount, date, category, subcategory, tax) to generate PDF",
+            "exportAsPdf": "Export as PDF",
             "confirmed": "Confirmed",
             "reviewRequired": "Review Required",
             "activate": "Activate",
+            "activateTooltip": "Status: Inactive. Click to reactivate",
             "deactivate": "Deactivate",
             "addTransaction": "Add Transaction",
             "creating": "Creating..."

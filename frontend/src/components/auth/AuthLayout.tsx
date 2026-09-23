@@ -72,7 +72,7 @@ export function AuthLayout() {
         : DEFAULT_LOCALE
 
     const nextLocale = getNextLocale(currentLocale)
-    const CurrentFlag = FLAGS[currentLocale]
+    const NextFlag = FLAGS[nextLocale]
 
     // Initialize states from localStorage
     useEffect(() => {
@@ -170,8 +170,8 @@ export function AuthLayout() {
                         title={`Switch to ${LOCALE_CONFIG[nextLocale].name}`}
                         className="h-8 px-2.5 border border-gray-200 dark:border-border rounded-md text-xs text-gray-700 dark:text-foreground bg-white dark:bg-card hover:bg-gray-50 dark:hover:bg-muted/50 flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                     >
-                        <CurrentFlag />
-                        <span className="text-[11px] font-semibold uppercase">{currentLocale}</span>
+                        <NextFlag />
+                        <span className="text-[11px] font-semibold uppercase">{nextLocale}</span>
                     </button>
 
                     {/* 

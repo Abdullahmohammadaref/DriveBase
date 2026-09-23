@@ -11,7 +11,6 @@ import api from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 import type { VehicleDetail } from "@/types/vehicle"
 import type { VehicleUpdateInput } from "@/lib/validations"
-import { RecordNavigation } from "@/components/RecordNavigation"
 
 export function VehicleFormPage() {
     const { t } = useTranslation()
@@ -79,45 +78,9 @@ export function VehicleFormPage() {
 
     const prevVehicleId = vehicle?.prev_vehicle_internal_id ?? null
     const nextVehicleId = vehicle?.next_vehicle_internal_id ?? null
-    const vehicleTitle = vehicle ? `${vehicle.make_name || ""} ${vehicle.model_name || ""}`.trim() : ""
 
     return (
         <div className="w-full space-y-2.5 pb-12">
-            {/* Sticky Page Header for Edit Mode */}
-            {isEditing && vehicle && (
-                <div className="flex items-center justify-between gap-2 border-b border-border pb-1.5">
-                    <div className="flex min-w-0 items-center gap-2.5">
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className="size-7 shrink-0"
-                            onClick={handleBack}
-                            aria-label={t("common.back", "Back")}
-                        >
-                            <ArrowLeft className="size-3.5" />
-                        </Button>
-                        <div className="flex items-baseline gap-2 min-w-0">
-                            <h1 className="truncate text-sm font-semibold tracking-tight text-heading">
-                                {vehicleTitle} <span className="text-muted-foreground font-normal">#{vehicle.internal_id}</span>
-                            </h1>
-                            <span className="hidden sm:inline text-[11px] text-muted-foreground truncate">
-                                {t("nav.vehicles", "Vehicles")} / {vehicle.make_name} #{vehicle.internal_id}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="flex shrink-0 items-center gap-1.5">
-                        <RecordNavigation
-                            basePath={`/${business_slug}/vehicles`}
-                            prevId={prevVehicleId}
-                            nextId={nextVehicleId}
-                            pathSuffix="/edit"
-                            label={t("vehicles.vehicleLabel", "Vehicle")}
-                        />
-                    </div>
-                </div>
-            )}
-
             {/* Vehicle Form with stacked full-width layout */}
             <VehicleForm
                 vehicle={isEditing ? vehicle : undefined}

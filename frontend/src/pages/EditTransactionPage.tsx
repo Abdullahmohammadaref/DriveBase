@@ -8,7 +8,6 @@ import { useTransaction, transactionKeys } from "@/hooks/useTransactions"
 import { useAutoSave } from "@/hooks/useAutoSave"
 // import { getSplitWidth, saveSplitWidth } from "@/lib/paginationPrefs" // DEACTIVATED: Split view width
 import type { TransactionFormData, TransactionUpdateData } from "@/types/transaction"
-import { RecordNavigation, ReviewQueueNavigation } from "@/components/RecordNavigation"
 
 /**
  * Edit Transaction Page
@@ -140,40 +139,6 @@ export function EditTransactionPage() {
 
 
 
-    const headerNode = (
-        <div className="flex items-center justify-between gap-2 border-b border-gray-200 dark:border-border pb-1.5 mb-2.5">
-            <div className="flex min-w-0 items-center gap-2">
-                <Button variant="outline" size="icon" className="size-7 shrink-0" onClick={handleBack} type="button" aria-label={t("common.back", "Back")}>
-                    <ArrowLeft className="size-3.5" />
-                </Button>
-                <div className="flex items-baseline gap-2 min-w-0">
-                    <h1 className="text-sm font-semibold tracking-tight text-heading">
-                        {t("transactions.form.editTitle", "Edit Transaction")} <span className="text-muted-foreground font-normal">#{transaction.internal_id}</span>
-                    </h1>
-                    <span className="hidden sm:inline text-[11px] text-muted-foreground truncate">
-                        {t("nav.transactions", "Transactions")} / #{transaction.internal_id}
-                    </span>
-                </div>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-1.5">
-                <RecordNavigation
-                    basePath={`/${business_slug}/transactions`}
-                    prevId={transaction.prev_transaction_internal_id}
-                    nextId={transaction.next_transaction_internal_id}
-                    pathSuffix="/edit"
-                    label={t("transactions.form.transactionLabel", "Transaction")}
-                />
-                <ReviewQueueNavigation
-                    basePath={`/${business_slug}/transactions`}
-                    prevReviewId={transaction.prev_review_required_internal_id}
-                    nextReviewId={transaction.next_review_required_internal_id}
-                    pathSuffix="/edit"
-                />
-            </div>
-        </div>
-    )
-
     return (
         <div>
             {/* Transaction Form (includes Related Transactions Table) */}
@@ -188,7 +153,6 @@ export function EditTransactionPage() {
                 autoSaveStatus={autoSaveStatus}
                 autoSaveErrorMessage={errorMessage}
                 isSplitView={false}
-                header={headerNode}
             />
         </div>
     )

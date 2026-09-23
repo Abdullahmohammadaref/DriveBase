@@ -62,26 +62,31 @@ export function TransactionTable({
     const renderSortableHeader = (field: string, children: React.ReactNode, className?: string) => {
         const isSorted = sortField === field
         const icon = !isSorted ? (
-            <ArrowUpDown className="h-3.5 w-3.5 ml-1 opacity-50" />
+            <ArrowUpDown className="h-3.5 w-3.5 ml-1 opacity-50 shrink-0" />
         ) : sortOrder === "asc" ? (
-            <ArrowUp className="h-3.5 w-3.5 ml-1" />
+            <ArrowUp className="h-3.5 w-3.5 ml-1 text-primary shrink-0" />
         ) : (
-            <ArrowDown className="h-3.5 w-3.5 ml-1" />
+            <ArrowDown className="h-3.5 w-3.5 ml-1 text-primary shrink-0" />
         )
 
         return (
-            <TableHead className={cn("sticky top-0 z-20 bg-gray-50 dark:bg-secondary font-semibold cursor-pointer select-none hover:bg-muted/70 px-3 py-0.5", className)}>
-                <button
-                    type="button"
-                    onClick={() => onSort?.(field)}
+            <TableHead
+                onClick={() => onSort?.(field)}
+                className={cn(
+                    "sticky top-0 z-20 bg-gray-50 dark:bg-secondary font-semibold cursor-pointer select-none hover:bg-muted/70 px-3 py-0.5 transition-colors",
+                    isSorted && "text-foreground",
+                    className
+                )}
+            >
+                <div
                     className={cn(
                         "flex items-center gap-1 w-full",
                         className?.includes("text-right") ? "justify-end" : ""
                     )}
                 >
-                    {children}
+                    <span>{children}</span>
                     {icon}
-                </button>
+                </div>
             </TableHead>
         )
     }
@@ -204,7 +209,7 @@ export function TransactionTable({
             <Table containerClassName={maxHeight ? "overflow-y-auto max-h-[180px]" : undefined}>
                 <TableHeader className="sticky top-0 z-20 bg-gray-50/95 dark:bg-secondary/95 backdrop-blur-xs border-b border-gray-200 dark:border-border">
                     <TableRow className="h-7 bg-gray-50/95 dark:bg-secondary/95 hover:bg-gray-50/95 border-b border-gray-200 dark:border-border">
-                        <TableHead className="sticky top-0 z-20 bg-gray-50 dark:bg-secondary h-7 px-3 py-0.5 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">{t("transactions.table.transaction")}</TableHead>
+                        {renderSortableHeader("internal_id", t("transactions.table.transaction"), "h-7 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider px-3 py-0.5")}
                         {renderSortableHeader("amount", t("transactions.table.amount"), "h-7 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider text-right w-28 md:w-32 px-3 py-0.5")}
                         {renderSortableHeader("date", t("transactions.table.date"), "h-7 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider px-3 py-0.5")}
                         {renderSortableHeader("method", t("transactions.table.method"), "h-7 text-[11px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider px-3 py-0.5")}

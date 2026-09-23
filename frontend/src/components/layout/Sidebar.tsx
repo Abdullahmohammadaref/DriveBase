@@ -122,7 +122,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     const handleParentLinkClick = (event: React.MouseEvent<HTMLAnchorElement>, titleKey: string) => {
         if (!isPlainLeftClick(event)) return
         if (collapsed) {
-            event.preventDefault()
+            // When collapsed, do not preventDefault so the link navigates to the page
             return
         }
         toggleExpanded(titleKey)

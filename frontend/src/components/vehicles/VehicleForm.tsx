@@ -4,14 +4,13 @@ import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query"
-import { Loader2, Save, ArrowLeft, AlertTriangle, X, FileText } from "lucide-react"
+import { Loader2, Save, ArrowLeft, AlertTriangle, X, FileText, Trash2, RotateCcw } from "lucide-react"
 import { ContractModal } from "./ContractModal"
 import { VehicleImageUpload } from "./VehicleImageUpload"
 import { FinancialMetricsStrip } from "./FinancialMetricsStrip"
 import { VehiclePipeline } from "./VehiclePipeline"
 import { VehicleExpensesEarningsCard } from "./VehicleExpensesEarningsCard"
 import { AutoSaveIndicator } from "@/components/AutoSaveIndicator"
-import { StickyFooter } from "@/components/StickyFooter"
 import { RecordNavigation } from "@/components/RecordNavigation"
 import { useTransactions } from "@/hooks/useTransactions"
 import { Button } from "@/components/ui/button"
@@ -658,8 +657,98 @@ export function VehicleForm({
     return (
         <>
             <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-3">
-                {/* Header - Only in Add mode */}
-                {!isEditing && (
+                {/* Header */}
+                {isEditing ? (
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-1.5 mb-2.5">
+                        {/* Left: Back + Vehicle Title/ID + AutoSave */}
+                        <div className="flex min-w-0 items-center gap-2.5">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="size-7 shrink-0"
+                                onClick={handleBack}
+                                aria-label={t("common.back", "Back")}
+                            >
+                                <ArrowLeft className="size-3.5" />
+                            </Button>
+                            <div className="flex items-center gap-2 min-w-0">
+                                <h1 className="truncate text-sm font-semibold tracking-tight text-heading">
+                                    {vehicleTitle} <span className="text-muted-foreground font-normal">#{vehicle?.internal_id}</span>
+                                </h1>
+                                <AutoSaveIndicator
+                                    status={autoSaveStatus}
+                                    errorMessage={autoSaveErrorMessage}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Middle: Status Pipeline + Days on Stock */}
+                        <div className="mx-1.5 flex min-w-0 items-center gap-1.5 overflow-x-auto">
+                            <VehiclePipeline
+                                currentStatus={watchedStatus as VehicleStatus}
+                                canMoveTo={vehicle?.can_move_to || []}
+                                onStatusChange={handleStatusChange}
+                                orientation="horizontal"
+                            />
+                            {vehicleFinancials.daysOnStock !== null && (
+                                <span className="hidden md:inline-flex h-5 shrink-0 items-center gap-1 rounded border border-amber-200 bg-amber-50 px-1.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800">
+                                    <span className="size-1 shrink-0 rounded-full bg-current" />
+                                    {vehicleFinancials.daysOnStock}d {t("vehicles.daysOnStock", "on Stock")}
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Right: Actions */}
+                        <div className="flex shrink-0 items-center gap-1.5">
+                            {watchedStatus === "inactive" ? (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 text-xs gap-1 text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/30"
+                                    onClick={() => handleStatusChange("purchased")}
+                                    title={t("common.activate", "Activate")}
+                                >
+                                    <RotateCcw className="size-3" />
+                                    {t("common.activate", "Activate")}
+                                </Button>
+                            ) : (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 text-xs gap-1 text-red-500 border-red-300 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/30"
+                                    onClick={() => handleStatusChange("inactive")}
+                                    title={t("common.deactivate", "Deactivate")}
+                                >
+                                    <Trash2 className="size-3" />
+                                    {t("common.deactivate", "Deactivate")}
+                                </Button>
+                            )}
+
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className={`h-7 text-xs gap-1 ${canGenerateAnyContract ? "" : "opacity-75"}`}
+                                onClick={() => setContractModalOpen(true)}
+                                title={t("vehicles.generateDocuments", "Generate documents")}
+                            >
+                                <FileText className="size-3" />
+                                {t("vehicles.documents", "Docs")}
+                            </Button>
+
+                            <RecordNavigation
+                                basePath={`/${business_slug}/vehicles`}
+                                prevId={prevVehicleId}
+                                nextId={nextVehicleId}
+                                pathSuffix="/edit"
+                                label={t("vehicles.vehicleLabel", "Vehicle")}
+                            />
+                        </div>
+                    </div>
+                ) : (
                     <div className="flex items-center justify-between pb-1.5 border-b border-gray-200 dark:border-border">
                         <div className="flex items-center gap-2">
                             <Button
@@ -671,21 +760,16 @@ export function VehicleForm({
                             >
                                 <ArrowLeft className="size-3.5" />
                             </Button>
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <h1 className="text-xs font-semibold text-heading">
-                                        {t("vehicleForm.addNewVehicle", "Add New Vehicle")}
-                                    </h1>
-                                    <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-medium bg-[#F9FAFB] dark:bg-secondary text-muted-foreground border border-gray-200 dark:border-border">
-                                        {nextIdLoading ? (
-                                            <Loader2 className="size-2.5 animate-spin mr-1" />
-                                        ) : null}
-                                        {t("vehicleForm.nextId", "Next ID")}: #{nextId ?? "..."}
-                                    </span>
-                                </div>
-                                <p className="text-[10px] text-muted-foreground">
-                                    {t("vehicleForm.subtitle", "Fill in the details to add a vehicle")}
-                                </p>
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-xs font-semibold text-heading">
+                                    {t("vehicleForm.addNewVehicle", "Add New Vehicle")}
+                                </h1>
+                                <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-medium bg-[#F9FAFB] dark:bg-secondary text-muted-foreground border border-gray-200 dark:border-border">
+                                    {nextIdLoading ? (
+                                        <Loader2 className="size-2.5 animate-spin mr-1" />
+                                    ) : null}
+                                    {t("vehicleForm.nextId", "Next ID")}: #{nextId ?? "..."}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -1160,116 +1244,29 @@ export function VehicleForm({
                     </section>
                 )}
 
-                {/* STICKY BOTTOM FOOTER BAR */}
-                <StickyFooter>
-                    {/* Left: Back + Vehicle Title/ID */}
-                    <div className="flex items-center gap-1.5">
+                {/* Bottom Actions Row for Add Mode */}
+                {!isEditing && (
+                    <div className="flex items-center justify-end border-t border-border pt-4 mt-6">
                         <Button
-                            type="button"
-                            variant="outline"
+                            type="submit"
                             size="sm"
-                            className="h-7 text-xs gap-1"
-                            onClick={handleBack}
+                            className="h-8 text-xs bg-primary text-primary-foreground hover:opacity-90 px-4"
+                            disabled={mutation.isPending}
                         >
-                            <ArrowLeft className="size-3" />
-                            {isEditing ? t("common.back", "Back") : t("common.cancel", "Cancel")}
-                        </Button>
-                        {isEditing && (
-                            <span className="hidden sm:inline-block truncate text-xs font-semibold text-heading max-w-[180px]">
-                                {vehicleTitle} <span className="text-muted-foreground font-normal text-[11px]">#{vehicle?.internal_id}</span>
-                            </span>
-                        )}
-                    </div>
-
-                    {/* Center: Status Pipeline + Days on Stock */}
-                    {isEditing ? (
-                        <div className="mx-1.5 flex min-w-0 items-center gap-1.5 overflow-x-auto">
-                            <VehiclePipeline
-                                currentStatus={watchedStatus as VehicleStatus}
-                                canMoveTo={vehicle?.can_move_to || []}
-                                onStatusChange={handleStatusChange}
-                                orientation="horizontal"
-                            />
-                            {vehicleFinancials.daysOnStock !== null && (
-                                <span className="hidden md:inline-flex h-5 shrink-0 items-center gap-1 rounded border border-amber-200 bg-amber-50 px-1.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800">
-                                    <span className="size-1 shrink-0 rounded-full bg-current" />
-                                    {vehicleFinancials.daysOnStock}d {t("vehicles.daysOnStock", "on Stock")}
-                                </span>
+                            {mutation.isPending ? (
+                                <>
+                                    <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+                                    {t("common.creating", "Creating...")}
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="mr-1.5 size-3.5" />
+                                    {t("vehicleForm.createVehicle", "Create Vehicle")}
+                                </>
                             )}
-                        </div>
-                    ) : (
-                        <div />
-                    )}
-
-                    {/* Right: Actions */}
-                    <div className="flex shrink-0 items-center gap-1.5">
-                        {isEditing ? (
-                            <>
-                                <AutoSaveIndicator
-                                    status={autoSaveStatus}
-                                    errorMessage={autoSaveErrorMessage}
-                                />
-
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className={`h-7 text-xs gap-1 ${canGenerateAnyContract ? "" : "opacity-75"}`}
-                                    onClick={() => setContractModalOpen(true)}
-                                    title={t("vehicles.generateDocuments", "Generate documents")}
-                                >
-                                    <FileText className="size-3" />
-                                    {t("vehicles.documents", "Docs")}
-                                </Button>
-
-                                <div className="hidden sm:block">
-                                    <RecordNavigation
-                                        basePath={`/${business_slug}/vehicles`}
-                                        prevId={prevVehicleId}
-                                        nextId={nextVehicleId}
-                                        pathSuffix="/edit"
-                                        label={t("vehicles.title", "Vehicle")}
-                                    />
-                                </div>
-
-                                <Button
-                                    type="submit"
-                                    size="sm"
-                                    className="h-7 text-xs bg-primary text-primary-foreground hover:opacity-90"
-                                    disabled={mutation.isPending}
-                                >
-                                    {mutation.isPending ? (
-                                        <>
-                                            <Loader2 className="mr-1 size-3 animate-spin" />
-                                            {t("common.saving", "Saving...")}
-                                        </>
-                                    ) : (
-                                        t("common.saveChanges", "Save Changes")
-                                    )}
-                                </Button>
-                            </>
-                        ) : (
-                            <Button
-                                type="submit"
-                                size="sm"
-                                className="h-7 text-xs bg-primary text-primary-foreground hover:opacity-90"
-                                disabled={mutation.isPending}
-                            >
-                                {mutation.isPending ? (
-                                    <>
-                                        <Loader2 className="mr-1 size-3 animate-spin" />
-                                        {t("common.creating", "Creating...")}
-                                    </>
-                                ) : (
-                                    <>
-                                        <Save className="mr-1 size-3" />
-                                        {t("vehicleForm.createVehicle", "Create Vehicle")}
-                                    </>
-                                )}
-                            </Button>
-                        )}
+                        </Button>
                     </div>
-                </StickyFooter>
+                )}
             </form>
 
             {/* Legal Entity Creation Modal */}

@@ -1,3 +1,4 @@
+import { useState, useCallback, useMemo } from "react"
 import { useParams, Link } from "react-router-dom"
 import { Plus, ExternalLink, Loader2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
@@ -23,6 +24,19 @@ export function RelatedTransactionsTable({
     const { business_slug, locale } = useParams<{ business_slug: string; locale?: string }>()
     const basePath = locale ? `/${business_slug}/${locale}` : `/${business_slug}`
 
+    // Sorting state
+    const [sortConfig, setSortConfig] = useState<{ field: string; order: "asc" | "desc" }>({
+        field: "date",
+        order: "desc",
+    })
+
+    const handleSort = useCallback((field: string) => {
+        setSortConfig((prev) => ({
+            field,
+            order: prev.field === field && prev.order === "asc" ? "desc" : "asc",
+        }))
+    }, [])
+
     // Fetch vehicle details
     const { data: vehicle } = useVehicle(vehicleId)
 
@@ -35,9 +49,59 @@ export function RelatedTransactionsTable({
     const deleteMutation = useDeleteTransaction()
 
     // Filter out inactive transactions
-    const transactions = (data?.transactions?.items ?? []).filter(
+    const rawTransactions = (data?.transactions?.items ?? []).filter(
         (tx) => tx.status !== "inactive"
     )
+
+    // Sort transactions client-side
+    const sortedTransactions = useMemo(() => {
+        const list = [...rawTransactions]
+        if (!sortConfig.field) return list
+
+        return list.sort((a, b) => {
+            let valA: any
+            let valB: any
+
+            switch (sortConfig.field) {
+                case "internal_id":
+                case "transaction":
+                    valA = a.internal_id ?? 0
+                    valB = b.internal_id ?? 0
+                    break
+                case "amount":
+                    valA = typeof a.amount === "string" ? parseFloat(a.amount) || 0 : (a.amount ?? 0)
+                    valB = typeof b.amount === "string" ? parseFloat(b.amount) || 0 : (b.amount ?? 0)
+                    break
+                case "date": {
+                    const timeA = a.date ? new Date(a.date).getTime() : 0
+                    const timeB = b.date ? new Date(b.date).getTime() : 0
+                    valA = isNaN(timeA) ? 0 : timeA
+                    valB = isNaN(timeB) ? 0 : timeB
+                    break
+                }
+                case "method":
+                    valA = (a.method_display || a.method || "").toLowerCase()
+                    valB = (b.method_display || b.method || "").toLowerCase()
+                    break
+                case "status":
+                    valA = (a.status_display || a.status || "").toLowerCase()
+                    valB = (b.status_display || b.status || "").toLowerCase()
+                    break
+                default:
+                    valA = (a as any)[sortConfig.field] ?? ""
+                    valB = (b as any)[sortConfig.field] ?? ""
+            }
+
+            if (valA < valB) return sortConfig.order === "asc" ? -1 : 1
+            if (valA > valB) return sortConfig.order === "asc" ? 1 : -1
+
+            const idA = a.internal_id ?? 0
+            const idB = b.internal_id ?? 0
+            if (idA < idB) return sortConfig.order === "asc" ? -1 : 1
+            if (idA > idB) return sortConfig.order === "asc" ? 1 : -1
+            return 0
+        })
+    }, [rawTransactions, sortConfig])
 
     const handleDelete = async (transaction: TransactionListItem) => {
         if (!confirm(t("transactions.confirmDelete") || `Delete transaction #${transaction.internal_id}?`)) {
@@ -104,7 +168,10 @@ export function RelatedTransactionsTable({
             ) : (
                 <div className="overflow-hidden rounded-md border border-gray-200 dark:border-border bg-white dark:bg-background shadow-xs">
                     <TransactionTable
-                        transactions={transactions}
+                        transactions={sortedTransactions}
+                        sortField={sortConfig.field}
+                        sortOrder={sortConfig.order}
+                        onSort={handleSort}
                         isLoading={false}
                         onDelete={handleDelete}
                         onActivate={handleActivate}

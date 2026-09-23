@@ -478,9 +478,11 @@
             "alreadyReviewTooltip": "Transaktion befindet sich bereits in Prüfung",
             "markReviewTooltip": "Status auf 'Prüfung erforderlich' setzen",
             "pdfRequiredFieldsTooltip": "Füllen Sie alle Pflichtfelder (Betrag, Datum, Kategorie, Unterkategorie, Steuer) aus, um das PDF zu erstellen",
+            "exportAsPdf": "Als PDF exportieren",
             "confirmed": "Bestätigt",
             "reviewRequired": "Prüfung erforderlich",
             "activate": "Aktivieren",
+            "activateTooltip": "Status: Inaktiv. Klicken zum Reaktivieren",
             "deactivate": "Deaktivieren",
             "addTransaction": "Transaktion hinzufügen",
             "creating": "Wird erstellt..."
