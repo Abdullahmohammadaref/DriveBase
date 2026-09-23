@@ -160,9 +160,6 @@ export function ActivityLogsPage() {
                             <History className="h-4 w-4" />
                             {t("activityLogs.title", "Activity Logs")}
                         </h1>
-                        <p className="text-xs text-muted-foreground">
-                            {data?.total || 0} {t("activityLogs.totalEntries", "total entries")}
-                        </p>
                     </div>
                 </div>
 

@@ -726,7 +726,7 @@ export function TransactionForm({
                                 <div className="px-5 pt-5 pb-0">
                                     <div className="flex flex-row flex-wrap items-center gap-x-4 gap-y-1 min-w-0 rounded-md border p-2 shadow-sm transition-colors bg-background border-border/40 hover:border-border/80 w-full mb-2">
                                         <div className="flex items-center gap-1.5">
-                                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold whitespace-nowrap">{t("vehicles.buyGross", "Gross")}:</span>
+                                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold whitespace-nowrap">{t("vehicles.buyGross", "Gross")}</span>
                                             <span className={`text-sm font-bold ${getAmountColor(grossAmount)} whitespace-nowrap`}>
                                                 {formatMoney(grossAmount)}
                                             </span>
@@ -1143,17 +1143,17 @@ export function TransactionForm({
                                         href={`/api/transactions/${initialData.internal_id}/pdf`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                                        className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background h-7 px-2.5 text-xs font-medium shadow-none hover:bg-accent hover:text-accent-foreground transition-colors"
                                     >
-                                        <Download className="h-4 w-4" />
+                                        <Download className="h-3.5 w-3.5" />
                                         PDF
                                     </a>
                                 ) : (
                                     <span
-                                        className="inline-flex items-center gap-2 rounded-md border border-input bg-muted px-4 py-2 text-sm font-medium text-muted-foreground cursor-not-allowed opacity-50"
+                                        className="inline-flex items-center gap-1.5 rounded-md border border-input bg-muted h-7 px-2.5 text-xs font-medium text-muted-foreground cursor-not-allowed opacity-50"
                                         title={t("transactions.form.pdfRequiredFieldsTooltip", "Complete all required fields (amount, date, category, subcategory, tax) to generate PDF")}
                                     >
-                                        <Download className="h-4 w-4" />
+                                        <Download className="h-3.5 w-3.5" />
                                         PDF
                                     </span>
                                 );

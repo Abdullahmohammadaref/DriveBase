@@ -165,6 +165,7 @@
     },
     "auth": {
         "welcomeBack": "Welcome Back",
+        "selectLoginType": "Select Login Type",
         "signInToManage": "Select your login type to continue",
         "managerLogin": "Manager Login",
         "employeeLogin": "Employee Login",

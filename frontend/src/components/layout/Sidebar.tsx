@@ -181,14 +181,14 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         >
             <div className="flex flex-col flex-1 min-h-0">
                 {/* Logo box */}
-                <div className="flex h-11 items-center justify-between border-b border-gray-200 dark:border-border px-3 shrink-0 mb-2">
+                <div className="flex h-16 items-center justify-between border-b border-gray-200 dark:border-border px-3 shrink-0 mb-2">
                     {!collapsed && (
-                        <Link to={buildHref("dashboard")} className="flex flex-1 items-center justify-center overflow-hidden">
+                        <Link to={buildHref("dashboard")} className="flex flex-1 items-center justify-center overflow-hidden py-1">
                             {user?.business_logo ? (
                                 <img
                                     src={user.business_logo}
                                     alt={user.business_name || "Logo"}
-                                    className="h-7 w-auto max-w-full object-contain"
+                                    className="h-14 max-h-14 w-auto max-w-full object-contain"
                                 />
                             ) : (
                                 <span className="text-sm font-bold text-gray-900 dark:text-foreground truncate text-center w-full">
@@ -198,17 +198,19 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                         </Link>
                     )}
                     {collapsed && (
-                        <div className="mx-auto flex h-7 w-7 items-center justify-center rounded-md bg-blue-600">
+                        <Link to={buildHref("dashboard")} className="mx-auto flex items-center justify-center">
                             {user?.business_logo ? (
                                 <img
                                     src={user.business_logo}
                                     alt="Logo"
-                                    className="h-6 w-6 object-contain rounded-md bg-white"
+                                    className="max-h-9 max-w-[44px] w-auto h-auto object-contain rounded"
                                 />
                             ) : (
-                                <Car className="h-4 w-4 text-white" />
+                                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-600">
+                                    <Car className="h-4 w-4 text-white" />
+                                </div>
                             )}
-                        </div>
+                        </Link>
                     )}
                 </div>
 

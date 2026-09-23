@@ -334,9 +334,23 @@ export default function BusinessSettingsPage() {
                     </div>
                     <div>
                         <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground">{t("businessSettings.title", "Business Settings")}</h1>
-                        <p className="text-xs text-muted-foreground">{t("businessSettings.manageBusinessDesc", "Manage your business information, branches, and users")}</p>
                     </div>
                 </div>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownloadExport}
+                    disabled={exportLoading}
+                    className="h-7.5 px-2.5 text-xs gap-1.5"
+                >
+                    {exportLoading ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                    ) : (
+                        <Download className="h-3.5 w-3.5" />
+                    )}
+                    {exportLoading ? t("businessSettings.preparingExport", "Preparing Export...") : t("businessSettings.exportBusinessData", "Export Business Data")}
+                </Button>
             </div>
 
             {saveSuccess && (
@@ -706,32 +720,6 @@ export default function BusinessSettingsPage() {
                             </button>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            {/* Data Export Section */}
-            <div className="rounded-xl border border-border bg-card p-6">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                    <div>
-                        <h3 className="text-base font-semibold text-foreground">
-                            {t("businessSettings.exportBusinessData", "Export Business Data")}
-                        </h3>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                            {t("businessSettings.exportBusinessDataDesc", "Download a ZIP file containing all your business data — vehicles, transactions, legal entities, choices, and uploaded images. Keep a copy somewhere safe.")}
-                        </p>
-                    </div>
-                    <button
-                        onClick={handleDownloadExport}
-                        disabled={exportLoading}
-                        className="flex-shrink-0 inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 hover:border-primary/40 transition-colors shrink-0 w-full sm:w-auto text-center disabled:opacity-50 disabled:pointer-events-none"
-                    >
-                        {exportLoading ? (
-                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                        ) : (
-                            <Download className="h-4 w-4" />
-                        )}
-                        {exportLoading ? t("businessSettings.preparingExport", "Preparing Export...") : t("businessSettings.downloadExport", "Download Export")}
-                    </button>
                 </div>
             </div>
 

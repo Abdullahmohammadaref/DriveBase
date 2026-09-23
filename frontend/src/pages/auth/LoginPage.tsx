@@ -13,10 +13,7 @@ export function LoginPage() {
         <div className="bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl shadow-sm max-w-md w-full p-8 mx-auto space-y-6">
             {/* Title */}
             <div className="text-center">
-                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{t('auth.welcomeBack')}</h1>
-                <p className="mt-1 text-xs text-gray-500 dark:text-muted-foreground">
-                    {t('auth.signInToManage')}
-                </p>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{t('auth.selectLoginType', 'Select Login Type')}</h1>
             </div>
 
             {/* Login Options */}
@@ -32,9 +29,6 @@ export function LoginPage() {
                         </div>
                         <div>
                             <h2 className="text-sm font-semibold text-gray-900 dark:text-foreground">{t('auth.managerLogin')}</h2>
-                            <p className="text-xs text-gray-500 dark:text-muted-foreground">
-                                {t('auth.fullAccess')}
-                            </p>
                         </div>
                     </div>
                     <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
@@ -51,9 +45,6 @@ export function LoginPage() {
                         </div>
                         <div>
                             <h2 className="text-sm font-semibold text-gray-900 dark:text-foreground">{t('auth.employeeLogin')}</h2>
-                            <p className="text-xs text-gray-500 dark:text-muted-foreground">
-                                {t('auth.loginLinkSent')}
-                            </p>
                         </div>
                     </div>
                     <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />

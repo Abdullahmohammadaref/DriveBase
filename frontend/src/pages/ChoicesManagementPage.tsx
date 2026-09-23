@@ -1023,9 +1023,6 @@ export default function ChoicesManagementPage() {
                     <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground">
                         {t("choices.title", "Manage Choices")}
                     </h1>
-                    <p className="text-xs text-muted-foreground">
-                        {t("choices.subtitle", "Add, deactivate, or reactivate dropdown options for vehicles and transactions")}
-                    </p>
                 </div>
             </div>
 

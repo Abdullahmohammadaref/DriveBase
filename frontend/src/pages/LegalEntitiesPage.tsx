@@ -321,9 +321,6 @@ export function LegalEntitiesPage() {
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 dark:border-border pb-2">
                     <div>
                         <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground">{getPageTitle()}</h1>
-                        <p className="text-xs text-muted-foreground">
-                            {data?.total || 0} {t("legalEntities.totalEntries", "total entries")}
-                        </p>
                     </div>
                     <Button onClick={handleAddClick} size="sm" className="h-7.5 px-3 text-xs gap-1.5 rounded-md shadow-xs">
                         <Plus className="h-3.5 w-3.5" />

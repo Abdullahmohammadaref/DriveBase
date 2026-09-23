@@ -193,12 +193,6 @@ export function EmployeeLoginPage() {
                     )}
                 </Button>
             </form>
-
-            <div className="rounded-lg bg-[#F8F9FA] dark:bg-muted/40 border border-gray-200 dark:border-border p-3 text-xs text-gray-600 dark:text-muted-foreground">
-                <p>
-                    {t("auth.employeeHowItWorks", "How it works: After submitting, your manager will receive a notification. Once they approve, you'll be logged in automatically.")}
-                </p>
-            </div>
         </div>
     )
 }

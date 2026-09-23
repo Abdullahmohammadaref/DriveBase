@@ -197,9 +197,6 @@ export function VehiclesPage() {
                     <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground">
                         {t("vehicles.title", "Vehicles")}
                     </h1>
-                    <p className="text-xs text-muted-foreground">
-                        {t("vehicles.subtitle", "Manage your vehicle inventory and performance metrics")}
-                    </p>
                 </div>
                 <Link
                     to="new"

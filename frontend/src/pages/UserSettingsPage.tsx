@@ -131,7 +131,6 @@ function UsernameSection({ currentUsername }: { currentUsername: string }) {
                 </div>
                 <div>
                     <h3 className="text-sm font-semibold text-foreground">{t("userSettings.username", "Username")}</h3>
-                    <p className="text-[11px] text-muted-foreground">{t("userSettings.changeUsernameDesc", "Change your display username")}</p>
                 </div>
             </div>
 
@@ -281,9 +280,6 @@ function PasswordSection() {
                 </div>
                 <div>
                     <h3 className="text-lg font-semibold text-foreground">{t("userSettings.password", "Password")}</h3>
-                    <p className="text-sm text-muted-foreground">
-                        {t("userSettings.changePasswordDesc", "Change your password (requires email verification)")}
-                    </p>
                 </div>
             </div>
 
@@ -443,9 +439,6 @@ function EmailSection({ currentEmail }: { currentEmail: string }) {
                 </div>
                 <div>
                     <h3 className="text-lg font-semibold text-foreground">{t("userSettings.emailAddress", "Email Address")}</h3>
-                    <p className="text-sm text-muted-foreground">
-                        {t("userSettings.changeEmailDesc", "Change your email (requires dual verification)")}
-                    </p>
                 </div>
             </div>
 
@@ -586,9 +579,6 @@ function BackupEmailSection({ currentBackupEmail }: { currentBackupEmail: string
                 </div>
                 <div>
                     <h3 className="text-lg font-semibold text-foreground">{t("userSettings.backupEmail", "Backup Email")}</h3>
-                    <p className="text-sm text-muted-foreground">
-                        {t("userSettings.backupEmailDesc", "Used for account recovery if you lose access to your primary email")}
-                    </p>
                 </div>
             </div>
 
@@ -687,9 +677,6 @@ function QuickLinks() {
                 </div>
                 <div>
                     <h3 className="text-lg font-semibold text-foreground">{t("userSettings.securityRecovery", "Account Recovery")}</h3>
-                    <p className="text-sm text-muted-foreground">
-                        {t("userSettings.quickAccessDesc", "Lost access to your email or forgot your password?")}
-                    </p>
                 </div>
             </div>
 
@@ -749,9 +736,6 @@ export default function UserSettingsPage() {
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 dark:border-border pb-2">
                 <div>
                     <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground">{t("userSettings.title", "User Settings")}</h1>
-                    <p className="text-xs text-muted-foreground">
-                        {t("userSettings.subtitle", "Manage your account credentials and security settings")}
-                    </p>
                 </div>
             </div>
 

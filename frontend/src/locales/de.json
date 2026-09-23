@@ -165,6 +165,7 @@
     },
     "auth": {
         "welcomeBack": "Willkommen zurück",
+        "selectLoginType": "Anmeldetyp auswählen",
         "signInToManage": "Wählen Sie Ihren Anmeldetyp",
         "managerLogin": "Manager-Anmeldung",
         "employeeLogin": "Mitarbeiter-Anmeldung",

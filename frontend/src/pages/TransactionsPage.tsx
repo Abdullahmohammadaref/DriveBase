@@ -245,9 +245,6 @@ export function TransactionsPage() {
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 dark:border-border pb-2">
                 <div>
                     <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground">{t("transactions.title", "Transactions")}</h1>
-                    <p className="text-xs text-muted-foreground">
-                        {t("transactions.subtitle", "Manage your financial transactions and summaries")}
-                    </p>
                 </div>
                 <div className="flex items-center gap-1.5">
                     <Button

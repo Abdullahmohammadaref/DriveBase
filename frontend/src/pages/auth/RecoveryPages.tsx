@@ -345,9 +345,6 @@ export function ForgotPasswordPage() {
             {/* Header */}
             <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{t("auth.resetPasswordTitle", "Reset Password")}</h1>
-                <p className="mt-0.5 text-xs text-gray-500 dark:text-muted-foreground">
-                    {t("auth.resetPasswordSubtitle", "Enter your email or username to receive a password reset link")}
-                </p>
             </div>
 
             {/* Method Toggle */}
@@ -568,9 +565,6 @@ export function ForgotEmailPage() {
             {/* Header */}
             <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-foreground">{t("auth.changeEmailTitle", "Change Email")}</h1>
-                <p className="mt-0.5 text-xs text-gray-500 dark:text-muted-foreground">
-                    {t("auth.changeEmailSubtitle", "Verify your identity using your backup email")}
-                </p>
             </div>
 
             {/* Form */}
@@ -660,13 +654,6 @@ export function ForgotEmailPage() {
                     )}
                 </Button>
             </form>
-
-            {/* Info */}
-            <div className="rounded-lg bg-[#F8F9FA] dark:bg-muted/40 border border-gray-200 dark:border-border p-3 text-xs text-gray-600 dark:text-muted-foreground">
-                <p>
-                    {t("auth.changeEmailHowItWorks", "How it works: Click the verification link sent to your backup email. Once verified, your email will be updated automatically.")}
-                </p>
-            </div>
         </div>
     )
 }
