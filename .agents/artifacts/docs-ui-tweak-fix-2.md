@@ -1,112 +1,35 @@
-# docs-ui-tweak-fix-2: COGS + Total Profit Formula Fix
+# Vehicle Edit Layout Rework (UI Tweak Fix 2)
 
-**Date:** 2026-08-19  
-**Scope:** Frontend financial calculation formulas + equation display labels  
-**Plan:** `plan-cogs-totalprofit-formula-fix-v2.md`
+## Goal
+To modernize the "Edit Vehicle" page layout, bringing it closer to the provided visual mockup by utilizing a structured 6-column grid and a denser, modal-driven "Expenses & Earnings" UI.
 
----
+## Changes Implemented
 
-## What Changed
+### 1. `VehicleExpensesEarningsCard.tsx`
+- **Rebuilt entirely** to match the mockup:
+  - Replaced the inline form with an **AddDialog modal** triggered by an "Add" button in the header.
+  - Replaced the vertical list of entries with a **Wrapping Pill List** (`flex flex-wrap`), using explicit mockup color classes (`bg-red-100 text-red-700`, `bg-green-100 text-green-700`).
+  - Implemented a condensed header displaying the overall net balance calculation.
 
-### 1. New `ExpenseEarningForCalc` Interface + `calcNetExpensesEarnings` Function
-**File:** `frontend/src/lib/vehicleFinancials.ts`
+### 2. `FinancialMetricsStrip.tsx`
+- Restructured the non-compact mode to use a single fixed `grid-cols-3` layout.
+- The `hasSale` conditional logic now simply injects additional cells into the *same* 3-column grid container instead of rendering a separate row, ensuring consistent alignment with the transactions table.
 
-Added a new interface and pure function to compute the net cost from vehicle-scoped expense/earning entries:
+### 3. `RelatedTransactionsTable.tsx`
+- Wrapped the internal `<TransactionTable ... />` inside a `<div className="overflow-x-auto">` container. This prevents the table from breaking its new 3-column wrapper slot on smaller monitors.
 
-```typescript
-export interface ExpenseEarningForCalc {
-    type: "expense" | "earning"
-    amount: number | string | null
-}
+### 4. `VehicleForm.tsx` (Layout Engine)
+- Added an `inlineTransactions?: React.ReactNode` prop to accept the transactions table from the parent page.
+- Extracted all major form sections into local JSX constants (`vehiclePhotoField`, `descriptionField`, `internalCommentsField`, `buyDetailsCard`, `saleDetailsCard`, `expensesEarningsBlock`, `financialMetricsBlock`).
+- **Conditional Rendering via IIFE:** Used an immediately-invoked function expression to render the old stacked layout for "Add Mode", but a new **6-column grid layout** for "Edit Mode":
+  - **Row 1:** Photo (1 col), Description (1 col), Comments (1 col), Expenses & Earnings (3 cols).
+  - **Row 2:** Buy Details (3 cols), Sale Details (3 cols).
+  - **Row 3:** Financial Metrics (3 cols), Transactions Table (3 cols).
 
-export function calcNetExpensesEarnings(
-    entries: ExpenseEarningForCalc[] | null | undefined,
-): number
-```
+### 5. `VehicleFormPage.tsx`
+- Wired the `RelatedTransactionsTable` into the new layout.
+- Removed the old `<RelatedTransactionsTable>` blocks rendered underneath the form.
+- Passed the table into `VehicleForm` using the newly exposed `inlineTransactions` prop.
 
-Formula: `netExpensesEarnings = Σ(expense.amount) − Σ(earning.amount)`
-
-### 2. COGS Formula Updated
-**File:** `frontend/src/lib/vehicleFinancials.ts`
-
-| Before | After |
-|--------|-------|
-| `COGS = buyNet + totalTxnCost` | `COGS = buyNet + netExpensesEarnings` |
-
-The `totalTxnCost` parameter was removed from `calcCOGS`. It now takes `netExpensesEarnings` (from vehicle expenses/earnings entries) instead of the old bank-transaction-derived cost.
-
-### 3. Total Profit Formula Updated
-**File:** `frontend/src/lib/vehicleFinancials.ts`
-
-| Before | After |
-|--------|-------|
-| `totalProfit = saleNet − buyNet − totalTxnCost` | `totalProfit = saleNet − COGS − taxLiability` |
-
-The function signature changed from `(saleNet, buyNet, totalTxnCost)` to `(saleNet, cogs, taxLiability)`. This means Total Profit now properly accounts for:
-- All expenses/earnings (via COGS)
-- VAT liability (subtracted as a separate cost)
-
-### 4. `VehicleFinancials` Interface Updated
-**File:** `frontend/src/lib/vehicleFinancials.ts`
-
-Removed fields:
-- `totalTxnCost: number`
-- `txnCount: number`
-
-Added field:
-- `netExpensesEarnings: number`
-
-### 5. `CalcVehicleFinancialsInput` Updated
-**File:** `frontend/src/lib/vehicleFinancials.ts`
-
-Added `entries?: ExpenseEarningForCalc[] | null` to accept vehicle expense/earning entries.
-
-### 6. Computation Order Change
-**File:** `frontend/src/lib/vehicleFinancials.ts` — inside `calcVehicleFinancials()`
-
-`taxLiability` is now computed **before** `totalProfit` (it was previously computed after), because `totalProfit` now depends on it.
-
-### 7. VehicleForm.tsx — Passes Entries to Calc
-**File:** `frontend/src/components/vehicles/VehicleForm.tsx`
-
-Added `entries: vehicle?.expenses_earnings?.map(...)` to the `calcVehicleFinancials()` call. This feeds the real expense/earning data into the new formula.
-
-### 8. Equation Labels Updated
-**File:** `frontend/src/components/vehicles/FinancialMetricsStrip.tsx`
-
-| Metric | Old Equation | New Equation |
-|--------|-------------|--------------|
-| COGS | `buyNet + totalTxnCost` (with transaction gating) | `buyNet + netExpensesEarnings` (always shown) |
-| Total Profit | `saleNet − buyNet − totalTxnCost` | `saleNet − cogs − taxLiability` |
-
-Break-Even equation was confirmed already correct — no change needed.
-
----
-
-## What Was NOT Changed
-
-- **Break-Even formula** — already correct (`COGS × (1 + targetMargin)`)
-- **`calcTotalTxnCost`, `calcTxnNet`, `countLinkedTransactions`, `TransactionForCalc`** — left defined and exported (still used by the active transaction-fetching code in VehicleForm.tsx)
-- **VAT Liability card** — unchanged, still active
-- **Net Profit card** — unchanged (`saleNet − buyNet`)
-- **Gross Profit, Margin, ROI** — unchanged (they consume the corrected `totalProfit`/`cogs` automatically)
-- **Backend** — no backend changes in this plan
-- **Design system** — no design changes needed
-
----
-
-## Verification
-
-- ✅ TypeScript compiles with zero errors (`npx tsc --noEmit`)
-- ✅ All existing functions remain exported (no breaking import changes)
-- ✅ `transactions` field still accepted by `CalcVehicleFinancialsInput` (backward compatible)
-
----
-
-## Files Modified
-
-| File | Lines Changed |
-|------|--------------|
-| `frontend/src/lib/vehicleFinancials.ts` | ~40 lines across 8 chunks |
-| `frontend/src/components/vehicles/VehicleForm.tsx` | 1 line added |
-| `frontend/src/components/vehicles/FinancialMetricsStrip.tsx` | 2 equation props updated |
+## Structural Notes
+No new files or components were created during this process. `PROJECT_MAP.md` requires no updates as the component hierarchy remains structurally identical; only the layout rendering logic within the components was modified.

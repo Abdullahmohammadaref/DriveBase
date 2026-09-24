@@ -321,6 +321,7 @@ export function VehiclesPage() {
                     <PerPageInput
                         value={filters.per_page || 20}
                         onChange={handlePerPageChange}
+                        total={data?.vehicles?.total}
                         label=""
                     />
                     {t("common.of", "of")}{" "}

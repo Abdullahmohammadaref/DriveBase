@@ -105,7 +105,7 @@ export function ImportTransactionsModal({
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md w-full overflow-hidden">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Upload className="h-5 w-5" />
@@ -126,7 +126,7 @@ export function ImportTransactionsModal({
                             onDragLeave={handleDragLeave}
                             onDrop={handleDrop}
                             className={cn(
-                                "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
+                                "border-2 border-dashed rounded-lg p-5 text-center cursor-pointer transition-colors w-full max-w-full overflow-hidden",
                                 isDragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/50",
                                 selectedFile && "border-success-500 bg-success-500/5"
                             )}
@@ -140,18 +140,22 @@ export function ImportTransactionsModal({
                             />
 
                             {selectedFile ? (
-                                <div className="flex items-center justify-center gap-3">
-                                    <FileText className="h-8 w-8 text-success-600" />
-                                    <div className="text-left">
-                                        <p className="font-medium">{selectedFile.name}</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            {(selectedFile.size / 1024).toFixed(1)} KB
-                                        </p>
+                                <div className="flex items-center justify-between gap-3 w-full min-w-0">
+                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                        <FileText className="h-8 w-8 shrink-0 text-success-600" />
+                                        <div className="text-left min-w-0 flex-1">
+                                            <p className="font-medium truncate text-sm" title={selectedFile.name}>
+                                                {selectedFile.name}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {(selectedFile.size / 1024).toFixed(1)} KB
+                                            </p>
+                                        </div>
                                     </div>
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="ml-2"
+                                        className="shrink-0 h-8 w-8 text-muted-foreground hover:text-foreground"
                                         onClick={(e) => {
                                             e.stopPropagation()
                                             setSelectedFile(null)

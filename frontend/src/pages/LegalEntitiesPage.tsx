@@ -559,6 +559,7 @@ export function LegalEntitiesPage() {
                     <PerPageInput
                         value={filters.per_page || 20}
                         onChange={handlePerPageChange}
+                        total={data?.total}
                         label=""
                     />
                     {t("common.of", "of")}

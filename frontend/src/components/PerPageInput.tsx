@@ -5,9 +5,10 @@ interface PerPageInputProps {
     value: number
     onChange: (value: number) => void
     label?: string
+    total?: number
 }
 
-export function PerPageInput({ value, onChange, label = "per page" }: PerPageInputProps) {
+export function PerPageInput({ value, onChange, label = "per page", total }: PerPageInputProps) {
     const [inputValue, setInputValue] = useState(String(value))
 
     // Keep input in sync when value changes from external sources
@@ -17,15 +18,26 @@ export function PerPageInput({ value, onChange, label = "per page" }: PerPageInp
 
     const commit = () => {
         const num = parseInt(inputValue, 10)
-        // Check if the number is valid and within range
-        if (!isNaN(num) && num >= 1 && num <= 500) {
-            onChange(num)
-        } else {
-            // If empty, NaN, or invalid range, default to 20 as requested
+        
+        // If empty, NaN, or non-positive
+        if (isNaN(num) || num < 1) {
             const defaultValue = 20
             setInputValue(String(defaultValue))
             onChange(defaultValue)
+            return
         }
+
+        // If the user enters a number greater than the total count, default to the total count!
+        let finalValue = num
+        if (typeof total === "number" && total > 0 && num > total) {
+            finalValue = total
+            setInputValue(String(total))
+        } else if (num > 10000) {
+            finalValue = 10000
+            setInputValue(String(10000))
+        }
+
+        onChange(finalValue)
     }
 
     return (
@@ -41,9 +53,9 @@ export function PerPageInput({ value, onChange, label = "per page" }: PerPageInp
                         commit()
                     }
                 }}
-                className="h-7 w-14 text-center px-1 text-sm font-medium text-foreground"
+                className="h-7 min-w-[3.5rem] w-auto max-w-[5.5rem] text-center px-1.5 text-sm font-medium text-foreground"
             />
-            <span>{label}</span>
+            {label ? <span>{label}</span> : null}
         </div>
     )
 }

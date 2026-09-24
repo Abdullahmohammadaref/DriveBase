@@ -401,6 +401,7 @@ export function TransactionsPage() {
                     <PerPageInput
                         value={filters.per_page || 20}
                         onChange={handlePerPageChange}
+                        total={data?.transactions?.total}
                         label=""
                     />
                     {t("common.of", "of")}{" "}

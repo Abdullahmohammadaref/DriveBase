@@ -243,7 +243,7 @@ class LegalEntityFilters(Schema):
     country_id: Optional[int] = None
     city_id: Optional[int] = None
     page: int = Field(default=1, ge=1)
-    per_page: int = Field(default=20, ge=1, le=100)
+    per_page: int = Field(default=20, ge=1, le=10000)
     sort: Optional[str] = Field(default="name", pattern="^(name|internal_id|type|address_city|status)$")
     order: Optional[str] = Field(default="asc", pattern="^(asc|desc)$")
 
@@ -601,7 +601,7 @@ class VehicleFilters(Schema):
     
     # Pagination
     page: int = Field(default=1, ge=1)
-    per_page: int = Field(default=20, ge=1, le=100)
+    per_page: int = Field(default=20, ge=1, le=10000)
 
 
 # =============================================================================

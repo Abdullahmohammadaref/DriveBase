@@ -2,13 +2,13 @@
 export function getPagePref(cookieKey: string, defaultValue: number): number {
     const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${cookieKey}=([^;]+)`))
     const parsed = match ? parseInt(match[1], 10) : NaN
-    if (!isNaN(parsed) && parsed > 0 && parsed <= 500) return parsed
+    if (!isNaN(parsed) && parsed > 0 && parsed <= 10000) return parsed
     return defaultValue
 }
 
 /** Save a preference to a cookie (1-year expiry) */
 export function savePagePref(cookieKey: string, value: number): void {
-    if (value > 0 && value <= 500) {
+    if (value > 0 && value <= 10000) {
         document.cookie = `${cookieKey}=${value}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
     }
 }

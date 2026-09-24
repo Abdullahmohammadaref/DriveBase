@@ -322,6 +322,7 @@ export function ActivityLogsPage() {
                         <PerPageInput
                             value={filters.per_page || 20}
                             onChange={handlePerPageChange}
+                            total={data?.total}
                             label=""
                         />
                         {t("common.of", "of")} <span className="text-foreground">{data.total}</span> {t("activityLogs.title", "entries")}
