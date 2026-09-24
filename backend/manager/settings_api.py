@@ -23,7 +23,8 @@ import os
 from .models import (
     User, Business, Branch, AuthActionRequest, LegalEntity, Vehicle, Transaction,
     Make, VehicleModel, VehicleType, BodyType, Color, FuelType, DamageType,
-    DoorsChoice, TaxPercentage, PaymentMethod, Currency, Category, Subcategory, KeyNumber
+    DoorsChoice, TaxPercentage, PaymentMethod, Currency, Category, Subcategory, KeyNumber,
+    VehicleExpenseEarning
 )
 
 # Create router with session authentication
@@ -778,7 +779,6 @@ def export_business_data(request: HttpRequest):
                 "sale_price": str(v.sale_price) if v.sale_price else None,
                 "sale_tax_percentage": str(v.sale_tax.percentage) if v.sale_tax else None,
                 "sale_payment_method": v.sale_payment_method.name if v.sale_payment_method else None,
-                "sale_commission": str(v.sale_commission) if v.sale_commission else None,
                 "sale_delivery_collection_date": v.sale_delivery_collection_date.isoformat() if v.sale_delivery_collection_date else None,
                 "sale_invoice_number": v.sale_invoice_number,
                 # Image path (relative)
@@ -788,6 +788,26 @@ def export_business_data(request: HttpRequest):
         zf.writestr(
             "data/vehicles.json",
             json.dumps(vehicles_data, indent=2, cls=DjangoJSONEncoder)
+        )
+        
+        # --- data/vehicle_expenses_earnings.json ---
+        expenses_earnings_qs = VehicleExpenseEarning.objects.filter(business=business).select_related(
+            'vehicle', 'category', 'subcategory'
+        )
+        expenses_earnings_data = []
+        for ee in expenses_earnings_qs:
+            expenses_earnings_data.append({
+                "vehicle_internal_id": ee.vehicle.internal_id if ee.vehicle else None,
+                "type": ee.type,
+                "amount": str(ee.amount) if ee.amount else None,
+                "category": ee.category.name if ee.category else None,
+                "subcategory": ee.subcategory.name if ee.subcategory else None,
+                "is_active": ee.is_active,
+                "created_at": ee.created_at.isoformat() if ee.created_at else None,
+            })
+        zf.writestr(
+            "data/vehicle_expenses_earnings.json",
+            json.dumps(expenses_earnings_data, indent=2, cls=DjangoJSONEncoder)
         )
         
         # --- data/transactions.json ---

@@ -271,6 +271,7 @@ export default function BusinessSettingsPage() {
 
     const handleDownloadExport = async () => {
         setExportLoading(true)
+        setSaveError(null)
         try {
             const response = await api.get("/settings/business/export-data", {
                 responseType: "blob"
@@ -301,6 +302,7 @@ export default function BusinessSettingsPage() {
             }, 10000)
         } catch (error) {
             console.error("Failed to download export:", error)
+            setSaveError(t("businessSettings.exportError", "Failed to download export. Please try again."))
         } finally {
             setExportLoading(false)
         }
