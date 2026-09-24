@@ -292,6 +292,7 @@ export function VehicleForm({
     const isInitializingRef = useRef(isEditing)
     const [mutationError, setMutationError] = useState<string | null>(null)
     const [entityModalOpen, setEntityModalOpen] = useState(false)
+    const createEntityTargetRef = useRef<"seller_id" | "buyer_id">("seller_id")
     const [createEntityTarget, setCreateEntityTarget] = useState<"seller_id" | "buyer_id">("seller_id")
     const [entityFormData, setEntityFormData] = useState<Partial<LegalEntityCreatePayload>>({ type: "individual" })
     const [entityFormError, setEntityFormError] = useState<string | null>(null)
@@ -353,6 +354,7 @@ export function VehicleForm({
 
     // --- Entity Modal Callbacks ---
     const handleOpenEntityModal = useCallback((target: "seller_id" | "buyer_id") => {
+        createEntityTargetRef.current = target
         setCreateEntityTarget(target)
         setEntityFormData({ type: "individual" })
         setEntityFormError(null)
@@ -385,7 +387,8 @@ export function VehicleForm({
         setEntityValidationErrors({})
         try {
             const newEntity = await createEntityMutation.mutateAsync(entityFormData as LegalEntityCreatePayload)
-            handleDropdownChange(createEntityTarget, newEntity.id)
+            const targetField = createEntityTargetRef.current || createEntityTarget
+            handleDropdownChange(targetField, newEntity.id)
             queryClient.invalidateQueries({ queryKey: vehicleKeys.choices() })
             setEntityModalOpen(false)
             setEntityFormData({ type: "individual" })
@@ -562,6 +565,13 @@ export function VehicleForm({
             const updateData: any = { status: newStatus }
             if (newStatus === "sold" || newStatus === "inactive") {
                 updateData.key_number_id = null
+            }
+            if (newStatus === "sold") {
+                if (watch("sale_price")) updateData.sale_price = Number(watch("sale_price"))
+                if (watch("sale_date")) updateData.sale_date = watch("sale_date")
+                if (watch("sale_payment_method_id")) updateData.sale_payment_method_id = watch("sale_payment_method_id")
+                if (watch("buyer_id")) updateData.buyer_id = watch("buyer_id")
+                if (watch("sale_tax_id")) updateData.sale_tax_id = watch("sale_tax_id")
             }
             onAutoSave(updateData as Partial<VehicleUpdateInput>)
         }

@@ -274,14 +274,15 @@ export default function BusinessSettingsPage() {
         setSaveError(null)
         try {
             const response = await api.get("/settings/business/export-data", {
-                responseType: "blob"
+                responseType: "blob",
+                timeout: 120000,
             })
             
             // Get content-disposition header if available to extract filename
             const contentDisposition = response.headers["content-disposition"]
             let filename = `acar_backup_${business?.name?.toLowerCase().replace(/\s+/g, "_") || "business"}.zip`
             if (contentDisposition) {
-                const match = contentDisposition.match(/filename="(.+)"/)
+                const match = contentDisposition.match(/filename="?([^";]+)"?/)
                 if (match && match[1]) {
                     filename = match[1]
                 }

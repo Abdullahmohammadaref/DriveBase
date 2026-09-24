@@ -20,6 +20,9 @@ export default defineConfig({
   // Development server configuration
   server: {
     port: 5173,
+    watch: {
+      ignored: ['**/test_artifacts/**', '**/test-results/**', '**/playwright-report/**', '**/.auth/**'],
+    },
     // Proxy API requests to Django backend
     proxy: {
       '/api': {

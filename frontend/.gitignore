@@ -26,3 +26,9 @@ vite.config.d.ts
 *.njsproj
 *.sln
 *.sw?
+
+# Test artifacts & Playwright
+test_artifacts/
+test-results/
+playwright-report/
+.auth/

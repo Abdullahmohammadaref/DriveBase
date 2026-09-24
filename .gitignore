@@ -86,3 +86,9 @@ scripts/*.log
 instructions.md
 
 reference_ui/
+
+# ----- Test artifacts & Playwright (dev & E2E) -----
+test_artifacts/
+test-results/
+playwright-report/
+.auth/

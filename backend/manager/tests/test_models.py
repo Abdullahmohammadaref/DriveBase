@@ -252,8 +252,8 @@ class LegalEntityAutoIdTests(BaseTestCase):
             address_street="Test St",
             address_street_number=1,
             address_postal_code="10000",
-            address_city="Berlin",
-            address_country="Germany",
+            address_city=self.city_berlin,
+            address_country=self.country_de_a,
         )
         self.assertEqual(e2.internal_id, 2)
 

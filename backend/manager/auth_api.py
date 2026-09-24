@@ -1199,3 +1199,98 @@ if settings.DEBUG:
             "message": "Logged in directly (DEBUG mode, 2FA bypassed).",
             "request_id": None,
         }
+
+    @auth_router.get("/auth/test-helper/request/{request_id}")
+    def test_helper_get_request(request: HttpRequest, request_id: str):
+        """DEBUG-ONLY: Retrieve auth request details for E2E testing."""
+        from django.http import JsonResponse
+        backend_url = getattr(settings, "BACKEND_URL", "http://localhost:8000")
+        try:
+            auth_req = AuthActionRequest.objects.get(request_id=request_id)
+        except AuthActionRequest.DoesNotExist:
+            return JsonResponse({"detail": "Not found"}, status=404)
+        
+        recipient_email = auth_req.user.email if auth_req.user else None
+        if auth_req.payload and isinstance(auth_req.payload, dict):
+            recipient_email = auth_req.payload.get("new_email") or recipient_email
+
+        return {
+            "request_id": auth_req.request_id,
+            "approval_token": auth_req.approval_token,
+            "approval_url": f"{backend_url}/api/auth/approve/{auth_req.approval_token}",
+            "action_type": auth_req.action_type,
+            "status": auth_req.status,
+            "recipient_email": recipient_email,
+            "is_expired": auth_req.is_expired(),
+        }
+
+    @auth_router.get("/auth/test-helper/latest")
+    def test_helper_get_latest(request: HttpRequest, action_type: Optional[str] = None):
+        """DEBUG-ONLY: Retrieve latest auth request for E2E testing."""
+        from django.http import JsonResponse
+        backend_url = getattr(settings, "BACKEND_URL", "http://localhost:8000")
+        qs = AuthActionRequest.objects.all().order_by("-created_at")
+        if action_type:
+            qs = qs.filter(action_type=action_type)
+        auth_req = qs.first()
+        if not auth_req:
+            return JsonResponse({"detail": "No auth request found"}, status=404)
+
+        recipient_email = auth_req.user.email if auth_req.user else None
+        if auth_req.payload and isinstance(auth_req.payload, dict):
+            recipient_email = auth_req.payload.get("new_email") or recipient_email
+
+        return {
+            "request_id": auth_req.request_id,
+            "approval_token": auth_req.approval_token,
+            "approval_url": f"{backend_url}/api/auth/approve/{auth_req.approval_token}",
+            "action_type": auth_req.action_type,
+            "status": auth_req.status,
+            "recipient_email": recipient_email,
+            "is_expired": auth_req.is_expired(),
+        }
+
+    @auth_router.api_operation(["GET", "POST"], "/auth/test-helper/expire/{request_id}")
+    def test_helper_expire_request(request: HttpRequest, request_id: str):
+        """DEBUG-ONLY: Immediately expire an auth request for testing timeout handling."""
+        from django.http import JsonResponse
+        from datetime import timedelta
+        try:
+            auth_req = AuthActionRequest.objects.get(request_id=request_id)
+        except AuthActionRequest.DoesNotExist:
+            return JsonResponse({"detail": "Not found"}, status=404)
+        
+        auth_req.expires_at = timezone.now() - timedelta(minutes=1)
+        auth_req.status = "expired"
+        auth_req.save()
+        return {"success": True, "request_id": auth_req.request_id, "status": "expired"}
+
+    @auth_router.api_operation(["GET", "POST"], "/auth/test-helper/activate-user/{username}")
+    def test_helper_activate_user(request: HttpRequest, username: str):
+        """DEBUG-ONLY: Activate a newly registered user account (simulating admin approval)."""
+        from django.http import JsonResponse
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return JsonResponse({"detail": "User not found"}, status=404)
+        
+        user.is_active = True
+        user.save()
+        return {"success": True, "username": user.username, "is_active": user.is_active}
+
+    @auth_router.api_operation(["GET", "POST"], "/auth/test-helper/reset-user/{username}")
+    def test_helper_reset_user(request: HttpRequest, username: str, password: Optional[str] = "password", email: Optional[str] = None):
+        """DEBUG-ONLY: Reset a user's password and email back to baseline."""
+        from django.http import JsonResponse
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return JsonResponse({"detail": "User not found"}, status=404)
+        
+        if password:
+            user.set_password(password)
+        if email:
+            user.email = email
+        user.is_active = True
+        user.save()
+        return {"success": True, "username": user.username, "email": user.email, "is_active": user.is_active}

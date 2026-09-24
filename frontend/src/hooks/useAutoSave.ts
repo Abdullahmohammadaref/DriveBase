@@ -170,6 +170,12 @@ export function useAutoSave<T>({
 
     // Immediate save (for dropdowns)
     const saveNow = useCallback((data: Partial<T>) => {
+        // Merge with any pending debounced data so we don't lose typed input
+        const mergedData = {
+            ...pendingDataRef.current,
+            ...data,
+        }
+
         // Clear any pending debounced save
         if (debounceTimerRef.current) {
             clearTimeout(debounceTimerRef.current)
@@ -177,12 +183,12 @@ export function useAutoSave<T>({
         }
         pendingDataRef.current = null
 
-        if (validate && !validate(data)) {
+        if (validate && !validate(mergedData)) {
             setStatus("failed_mandatory")
             return
         }
 
-        saveMutation.mutate(data)
+        saveMutation.mutate(mergedData)
     }, [saveMutation, validate])
 
     // Debounced save (for text inputs)

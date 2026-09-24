@@ -1716,7 +1716,7 @@ class Transaction(models.Model):
             has_subcategory = bool((self.subcategory and str(self.subcategory).strip()) or self.subcategory_fk_id)
             has_tax = self.tax is not None
             has_date = bool(self.date)
-            has_method = bool((self.method and str(self.method).strip()) or self.payment_method_fk_id)
+            has_method = bool((self.method and str(self.method).strip()) or self.payment_method_id)
             has_from_or_to = bool(self.from_or_to and str(self.from_or_to).strip())
             has_amount = self.amount is not None
             has_currency = bool((self.currency and str(self.currency).strip()) or self.currency_fk_id)

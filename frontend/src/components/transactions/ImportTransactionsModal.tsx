@@ -47,6 +47,7 @@ export function ImportTransactionsModal({
         if (!newOpen) {
             setSelectedFile(null)
             setSelectedMethod(null)
+            importMutation.reset()
         }
         onOpenChange(newOpen)
     }
@@ -97,7 +98,6 @@ export function ImportTransactionsModal({
                 file: selectedFile,
                 method: String(selectedMethod), // Backend expects string ID
             })
-            handleOpenChange(false)
         } catch (error) {
             // Error is handled by mutation
         }
@@ -209,21 +209,23 @@ export function ImportTransactionsModal({
                         onClick={() => handleOpenChange(false)}
                         disabled={importMutation.isPending}
                     >
-                        Cancel
+                        {importMutation.isSuccess ? "Close" : "Cancel"}
                     </Button>
-                    <Button
-                        onClick={handleImport}
-                        disabled={!selectedFile || !selectedMethod || importMutation.isPending}
-                    >
-                        {importMutation.isPending ? (
-                            <>
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                Importing...
-                            </>
-                        ) : (
-                            "Import"
-                        )}
-                    </Button>
+                    {!importMutation.isSuccess && (
+                        <Button
+                            onClick={handleImport}
+                            disabled={!selectedFile || !selectedMethod || importMutation.isPending}
+                        >
+                            {importMutation.isPending ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Importing...
+                                </>
+                            ) : (
+                                "Import"
+                            )}
+                        </Button>
+                    )}
                 </DialogFooter>
             </DialogContent>
         </Dialog>

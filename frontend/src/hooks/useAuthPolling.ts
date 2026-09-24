@@ -124,6 +124,34 @@ export function useAuthPolling(options: UseAuthPollingOptions = {}): UseAuthPoll
                         }
                     }, 1000)
                 }
+            } else if (response.status === 202) {
+                const data = response.data
+
+                // Check for intermediate waiting_for_new_email state
+                if (data.status === "waiting_for_new_email") {
+                    setStatus("waiting_for_new_email")
+                    setMessage(data.message || "Old email verified! Now check your NEW email.")
+                    onWaitingForNewEmail?.(data)
+                    return
+                }
+
+                // Check for waiting_for_backup_email (registration)
+                if (data.status === "waiting_for_backup_email") {
+                    setStatus("waiting_for_backup_email")
+                    setMessage(data.message || "Primary email verified! Now check your backup email.")
+                    onWaitingForBackupEmail?.(data)
+                    return
+                }
+
+                // Check for waiting_for_admin (registration)
+                if (data.status === "waiting_for_admin") {
+                    setStatus("waiting_for_admin")
+                    setMessage(data.message || "Emails verified! Waiting for administrator approval.")
+                    onWaitingForAdmin?.(data)
+                    return
+                }
+
+                setMessage(data.message || "Waiting for approval...")
             }
         } catch (err: any) {
             // 202 Accepted = Still pending or intermediate state, continue polling

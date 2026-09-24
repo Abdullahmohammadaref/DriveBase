@@ -152,8 +152,8 @@ def get_user_business(request: HttpRequest) -> Business:
 
 
 def require_manager(request: HttpRequest) -> bool:
-    """Check if user is a manager."""
-    return request.user.is_manager
+    """Check if user is a manager or superuser."""
+    return bool(getattr(request.user, 'is_manager', False) or getattr(request.user, 'is_superuser', False))
 
 
 # =============================================================================
@@ -676,7 +676,7 @@ def export_business_data(request: HttpRequest):
     - media/images/vehicles/* (all uploaded vehicle images)
     - media/logo/* (business logo if it exists)
     """
-    if not request.user.is_manager:
+    if not require_manager(request):
         return HttpResponse(status=403)
     
     business = get_user_business(request)

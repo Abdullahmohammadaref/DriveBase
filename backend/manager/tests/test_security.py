@@ -167,8 +167,8 @@ class LegalEntityIdorTests(BaseTestCase):
             address_street="Secret St",
             address_street_number=1,
             address_postal_code="11111",
-            address_city="Nowhere",
-            address_country="Germany",
+            address_city=self.city_berlin,
+            address_country=self.country_de_b,
         )
         response = self.client.get(f"/api/legal-entities/{e.internal_id}")
         self.assertEqual(response.status_code, 404)

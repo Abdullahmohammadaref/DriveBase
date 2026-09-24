@@ -1054,7 +1054,7 @@ def vehicle_details(request, business_name, vehicle_internal_id):
             # Fetch dynamic choices from database models
             business = request.user.business
             fuel_choices = [(ft.id, ft.name) for ft in FuelType.objects.filter(business=business, is_active=True)]
-            manufacturer_choices = [(m.id, m.name) for m in Manufacturer.objects.filter(business=business, is_active=True)]
+            manufacturer_choices = [(m.id, m.name) for m in Make.objects.filter(business=business, is_active=True)]
             vehicle_type_choices = [(vt.id, vt.name) for vt in VehicleType.objects.filter(business=business, is_active=True)]
             body_type_choices = [(bt.id, bt.name) for bt in BodyType.objects.filter(business=business, is_active=True)]
             color_choices = [(c.id, c.name) for c in Color.objects.filter(business=business, is_active=True)]
