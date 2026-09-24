@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react"
-import { Link } from "react-router-dom"
+import { Link, useParams } from "react-router-dom"
 import {
     useReactTable,
     getCoreRowModel,
@@ -83,6 +83,9 @@ export function VehicleTable({
     onPageChange,
     onDeleteClick,
 }: VehicleTableProps) {
+    const { business_slug, locale } = useParams<{ business_slug: string; locale?: string }>()
+    const basePath = locale ? `/${business_slug}/${locale}` : `/${business_slug}`
+
     // Define columns
     const columns = useMemo<ColumnDef<VehicleListItem>[]>(
         () => [
@@ -294,7 +297,7 @@ export function VehicleTable({
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
                                 <Link
-                                    to={`/vehicles/${row.original.internal_id}`}
+                                    to={`${basePath}/vehicles/${row.original.internal_id}`}
                                     className="flex items-center"
                                 >
                                     <Eye className="mr-2 h-4 w-4" />
@@ -303,7 +306,7 @@ export function VehicleTable({
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
                                 <Link
-                                    to={`/vehicles/${row.original.internal_id}/edit`}
+                                    to={`${basePath}/vehicles/${row.original.internal_id}/edit`}
                                     className="flex items-center"
                                 >
                                     <Pencil className="mr-2 h-4 w-4" />

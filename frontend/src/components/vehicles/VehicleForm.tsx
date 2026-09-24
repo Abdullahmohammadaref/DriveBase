@@ -191,7 +191,8 @@ export function VehicleForm({
     inlineTransactions,
 }: VehicleFormProps) {
     const navigate = useNavigate()
-    const { business_slug } = useParams<{ business_slug: string }>()
+    const { business_slug, locale } = useParams<{ business_slug: string; locale?: string }>()
+    const basePath = locale ? `/${business_slug}/${locale}` : `/${business_slug}`
     const queryClient = useQueryClient()
     const { t } = useTranslation()
 
@@ -304,8 +305,8 @@ export function VehicleForm({
     // --- Basic Handlers ---
     const handleBack = useCallback(() => {
         if (window.history.state && window.history.state.idx > 0) navigate(-1)
-        else navigate("/vehicles")
-    }, [navigate])
+        else navigate(`${basePath}/vehicles`)
+    }, [navigate, basePath])
 
     const toOptions = useCallback((items: Array<{ id: number; name: string }> | undefined) =>
         items?.map((item) => ({ id: item.id, name: item.name })) ?? [], [])
@@ -740,7 +741,7 @@ export function VehicleForm({
                             </Button>
 
                             <RecordNavigation
-                                basePath={`/${business_slug}/vehicles`}
+                                basePath={`${basePath}/vehicles`}
                                 prevId={prevVehicleId}
                                 nextId={nextVehicleId}
                                 pathSuffix="/edit"

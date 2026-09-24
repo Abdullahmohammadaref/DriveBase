@@ -31,7 +31,8 @@ import type { TransactionFilters, TransactionListItem } from "@/types/transactio
  */
 export function TransactionsPage() {
     const { t } = useTranslation()
-    const { business_slug } = useParams()
+    const { business_slug, locale } = useParams<{ business_slug: string; locale?: string }>()
+    const basePath = locale ? `/${business_slug}/${locale}` : `/${business_slug}`
     const [searchParams] = useSearchParams()
 
     // Filter state - initialize from URL
@@ -271,7 +272,7 @@ export function TransactionsPage() {
                         {pdfLoading ? t("transactions.generating", "Generating...") : t("transactions.exportPdf", "Export PDF")}
                     </Button>
                     <Link
-                        to={`/${business_slug}/transactions/new`}
+                        to={`${basePath}/transactions/new`}
                         className="inline-flex items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-xs hover:bg-primary/90"
                     >
                         <Plus className="h-3.5 w-3.5" />

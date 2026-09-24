@@ -484,9 +484,11 @@ export default function BusinessSettingsPage() {
                     </div>
 
                     {/* Company Registration Section */}
-                    <div className="border-t border-border pt-6">
+                    <div className="border-t border-border pt-6 space-y-4">
                         <h3 className="text-sm font-medium text-muted-foreground mb-4">{t("businessSettings.companyRegistration", "Company Registration")}</h3>
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-7">
+                        
+                        {/* First 4 fields */}
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                             <div>
                                 <label className="block text-sm font-medium text-foreground mb-1.5">{t("businessSettings.managingDirector", "Managing Director")}</label>
                                 <input type="text" value={formData.managing_director || ""} onChange={(e) => handleFieldChange("managing_director", e.target.value)} className={inputClass} />
@@ -503,6 +505,10 @@ export default function BusinessSettingsPage() {
                                 <label className="block text-sm font-medium text-foreground mb-1.5">{t("businessSettings.ustIdNr", "USt-IdNr")}</label>
                                 <input type="text" value={formData.ust_id_nr || ""} onChange={(e) => handleFieldChange("ust_id_nr", e.target.value)} className={inputClass} />
                             </div>
+                        </div>
+
+                        {/* Last 3 fields */}
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             <div>
                                 <label className="block text-sm font-medium text-foreground mb-1.5">{t("businessSettings.headquarters", "Headquarters City")}</label>
                                 <input type="text" value={formData.headquarters_city || ""} onChange={(e) => handleFieldChange("headquarters_city", e.target.value)} className={inputClass} />

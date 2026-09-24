@@ -22,7 +22,8 @@ import type { TransactionFormData, TransactionUpdateData } from "@/types/transac
 export function EditTransactionPage() {
     const { t } = useTranslation()
     const navigate = useNavigate()
-    const { business_slug, id } = useParams()
+    const { business_slug, id, locale } = useParams<{ business_slug: string; id: string; locale?: string }>()
+    const basePath = locale ? `/${business_slug}/${locale}` : `/${business_slug}`
     const transactionId = id ? parseInt(id) : 0
 
     // Fetch existing transaction data
@@ -107,7 +108,7 @@ export function EditTransactionPage() {
         if (window.history.state && window.history.state.idx > 0) {
             navigate(-1)
         } else {
-            navigate(`/${business_slug}/transactions`)
+            navigate(`${basePath}/transactions`)
         }
     }
 

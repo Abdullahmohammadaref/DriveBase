@@ -24,7 +24,7 @@ import {
     AreaChart,
     Area,
 } from "recharts"
-import { useParams } from "react-router-dom"
+import { useParams, Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { useDashboard } from "@/hooks/useDashboard"
 import { formatCurrency } from "@/lib/utils"
@@ -41,7 +41,8 @@ import { FinancialSummaryTable } from "@/components/transactions/FinancialSummar
  * All data is pre-computed server-side.
  */
 export function DashboardPage() {
-    const { business_slug } = useParams<{ business_slug: string }>()
+    const { business_slug, locale } = useParams<{ business_slug: string; locale?: string }>()
+    const basePath = locale ? `/${business_slug}/${locale}` : `/${business_slug}`
     const { t } = useTranslation()
     const { data, isLoading, isError, error } = useDashboard()
 
@@ -86,13 +87,13 @@ export function DashboardPage() {
                     <p className="text-sm text-muted-foreground/60 mt-1">
                         {t("dashboard.addFirstVehicle", "Add your first vehicle to see analytics here.")}
                     </p>
-                    <a
-                        href={`/${business_slug}/vehicles/new`}
+                    <Link
+                        to={`${basePath}/vehicles/new`}
                         className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                     >
                         <Car className="h-4 w-4" />
                         {t("dashboard.addVehicle", "Add Vehicle")}
-                    </a>
+                    </Link>
                 </div>
             </div>
         )
@@ -363,9 +364,9 @@ export function DashboardPage() {
                         </h3>
                         <div className="space-y-1">
                             {d.top_vehicles.slice(0, 5).map((v, i) => (
-                                <a
+                                <Link
                                     key={v.internal_id}
-                                    href={`/${business_slug}/vehicles/${v.internal_id}/edit`}
+                                    to={`${basePath}/vehicles/${v.internal_id}/edit`}
                                     className="flex items-center justify-between rounded-md px-2.5 py-1.5 hover:bg-gray-50 dark:hover:bg-muted/50 transition-colors group text-xs"
                                 >
                                     <div className="flex items-center gap-2 min-w-0">
@@ -383,7 +384,7 @@ export function DashboardPage() {
                                         )}
                                         <ArrowUpRight className="h-3 w-3 text-gray-300 group-hover:text-gray-600 dark:text-muted-foreground/0 dark:group-hover:text-muted-foreground transition-colors" />
                                     </div>
-                                </a>
+                                </Link>
                             ))}
                         </div>
                     </div>

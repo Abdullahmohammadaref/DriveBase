@@ -126,7 +126,8 @@ export function TransactionForm({
     const { t } = useTranslation()
 
     const navigate = useNavigate()
-    const { business_slug } = useParams()
+    const { business_slug, locale } = useParams<{ business_slug: string; locale?: string }>()
+    const basePath = locale ? `/${business_slug}/${locale}` : `/${business_slug}`
 
     // Hooks for status toggle actions
     const deleteTransaction = useDeleteTransaction()
@@ -462,7 +463,7 @@ export function TransactionForm({
         if (window.history.state && window.history.state.idx > 0) {
             navigate(-1)
         } else {
-            navigate(`/${business_slug}/transactions`)
+            navigate(`${basePath}/transactions`)
         }
     }
 
@@ -711,7 +712,7 @@ export function TransactionForm({
 
                                 {/* Standard Navigation */}
                                 <RecordNavigation
-                                    basePath={`/${business_slug}/transactions`}
+                                    basePath={`${basePath}/transactions`}
                                     prevId={initialData.prev_transaction_internal_id}
                                     nextId={initialData.next_transaction_internal_id}
                                     pathSuffix="/edit"
@@ -719,7 +720,7 @@ export function TransactionForm({
                                 />
 
                                 <ReviewQueueNavigation
-                                    basePath={`/${business_slug}/transactions`}
+                                    basePath={`${basePath}/transactions`}
                                     prevReviewId={initialData.prev_review_required_internal_id}
                                     nextReviewId={initialData.next_review_required_internal_id}
                                     pathSuffix="/edit"

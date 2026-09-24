@@ -16,7 +16,8 @@ export function VehicleFormPage() {
     const { t } = useTranslation()
     const navigate = useNavigate()
     const { user } = useAuth()
-    const { business_slug, id } = useParams<{ business_slug: string; id: string }>()
+    const { business_slug, id, locale } = useParams<{ business_slug: string; id: string; locale?: string }>()
+    const basePath = locale ? `/${business_slug}/${locale}` : `/${business_slug}`
     const isEditing = Boolean(id)
     const vehicleId = id ? Number(id) : 0
 
@@ -42,7 +43,7 @@ export function VehicleFormPage() {
         if (window.history.state && window.history.state.idx > 0) {
             navigate(-1)
         } else {
-            navigate(`/${business_slug}/vehicles`)
+            navigate(`${basePath}/vehicles`)
         }
     }
 

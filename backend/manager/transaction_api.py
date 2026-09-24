@@ -886,15 +886,18 @@ def import_transactions_csv(
         max_id=Max('internal_id')
     )['max_id'] or 0
     
-    # Read and decode file (try utf-8-sig first for BOM handling, then utf-8)
+    # Read and decode file (try utf-8-sig first for BOM handling, then utf-8, then cp1252/latin1 for German ANSI)
     try:
         file_content = transactions_file.read()
         try:
             csv_text = file_content.decode('utf-8-sig')
         except UnicodeDecodeError:
-            csv_text = file_content.decode('utf-8')
-    except UnicodeDecodeError:
-        return 400, ErrorResponse(message="Please upload a valid UTF-8 encoded .csv file.")
+            try:
+                csv_text = file_content.decode('utf-8')
+            except UnicodeDecodeError:
+                csv_text = file_content.decode('cp1252')
+    except Exception:
+        return 400, ErrorResponse(message="Please upload a valid CSV file (UTF-8 or ANSI/CP1252 encoded).")
     
     # Parse CSV with pandas (semicolon delimiter)
     try:

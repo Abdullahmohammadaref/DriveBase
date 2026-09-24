@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth"
  */
 export function ProtectedRoute() {
     const { isAuthenticated, isLoading, user } = useAuth()
-    const { business_slug } = useParams<{ business_slug: string }>()
+    const { business_slug, locale } = useParams<{ business_slug: string; locale?: string }>()
 
     // Show loading state while checking auth
     if (isLoading) {
@@ -43,7 +43,8 @@ export function ProtectedRoute() {
 
         if (userSlug !== urlSlug) {
             // Wrong business - redirect to correct one
-            return <Navigate to={`/${userSlug}/dashboard`} replace />
+            const target = locale ? `/${userSlug}/${locale}/dashboard` : `/${userSlug}/dashboard`
+            return <Navigate to={target} replace />
         }
     }
 
