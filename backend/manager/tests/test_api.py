@@ -960,3 +960,79 @@ class AuthApiTests(BaseTestCase):
     def test_csrf_endpoint_sets_cookie(self):
         response = self.client.get("/api/auth/csrf")
         self.assertEqual(response.status_code, 200)
+
+
+# =============================================================================
+# Vehicle Expense & Earning API Integration Tests
+# =============================================================================
+
+class VehicleExpenseEarningApiTests(BaseTestCase):
+    """Test create, update (PUT & PATCH), list, and delete of vehicle expenses/earnings."""
+
+    def test_create_and_update_expense_earning(self):
+        self.login_manager_a()
+
+        # 1. Create an expense
+        create_payload = {
+            "type": "expense",
+            "amount": "150.50",
+            "category_id": self.category_a.id,
+            "subcategory_id": self.subcategory_a.id,
+        }
+        res = self.client.post(
+            f"/api/vehicles/{self.vehicle_a.internal_id}/expenses-earnings",
+            data=json.dumps(create_payload),
+            content_type="application/json",
+        )
+        self.assertEqual(res.status_code, 201)
+        ee_data = res.json()
+        ee_id = ee_data["id"]
+        self.assertEqual(ee_data["type"], "expense")
+        self.assertEqual(float(ee_data["amount"]), 150.50)
+
+        # 2. Update via PUT (change to earning, amount 250.00)
+        update_payload = {
+            "type": "earning",
+            "amount": "250.00",
+            "category_id": self.category_a.id,
+            "subcategory_id": self.subcategory_a.id,
+        }
+        res_put = self.client.put(
+            f"/api/vehicles/{self.vehicle_a.internal_id}/expenses-earnings/{ee_id}",
+            data=json.dumps(update_payload),
+            content_type="application/json",
+        )
+        self.assertEqual(res_put.status_code, 200)
+        updated_data = res_put.json()
+        self.assertEqual(updated_data["type"], "earning")
+        self.assertEqual(float(updated_data["amount"]), 250.00)
+
+        # 3. Update via PATCH (change only amount to 300.00)
+        patch_payload = {
+            "amount": "300.00",
+        }
+        res_patch = self.client.patch(
+            f"/api/vehicles/{self.vehicle_a.internal_id}/expenses-earnings/{ee_id}",
+            data=json.dumps(patch_payload),
+            content_type="application/json",
+        )
+        self.assertEqual(res_patch.status_code, 200)
+        patched_data = res_patch.json()
+        self.assertEqual(patched_data["type"], "earning")
+        self.assertEqual(float(patched_data["amount"]), 300.00)
+
+        # 4. Check vehicle detail reflects updated expense_earnings
+        res_detail = self.client.get(f"/api/vehicles/{self.vehicle_a.internal_id}")
+        self.assertEqual(res_detail.status_code, 200)
+        detail_data = res_detail.json()
+        self.assertEqual(len(detail_data["expenses_earnings"]), 1)
+        self.assertEqual(float(detail_data["expenses_earnings"][0]["amount"]), 300.00)
+
+        # 5. Delete expense
+        res_del = self.client.delete(f"/api/vehicles/{self.vehicle_a.internal_id}/expenses-earnings/{ee_id}")
+        self.assertEqual(res_del.status_code, 200)
+
+        # 6. Verify detail has 0 active entries
+        res_detail_after = self.client.get(f"/api/vehicles/{self.vehicle_a.internal_id}")
+        self.assertEqual(len(res_detail_after.json()["expenses_earnings"]), 0)
+

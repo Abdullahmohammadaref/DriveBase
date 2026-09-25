@@ -267,6 +267,47 @@ export function useCreateExpenseEarning() {
             queryClient.invalidateQueries({
                 queryKey: vehicleKeys.detail(variables.vehicleInternalId),
             })
+            queryClient.invalidateQueries({
+                queryKey: ["vehicles"],
+            })
+        },
+    })
+}
+
+/**
+ * Update an existing expense/earning for a vehicle
+ */
+export function useUpdateExpenseEarning() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({
+            vehicleInternalId,
+            entryId,
+            payload,
+        }: {
+            vehicleInternalId: number
+            entryId: number
+            payload: {
+                type: "expense" | "earning"
+                amount: number
+                category_id: number
+                subcategory_id: number
+            }
+        }) => {
+            const response = await api.put(
+                `/vehicles/${vehicleInternalId}/expenses-earnings/${entryId}`,
+                payload
+            )
+            return response.data
+        },
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: vehicleKeys.detail(variables.vehicleInternalId),
+            })
+            queryClient.invalidateQueries({
+                queryKey: ["vehicles"],
+            })
         },
     })
 }
@@ -292,6 +333,9 @@ export function useDeleteExpenseEarning() {
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({
                 queryKey: vehicleKeys.detail(variables.vehicleInternalId),
+            })
+            queryClient.invalidateQueries({
+                queryKey: ["vehicles"],
             })
         },
     })

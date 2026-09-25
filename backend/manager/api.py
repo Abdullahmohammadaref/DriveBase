@@ -41,7 +41,7 @@ from .schemas import (
     LegalEntityListOut, LegalEntityUpdate, LegalEntityFilters, LegalEntitiesListResponse,
     BranchOut, ErrorResponse, SuccessResponse, DeleteCheckResponse,
     ChoiceUpdatePayload, KeyNumberOut,
-    VehicleExpenseEarningOut, VehicleExpenseEarningCreate
+    VehicleExpenseEarningOut, VehicleExpenseEarningCreate, VehicleExpenseEarningUpdate
 )
 from .delete_helpers import check_entity_dependencies, execute_cascade_delete, execute_unlink_and_delete, CHOICE_MODEL_MAP
 from .image_processing import process_vehicle_image
@@ -1174,6 +1174,72 @@ def create_vehicle_expense_earning(
         "category_name": category.name,
         "subcategory_id": ee.subcategory_id,
         "subcategory_name": subcategory.name,
+        "created_at": ee.created_at,
+    }
+
+
+@router.put(
+    "/vehicles/{internal_id}/expenses-earnings/{ee_id}",
+    response={200: VehicleExpenseEarningOut, 400: ErrorResponse, 404: ErrorResponse},
+)
+@router.patch(
+    "/vehicles/{internal_id}/expenses-earnings/{ee_id}",
+    response={200: VehicleExpenseEarningOut, 400: ErrorResponse, 404: ErrorResponse},
+)
+def update_vehicle_expense_earning(
+    request,
+    internal_id: int,
+    ee_id: int,
+    payload: VehicleExpenseEarningUpdate,
+):
+    """Update an existing expense/earning for a vehicle."""
+    business = get_user_business(request)
+    vehicle = get_object_or_404(Vehicle, business=business, internal_id=internal_id)
+
+    ee = get_object_or_404(
+        VehicleExpenseEarning, id=ee_id, vehicle=vehicle, is_active=True
+    )
+
+    if payload.category_id is not None:
+        category = get_object_or_404(Category, id=payload.category_id, business=business, is_active=True)
+        ee.category = category
+
+    if payload.subcategory_id is not None:
+        subcategory = get_object_or_404(
+            Subcategory, id=payload.subcategory_id, category=ee.category, business=business, is_active=True
+        )
+        ee.subcategory = subcategory
+
+    if payload.type is not None:
+        ee.type = payload.type
+
+    if payload.amount is not None:
+        ee.amount = payload.amount
+
+    ee.save()
+
+    type_de = "Ausgabe" if ee.type == "expense" else "Einnahme"
+    type_en = ee.type.title()
+    log_activity(
+        request,
+        action='update',
+        entity_type='vehicle',
+        entity_id=vehicle.internal_id,
+        entity_name=str(vehicle),
+        details={
+            "en": f"{type_en} of {ee.amount} updated ({ee.category.name if ee.category else ''} / {ee.subcategory.name if ee.subcategory else ''})",
+            "de": f"{type_de} in Höhe von {ee.amount} aktualisiert ({ee.category.name if ee.category else ''} / {ee.subcategory.name if ee.subcategory else ''})"
+        }
+    )
+
+    return 200, {
+        "id": ee.id,
+        "type": ee.type,
+        "amount": ee.amount,
+        "category_id": ee.category_id,
+        "category_name": ee.category.name if ee.category else None,
+        "subcategory_id": ee.subcategory_id,
+        "subcategory_name": ee.subcategory.name if ee.subcategory else None,
         "created_at": ee.created_at,
     }
 

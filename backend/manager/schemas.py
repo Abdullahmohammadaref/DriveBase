@@ -36,6 +36,14 @@ class VehicleExpenseEarningCreate(Schema):
     subcategory_id: int
 
 
+class VehicleExpenseEarningUpdate(Schema):
+    """Schema for updating an existing vehicle expense/earning entry."""
+    type: Optional[str] = Field(None, pattern="^(expense|earning)$")
+    amount: Optional[Decimal] = Field(None, gt=0)
+    category_id: Optional[int] = None
+    subcategory_id: Optional[int] = None
+
+
 # =============================================================================
 # Choice Update Schema (for PATCH /choices/{type}/{id})
 # =============================================================================

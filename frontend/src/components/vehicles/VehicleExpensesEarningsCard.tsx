@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { DynamicSelect } from "@/components/ui/dynamic-select"
 import { formatCurrency } from "@/lib/utils"
-import { useCreateExpenseEarning, useDeleteExpenseEarning } from "@/hooks/useVehicles"
+import { useCreateExpenseEarning, useUpdateExpenseEarning, useDeleteExpenseEarning } from "@/hooks/useVehicles"
 import type { VehicleExpenseEarning, AllChoices } from "@/types/vehicle"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
@@ -24,6 +24,7 @@ export function VehicleExpensesEarningsCard({
     const { t } = useTranslation()
     // -- State --
     const [showDialog, setShowDialog] = useState(false)
+    const [editingEntry, setEditingEntry] = useState<VehicleExpenseEarning | null>(null)
     const [entryType, setEntryType] = useState<"expense" | "earning">("expense")
     const [amount, setAmount] = useState("")
     const [categoryId, setCategoryId] = useState<number | null>(null)
@@ -32,6 +33,7 @@ export function VehicleExpensesEarningsCard({
 
     // -- Mutations --
     const createMutation = useCreateExpenseEarning()
+    const updateMutation = useUpdateExpenseEarning()
     const deleteMutation = useDeleteExpenseEarning()
 
     // -- Derived --
@@ -66,11 +68,32 @@ export function VehicleExpensesEarningsCard({
     // Validation
     const isFormValid = useMemo(() => {
         const numAmount = parseFloat(amount)
-        return categoryId !== null && !isNaN(numAmount) && numAmount > 0
-    }, [categoryId, amount])
+        return categoryId !== null && subcategoryId !== null && !isNaN(numAmount) && numAmount > 0
+    }, [categoryId, subcategoryId, amount])
 
     // -- Handlers --
+    const handleOpenAdd = () => {
+        setEditingEntry(null)
+        setEntryType("expense")
+        setAmount("")
+        setCategoryId(null)
+        setSubcategoryId(null)
+        setFormError(null)
+        setShowDialog(true)
+    }
+
+    const handleEdit = (entry: VehicleExpenseEarning) => {
+        setEditingEntry(entry)
+        setEntryType(entry.type)
+        setAmount(String(entry.amount))
+        setCategoryId(entry.category_id)
+        setSubcategoryId(entry.subcategory_id)
+        setFormError(null)
+        setShowDialog(true)
+    }
+
     const resetForm = useCallback(() => {
+        setEditingEntry(null)
         setAmount("")
         setCategoryId(null)
         setSubcategoryId(null)
@@ -83,34 +106,47 @@ export function VehicleExpensesEarningsCard({
         const numAmount = parseFloat(amount)
 
         if (!categoryId) {
-            setFormError("Category is required")
+            setFormError(t("expensesEarnings.categoryRequired", "Category is required"))
             return
         }
         if (!subcategoryId) {
-            setFormError("Subcategory is required")
+            setFormError(t("expensesEarnings.subcategoryRequired", "Subcategory is required"))
             return
         }
         if (isNaN(numAmount) || numAmount <= 0) {
-            setFormError("Amount must be greater than 0")
+            setFormError(t("expensesEarnings.amountPositive", "Amount must be greater than 0"))
             return
         }
 
         try {
-            await createMutation.mutateAsync({
-                vehicleInternalId,
-                payload: {
-                    type: entryType,
-                    category_id: categoryId,
-                    subcategory_id: subcategoryId,
-                    amount: numAmount,
-                },
-            })
+            if (editingEntry) {
+                await updateMutation.mutateAsync({
+                    vehicleInternalId,
+                    entryId: editingEntry.id,
+                    payload: {
+                        type: entryType,
+                        category_id: categoryId,
+                        subcategory_id: subcategoryId,
+                        amount: numAmount,
+                    },
+                })
+            } else {
+                await createMutation.mutateAsync({
+                    vehicleInternalId,
+                    payload: {
+                        type: entryType,
+                        category_id: categoryId,
+                        subcategory_id: subcategoryId,
+                        amount: numAmount,
+                    },
+                })
+            }
             resetForm()
         } catch (err: any) {
             const msg =
                 err?.response?.data?.error ||
                 err?.response?.data?.detail ||
-                "Failed to create entry"
+                (editingEntry ? "Failed to update entry" : "Failed to create entry")
             setFormError(typeof msg === "string" ? msg : JSON.stringify(msg))
         }
     }
@@ -135,7 +171,7 @@ export function VehicleExpensesEarningsCard({
                 </span>
                 <button
                     type="button"
-                    onClick={() => setShowDialog(true)}
+                    onClick={handleOpenAdd}
                     className="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 flex items-center gap-0.5 cursor-pointer"
                 >
                     <Plus className="size-3" /> {t("expensesEarnings.add", "Add")}
@@ -176,7 +212,9 @@ export function VehicleExpensesEarningsCard({
                             return (
                                 <div
                                     key={entry.id}
-                                    className="group flex py-1.5 px-2 items-center justify-between gap-2 text-xs hover:bg-gray-50/50 dark:hover:bg-muted/40 transition-colors"
+                                    onClick={() => !deleteMutation.isPending && handleEdit(entry)}
+                                    className="group flex py-1.5 px-2 items-center justify-between gap-2 text-xs hover:bg-blue-50/50 dark:hover:bg-muted/40 transition-colors cursor-pointer rounded"
+                                    title={t("expensesEarnings.edit", "Edit entry")}
                                 >
                                     <div className="min-w-0 flex-1 truncate">
                                         <span className="text-gray-700 dark:text-foreground font-medium text-xs truncate">
@@ -199,7 +237,10 @@ export function VehicleExpensesEarningsCard({
                                         </span>
                                         <button
                                             type="button"
-                                            onClick={() => handleDelete(entry.id)}
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                handleDelete(entry.id)
+                                            }}
                                             disabled={deleteMutation.isPending}
                                             className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded text-destructive hover:bg-rose-50 dark:hover:bg-rose-950/40"
                                             title={t("expensesEarnings.delete", "Delete entry")}
@@ -214,12 +255,20 @@ export function VehicleExpensesEarningsCard({
                 </div>
             </div>
 
-            {/* Add Entry Modal */}
-            <Dialog open={showDialog} onOpenChange={setShowDialog}>
+            {/* Add or Edit Entry Modal */}
+            <Dialog
+                open={showDialog}
+                onOpenChange={(open) => {
+                    if (!open) resetForm()
+                    else setShowDialog(true)
+                }}
+            >
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle className="text-base font-semibold text-heading">
-                            {t("expensesEarnings.addTitle", "Add Expense or Earning")}
+                            {editingEntry
+                                ? t("expensesEarnings.editTitle", "Edit Expense or Earning")
+                                : t("expensesEarnings.addTitle", "Add Expense or Earning")}
                         </DialogTitle>
                     </DialogHeader>
 
@@ -234,7 +283,7 @@ export function VehicleExpensesEarningsCard({
                                     className={`flex h-7 items-center justify-center gap-1 rounded text-xs font-medium transition-all ${
                                         entryType === "expense"
                                             ? "bg-background text-danger shadow-xs"
-                                            : "text-muted-foreground hover:text-foreground"
+                                             : "text-muted-foreground hover:text-foreground"
                                     }`}
                                 >
                                     <TrendingDown className="size-3" />
@@ -276,14 +325,14 @@ export function VehicleExpensesEarningsCard({
                         {/* Subcategory */}
                         <div className="space-y-1">
                             <Label className="text-xs text-muted-foreground">
-                                {t("expensesEarnings.subcategory", "Subcategory")}
+                                {t("expensesEarnings.subcategory", "Subcategory")} <span className="text-destructive">*</span>
                             </Label>
                             <DynamicSelect
                                 choiceType="subcategory"
                                 options={subcategoryOptions}
                                 value={subcategoryId}
                                 onChange={(val) => setSubcategoryId(val)}
-                                placeholder={categoryId ? t("expensesEarnings.selectSubcategory", "Select subcategory (optional)") : t("transactions.selectCategoryFirst", "Select category first")}
+                                placeholder={categoryId ? t("expensesEarnings.selectSubcategory", "Select subcategory") : t("transactions.selectCategoryFirst", "Select category first")}
                                 disabled={!categoryId}
                                 createLabel="Subcategory"
                                 parentId={categoryId ?? undefined}
@@ -326,9 +375,11 @@ export function VehicleExpensesEarningsCard({
                             type="button"
                             size="sm"
                             onClick={handleSubmit}
-                            disabled={!isFormValid || createMutation.isPending}
+                            disabled={!isFormValid || createMutation.isPending || updateMutation.isPending}
                         >
-                            {createMutation.isPending ? t("common.adding", "Adding...") : t("expensesEarnings.save", "Save")}
+                            {createMutation.isPending || updateMutation.isPending
+                                ? (editingEntry ? t("common.saving", "Saving...") : t("common.adding", "Adding..."))
+                                : (editingEntry ? t("expensesEarnings.saveChanges", "Save Changes") : t("expensesEarnings.save", "Save"))}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
