@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { Plus, Search, X } from "lucide-react"
+import { Plus, Search, X, BarChart3, ChevronDown, ChevronUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SortMenuButton } from "@/components/ui/SortMenuButton"
@@ -21,8 +21,10 @@ import { ContractModal } from "@/components/vehicles/ContractModal"
 import { StickyFooter } from "@/components/StickyFooter"
 import { PerPageInput } from "@/components/PerPageInput"
 import { PageInput } from "@/components/PageInput"
-import { getPagePref, savePagePref } from "@/lib/paginationPrefs"
+import { getPagePref, savePagePref, getBoolPref, saveBoolPref } from "@/lib/paginationPrefs"
 // import { getSplitWidth, saveSplitWidth } from "@/lib/paginationPrefs" // DEACTIVATED: SplitViewDivider
+
+const PREF_SHOW_FINANCIAL_SUMMARY = "acar_pref_show_vehicles_summary"
 // import { SplitViewDivider } from "@/components/SplitViewDivider" // DEACTIVATED: SplitViewDivider
 import type { VehicleFilters, VehicleListItem } from "@/types/vehicle"
 
@@ -49,6 +51,11 @@ export function VehiclesPage() {
 
     // Quick search (debounced)
     const [searchValue, setSearchValue] = useState("")
+
+    // Persistent toggle for financial summary (default: collapsed/hidden, remembered via cookie & localStorage)
+    const [showFinancialSummary, setShowFinancialSummary] = useState<boolean>(() =>
+        getBoolPref(PREF_SHOW_FINANCIAL_SUMMARY, false)
+    )
 
     // Update filters when URL changes (sidebar navigation)
     useEffect(() => {
@@ -198,20 +205,42 @@ export function VehiclesPage() {
                         {t("vehicles.title", "Vehicles")}
                     </h1>
                 </div>
-                <Link
-                    to="new"
-                    className="inline-flex items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-xs hover:bg-primary/90"
-                >
-                    <Plus className="h-3.5 w-3.5" />
-                    {t("vehicles.addVehicle", "Add Vehicle")}
-                </Link>
+                <div className="flex items-center gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                            const next = !showFinancialSummary
+                            setShowFinancialSummary(next)
+                            saveBoolPref(PREF_SHOW_FINANCIAL_SUMMARY, next)
+                        }}
+                        className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground border-border/80"
+                        title={showFinancialSummary ? t("vehicles.hideSummaryTooltip", "Hide financial summary") : t("vehicles.showSummaryTooltip", "Show financial summary")}
+                    >
+                        <BarChart3 className="h-3.5 w-3.5 text-primary" />
+                        <span>{showFinancialSummary ? t("vehicles.hideSummary", "Hide Summary") : t("vehicles.summary", "Summary")}</span>
+                        {showFinancialSummary ? <ChevronUp className="h-3 w-3 opacity-60" /> : <ChevronDown className="h-3 w-3 opacity-60" />}
+                    </Button>
+                    <Link
+                        to="new"
+                        className="inline-flex items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-xs hover:bg-primary/90"
+                    >
+                        <Plus className="h-3.5 w-3.5" />
+                        {t("vehicles.addVehicle", "Add Vehicle")}
+                    </Link>
+                </div>
             </div>
 
-            {/* Financial Summary */}
-            <FinancialSummaryCard
-                summary={data?.financial_summary}
-                isLoading={isLoading}
-            />
+            {/* Financial Summary (Collapsible) */}
+            {showFinancialSummary && (
+                <div className="animate-in fade-in-0 duration-200">
+                    <FinancialSummaryCard
+                        summary={data?.financial_summary}
+                        isLoading={isLoading}
+                    />
+                </div>
+            )}
 
             {/* Main Layout */}
             <div className="flex flex-col lg:flex-row relative lg:items-start gap-3.5">

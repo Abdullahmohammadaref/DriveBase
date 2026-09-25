@@ -12,6 +12,10 @@ import * as path from 'path';
 
 test.describe('Phase 1: Authentication, Registration, 2FA & Security Suite', () => {
 
+    test.beforeEach(async ({ context }) => {
+        await context.clearCookies();
+    });
+
     test('Story 1.8: Form validation assertions on Manager Login & Register', async ({ page }) => {
         const auth = new AuthPage(page);
 

@@ -549,8 +549,15 @@ test.describe('ACAR Dealership 14-Day Operational Lifecycle Suite', () => {
         await vehiclesPage.verifyAutoSaveState('saved');
 
         // 2. Gross Profit Assertions:
-        // Revenue: €23,500.00, Gross Profit: €4,190.00 / €5,000.00
+        // Revenue: €23,500.00, Gross Profit: €4,190.00 / €5,000.00 (visible in header)
         await expect(page.getByText(/4[.,]190|5[.,]000/).first()).toBeVisible({ timeout: 5000 });
+
+        // Expand financial summary in header to verify detailed margin / ROI invariants
+        const breakdownToggle = page.locator('button').filter({ hasText: /Financial Summary|Finanzübersicht|Financial Calculations|Finanzielle Aufschlüsselung/i }).first();
+        if (await breakdownToggle.isVisible()) {
+            await breakdownToggle.click();
+            await page.waitForTimeout(300);
+        }
         await expect(page.getByText(/17[.,]8|21[.,]3/).first()).toBeVisible();
     });
 

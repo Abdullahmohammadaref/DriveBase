@@ -39,4 +39,23 @@ export function savePagePrefString(cookieKey: string, value: string): void {
     document.cookie = `${cookieKey}=${value}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
 }
 
+/** Get a boolean preference from cookies or localStorage (default false) */
+export function getBoolPref(key: string, defaultValue = false): boolean {
+    try {
+        const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${key}=([^;]+)`))
+        if (match) return match[1] === "true"
+        const val = localStorage.getItem(key)
+        if (val !== null) return val === "true"
+    } catch { }
+    return defaultValue
+}
+
+/** Save a boolean preference to both cookies and localStorage (1-year expiry) */
+export function saveBoolPref(key: string, value: boolean): void {
+    try {
+        document.cookie = `${key}=${value}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
+        localStorage.setItem(key, String(value))
+    } catch { }
+}
+
 export { SPLIT_MIN, SPLIT_MAX }

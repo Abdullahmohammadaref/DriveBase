@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query"
-import { Loader2, Save, ArrowLeft, AlertTriangle, X, FileText, Trash2, RotateCcw } from "lucide-react"
+import { Loader2, Save, ArrowLeft, AlertTriangle, X, FileText, Trash2, RotateCcw, BarChart3, ChevronDown, ChevronUp } from "lucide-react"
 import { ContractModal } from "./ContractModal"
 import { VehicleImageUpload } from "./VehicleImageUpload"
 import { FinancialMetricsStrip } from "./FinancialMetricsStrip"
@@ -30,9 +30,12 @@ import { useCreateLegalEntity, type LegalEntityCreatePayload } from "@/hooks/use
 import { useChoices, useModels, useNextVehicleId, useNextAvailableKey, vehicleKeys } from "@/hooks/useVehicles"
 import { vehicleCreateSchema, vehicleUpdateSchema, type VehicleCreateInput, type VehicleUpdateInput } from "@/lib/validations"
 import api, { ensureCsrfToken } from "@/lib/api"
-import { formatCurrency } from "@/lib/utils"
+import { formatCurrency, cn } from "@/lib/utils"
 import { calcVehicleFinancials } from "@/lib/vehicleFinancials"
+import { getBoolPref, saveBoolPref } from "@/lib/paginationPrefs"
 import type { VehicleDetail } from "@/types/vehicle"
+
+const PREF_SHOW_VEHICLE_FINANCIALS = "acar_pref_show_vehicle_financials"
 
 interface VehicleFormProps {
     vehicle?: VehicleDetail
@@ -560,6 +563,11 @@ export function VehicleForm({
         status: vehicle?.status ?? null,
     })
 
+    // Persistent toggle for financial summary (default: collapsed/hidden, remembered via cookie & localStorage)
+    const [showFinancialSummary, setShowFinancialSummary] = useState<boolean>(() =>
+        getBoolPref(PREF_SHOW_VEHICLE_FINANCIALS, false)
+    )
+
     // --- Validation & Mutation ---
     const validateSaleFields = (): boolean => {
         const errorsList: string[] = []
@@ -730,6 +738,17 @@ export function VehicleForm({
                                     {vehicleFinancials.daysOnStock}d {t("vehicles.daysOnStock", "on Stock")}
                                 </span>
                             )}
+                            {watchedStatus === "sold" && vehicleFinancials.grossProfit !== null && (
+                                <span className={cn(
+                                    "hidden sm:inline-flex h-5 shrink-0 items-center gap-1 rounded border px-1.5 text-[10px] font-semibold",
+                                    vehicleFinancials.grossProfit >= 0
+                                        ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800"
+                                        : "border-rose-300 bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800"
+                                )}>
+                                    <span className="size-1 shrink-0 rounded-full bg-current" />
+                                    {t("vehicles.metrics.grossProfit", "Gross Profit")}: {vehicleFinancials.grossProfit >= 0 ? "+" : ""}{formatCurrency(vehicleFinancials.grossProfit)}
+                                </span>
+                            )}
                         </div>
 
                         {/* Right: Actions */}
@@ -759,6 +778,24 @@ export function VehicleForm({
                                     {t("common.deactivate", "Deactivate")}
                                 </Button>
                             )}
+
+                            {/* Financial Summary Button (between Deactivate and Docs) */}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    const next = !showFinancialSummary
+                                    setShowFinancialSummary(next)
+                                    saveBoolPref(PREF_SHOW_VEHICLE_FINANCIALS, next)
+                                }}
+                                className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground border-border/80"
+                                title={showFinancialSummary ? t("vehicles.hideFinancialSummaryTooltip", "Hide financial summary") : t("vehicles.showFinancialSummaryTooltip", "Show financial summary")}
+                            >
+                                <BarChart3 className="size-3 text-primary" />
+                                <span>{showFinancialSummary ? t("vehicles.hideFinancialSummary", "Hide Financial Summary") : t("vehicles.financialSummary", "Financial Summary")}</span>
+                                {showFinancialSummary ? <ChevronUp className="size-3 opacity-60" /> : <ChevronDown className="size-3 opacity-60" />}
+                            </Button>
 
                             <Button
                                 type="button"
@@ -823,6 +860,17 @@ export function VehicleForm({
                         >
                             <X className="size-3.5" />
                         </button>
+                    </div>
+                )}
+
+                {/* Financial Summary (Collapsible, at top of page body) */}
+                {isEditing && showFinancialSummary && (
+                    <div className="animate-in fade-in-0 duration-200">
+                        <FinancialMetricsStrip
+                            financials={vehicleFinancials}
+                            hideTransactions={!isEditing}
+                            annualTargetRate={businessSettings?.target_annual_return}
+                        />
                     </div>
                 )}
 
@@ -1085,13 +1133,22 @@ export function VehicleForm({
                             title={t("vehicleForm.purchaseDetails", "Buy Details")}
                             action={
                                 buyBreakdown.hasValue ? (
-                                    <span className="shrink-0 text-xs normal-case tracking-normal text-gray-600 dark:text-muted-foreground font-mono font-medium">
-                                        {t("vehicleForm.net", "Net")} <span className="font-bold text-[#318d6c]">{formatMoneyOrDash(buyBreakdown.net)}</span> = {t("vehicles.buyGross", "Gross")} {formatMoneyOrDash(buyBreakdown.gross)} − {t("vehicleForm.tax", "Tax")} {formatMoneyOrDash(buyBreakdown.taxAmount)} ({buyBreakdown.taxRate.toFixed(1)}%)
-                                    </span>
+                                    <div className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 dark:border-border/80 bg-gray-100/90 dark:bg-secondary/60 px-2.5 py-0.5 text-xs font-mono font-medium shadow-2xs text-gray-700 dark:text-gray-300">
+                                        <span className="text-gray-500 dark:text-muted-foreground">{t("vehicleForm.net", "Net")}</span>
+                                        <span className="font-bold text-[#318d6c]">{formatMoneyOrDash(buyBreakdown.net)}</span>
+                                        <span className="text-gray-400">=</span>
+                                        <span className="text-gray-500 dark:text-muted-foreground">{t("vehicles.buyGross", "Gross")}</span>
+                                        <span className="font-semibold">{formatMoneyOrDash(buyBreakdown.gross)}</span>
+                                        <span className="text-gray-400">−</span>
+                                        <span className="text-gray-500 dark:text-muted-foreground">{t("vehicleForm.tax", "Tax")}</span>
+                                        <span className="font-medium text-gray-600 dark:text-gray-400">{formatMoneyOrDash(buyBreakdown.taxAmount)} ({buyBreakdown.taxRate.toFixed(1)}%)</span>
+                                    </div>
                                 ) : (
-                                    <span className="shrink-0 text-xs normal-case tracking-normal text-gray-400 dark:text-muted-foreground font-mono">
-                                        {t("vehicleForm.net", "Net")}: — {t("vehicles.buyGross", "Gross")} (—) − {t("vehicleForm.tax", "Tax")} —
-                                    </span>
+                                    <div className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-gray-200 dark:border-border/60 bg-gray-50/60 dark:bg-muted/20 px-2.5 py-0.5 text-xs font-mono text-gray-400 dark:text-muted-foreground">
+                                        <span>{t("vehicleForm.net", "Net")}: —</span>
+                                        <span>{t("vehicles.buyGross", "Gross")} (—)</span>
+                                        <span>− {t("vehicleForm.tax", "Tax")} —</span>
+                                    </div>
                                 )
                             }
                         />
@@ -1171,13 +1228,22 @@ export function VehicleForm({
                                 title={t("vehicleForm.saleDetails", "Sale Details")}
                                 action={
                                     saleBreakdown.hasValue ? (
-                                        <span className="shrink-0 text-xs normal-case tracking-normal text-gray-600 dark:text-muted-foreground font-mono font-medium">
-                                            {t("vehicleForm.net", "Net")} <span className="font-bold text-[#318d6c]">{formatMoneyOrDash(saleBreakdown.net)}</span> = {t("vehicles.saleGross", "Gross")} {formatMoneyOrDash(saleBreakdown.gross)} − {t("vehicleForm.tax", "Tax")} {formatMoneyOrDash(saleBreakdown.taxAmount)} ({saleBreakdown.taxRate.toFixed(1)}%)
-                                        </span>
+                                        <div className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 dark:border-border/80 bg-gray-100/90 dark:bg-secondary/60 px-2.5 py-0.5 text-xs font-mono font-medium shadow-2xs text-gray-700 dark:text-gray-300">
+                                            <span className="text-gray-500 dark:text-muted-foreground">{t("vehicleForm.net", "Net")}</span>
+                                            <span className="font-bold text-[#318d6c]">{formatMoneyOrDash(saleBreakdown.net)}</span>
+                                            <span className="text-gray-400">=</span>
+                                            <span className="text-gray-500 dark:text-muted-foreground">{t("vehicles.saleGross", "Gross")}</span>
+                                            <span className="font-semibold">{formatMoneyOrDash(saleBreakdown.gross)}</span>
+                                            <span className="text-gray-400">−</span>
+                                            <span className="text-gray-500 dark:text-muted-foreground">{t("vehicleForm.tax", "Tax")}</span>
+                                            <span className="font-medium text-gray-600 dark:text-gray-400">{formatMoneyOrDash(saleBreakdown.taxAmount)} ({saleBreakdown.taxRate.toFixed(1)}%)</span>
+                                        </div>
                                     ) : (
-                                        <span className="shrink-0 text-xs normal-case tracking-normal text-gray-400 dark:text-muted-foreground font-mono">
-                                            {t("vehicleForm.net", "Net")}: — {t("vehicles.saleGross", "Gross")} (—) − {t("vehicleForm.tax", "Tax")} —
-                                        </span>
+                                        <div className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-gray-200 dark:border-border/60 bg-gray-50/60 dark:bg-muted/20 px-2.5 py-0.5 text-xs font-mono text-gray-400 dark:text-muted-foreground">
+                                            <span>{t("vehicleForm.net", "Net")}: —</span>
+                                            <span>{t("vehicles.saleGross", "Gross")} (—)</span>
+                                            <span>− {t("vehicleForm.tax", "Tax")} —</span>
+                                        </div>
                                     )
                                 }
                             />
@@ -1260,17 +1326,6 @@ export function VehicleForm({
                         </section>
                     )}
                 </div>
-
-                {/* SECTION 4: FINANCIAL METRIC KPI RIBBON */}
-                {buyBreakdown.hasValue && (
-                    <section className="pt-0.5">
-                        <FinancialMetricsStrip
-                            financials={vehicleFinancials}
-                            hideTransactions={!isEditing}
-                            annualTargetRate={businessSettings?.target_annual_return}
-                        />
-                    </section>
-                )}
 
                 {/* SECTION 5: TRANSACTIONS SUB-TABLE */}
                 {inlineTransactions && (

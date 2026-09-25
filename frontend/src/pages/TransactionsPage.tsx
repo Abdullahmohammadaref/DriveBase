@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react"
 import { Link, useSearchParams, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { Plus, Search, X, Upload, CheckCircle2, Download, Loader2, RefreshCw } from "lucide-react"
+import { Plus, Search, X, Upload, CheckCircle2, Download, Loader2, RefreshCw, BarChart3, ChevronDown, ChevronUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -17,10 +17,12 @@ import { FinancialSummaryTable, TransactionFiltersSidebar, TransactionTable, Imp
 import { StickyFooter } from "@/components/StickyFooter"
 import { PerPageInput } from "@/components/PerPageInput"
 import { PageInput } from "@/components/PageInput"
-import { getPagePref, savePagePref } from "@/lib/paginationPrefs"
+import { getPagePref, savePagePref, getBoolPref, saveBoolPref } from "@/lib/paginationPrefs"
 // import { getSplitWidth, saveSplitWidth } from "@/lib/paginationPrefs" // DEACTIVATED: SplitViewDivider
 import api from "@/lib/api"
 // import { SplitViewDivider } from "@/components/SplitViewDivider" // DEACTIVATED: SplitViewDivider
+
+const PREF_SHOW_TX_SUMMARY = "acar_pref_show_tx_summary"
 import type { TransactionFilters, TransactionListItem } from "@/types/transaction"
 
 
@@ -49,6 +51,11 @@ export function TransactionsPage() {
 
     // General search input
     const [searchValue, setSearchValue] = useState("")
+
+    // Persistent toggle for financial summary / totals (default: collapsed/hidden, remembered via cookie & localStorage)
+    const [showFinancialSummary, setShowFinancialSummary] = useState<boolean>(() =>
+        getBoolPref(PREF_SHOW_TX_SUMMARY, false)
+    )
 
     // Update filters when URL changes (sidebar navigation)
     useEffect(() => {
@@ -271,6 +278,22 @@ export function TransactionsPage() {
                         )}
                         {pdfLoading ? t("transactions.generating", "Generating...") : t("transactions.exportPdf", "Export PDF")}
                     </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                            const next = !showFinancialSummary
+                            setShowFinancialSummary(next)
+                            saveBoolPref(PREF_SHOW_TX_SUMMARY, next)
+                        }}
+                        className="h-7.5 px-2.5 text-xs gap-1.5 text-muted-foreground hover:text-foreground border-border/80"
+                        title={showFinancialSummary ? t("transactions.hideTotalsTooltip", "Hide financial totals") : t("transactions.showTotalsTooltip", "Show financial totals")}
+                    >
+                        <BarChart3 className="h-3.5 w-3.5 text-primary" />
+                        <span>{showFinancialSummary ? t("transactions.hideTotals", "Hide Totals") : t("transactions.totals", "Totals")}</span>
+                        {showFinancialSummary ? <ChevronUp className="h-3 w-3 opacity-60" /> : <ChevronDown className="h-3 w-3 opacity-60" />}
+                    </Button>
                     <Link
                         to={`${basePath}/transactions/new`}
                         className="inline-flex items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-xs hover:bg-primary/90"
@@ -295,11 +318,15 @@ export function TransactionsPage() {
                 </div>
             )}
 
-            {/* Financial Summary */}
-            <FinancialSummaryTable
-                summary={data?.financial_summary}
-                isLoading={isLoading}
-            />
+            {/* Financial Summary (Collapsible) */}
+            {showFinancialSummary && (
+                <div className="animate-in fade-in-0 duration-200">
+                    <FinancialSummaryTable
+                        summary={data?.financial_summary}
+                        isLoading={isLoading}
+                    />
+                </div>
+            )}
 
             {/* Main Layout */}
             <div className="flex flex-col lg:flex-row relative lg:items-start gap-3.5">

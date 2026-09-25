@@ -48,7 +48,7 @@ export class VehiclesPage {
         };
         const pattern = labels[status] || new RegExp(status, 'i');
         const statusBtn = this.page.locator('button').filter({ hasText: pattern }).first();
-        if (await statusBtn.isVisible()) {
+        if (await statusBtn.isVisible() && await statusBtn.isEnabled()) {
             await statusBtn.click();
             await this.page.waitForTimeout(300);
         }
