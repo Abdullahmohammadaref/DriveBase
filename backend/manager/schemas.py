@@ -728,6 +728,27 @@ class SuccessResponse(Schema):
     success: bool = True
     message: Optional[str] = None
     id: Optional[int] = None
+    action: Optional[str] = None
+
+
+class LinkedItemSchema(Schema):
+    type: str
+    id: int
+    title: str
+    subtitle: Optional[str] = None
+    url_path: Optional[str] = None
+
+
+class DeleteCheckResponse(Schema):
+    """Response schema for pre-flight delete dependency check"""
+    can_hard_delete: bool
+    action: str
+    entity_name: str
+    dependencies_count: int
+    dependency_details: List[str] = []
+    recent_items: List[str] = []
+    linked_items: List[LinkedItemSchema] = []
+    message: str
 
 
 # =============================================================================

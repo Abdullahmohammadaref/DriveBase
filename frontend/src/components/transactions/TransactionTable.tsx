@@ -1,5 +1,5 @@
 import { Link, useParams, useNavigate } from "react-router-dom"
-import { FileText, Trash2, RotateCcw, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import { FileText, Trash2, RotateCcw, ArrowUpDown, ArrowUp, ArrowDown, Unlink } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -19,6 +19,7 @@ interface TransactionTableProps {
     isLoading?: boolean
     onDelete: (transaction: TransactionListItem) => void
     onActivate: (transaction: TransactionListItem) => void
+    onUnlink?: (transaction: TransactionListItem) => void
     // Sorting props
     sortField?: string
     sortOrder?: "asc" | "desc"
@@ -41,6 +42,7 @@ export function TransactionTable({
     isLoading,
     onDelete,
     onActivate,
+    onUnlink,
     sortField,
     sortOrder,
     onSort,
@@ -320,6 +322,22 @@ export function TransactionTable({
                                             >
                                                 <FileText className="size-3 text-muted-foreground" />
                                             </a>
+                                        )}
+
+                                        {/* Unlink from vehicle */}
+                                        {onUnlink && (tx.vehicle_id || tx.vehicle_internal_id) && tx.status !== "inactive" && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="size-6 text-amber-600 hover:bg-amber-100 hover:text-amber-800 dark:text-amber-400 dark:hover:bg-amber-950/40"
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    onUnlink(tx)
+                                                }}
+                                                title={t('transactions.unlinkVehicle', 'Unlink from vehicle')}
+                                            >
+                                                <Unlink className="size-3" />
+                                            </Button>
                                         )}
 
                                         {/* Delete/Activate */}

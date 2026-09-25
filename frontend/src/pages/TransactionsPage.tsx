@@ -4,16 +4,9 @@ import { useTranslation } from "react-i18next"
 import { Plus, Search, X, Upload, CheckCircle2, Download, Loader2, RefreshCw, BarChart3, ChevronDown, ChevronUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog"
-import { useTransactions, useDeleteTransaction, useActivateTransaction } from "@/hooks/useTransactions"
+import { useTransactions, useDeleteTransaction, useActivateTransaction, useUpdateTransaction } from "@/hooks/useTransactions"
 import { FinancialSummaryTable, TransactionFiltersSidebar, TransactionTable, ImportTransactionsModal } from "@/components/transactions"
+import { SmartDeleteModal } from "@/components/common/SmartDeleteModal"
 import { StickyFooter } from "@/components/StickyFooter"
 import { PerPageInput } from "@/components/PerPageInput"
 import { PageInput } from "@/components/PageInput"
@@ -131,6 +124,21 @@ export function TransactionsPage() {
     // Mutations
     const deleteMutation = useDeleteTransaction()
     const activateMutation = useActivateTransaction()
+    const updateMutation = useUpdateTransaction()
+
+    const handleUnlink = useCallback(async (tx: TransactionListItem) => {
+        if (!confirm(t("transactions.confirmUnlink", "Unlink Transaction #{{id}} from its vehicle? It will remain in your ledger as a standalone transaction.", { id: tx.internal_id }))) {
+            return
+        }
+        try {
+            await updateMutation.mutateAsync({
+                internalId: tx.internal_id!,
+                data: { vehicle_id: null },
+            })
+        } catch (error) {
+            console.error("Failed to unlink transaction:", error)
+        }
+    }, [updateMutation, t])
 
 
 
@@ -185,9 +193,19 @@ export function TransactionsPage() {
     }, [])
 
     // Confirm delete
-    const handleConfirmDelete = useCallback(async () => {
+    const handleConfirmDelete = useCallback(async (optsOrCascade?: boolean | { forceCascade?: boolean; unlinkDelete?: boolean; mode?: string }) => {
         if (transactionToDelete?.internal_id) {
-            await deleteMutation.mutateAsync(transactionToDelete.internal_id)
+            const isObj = typeof optsOrCascade === "object" && optsOrCascade !== null
+            const forceCascade = isObj ? (optsOrCascade.forceCascade || optsOrCascade.mode === "cascade") : Boolean(optsOrCascade)
+            const unlinkDelete = isObj ? (optsOrCascade.unlinkDelete || optsOrCascade.mode === "unlink_delete") : false
+            const deleteMode = isObj ? optsOrCascade.mode : (forceCascade ? "cascade" : "deactivate")
+
+            await deleteMutation.mutateAsync({
+                internalId: transactionToDelete.internal_id,
+                forceCascade,
+                unlinkDelete,
+                deleteMode,
+            })
             setDeleteDialogOpen(false)
             setTransactionToDelete(null)
         }
@@ -412,6 +430,7 @@ export function TransactionsPage() {
                         isLoading={isLoading}
                         onDelete={handleDeleteClick}
                         onActivate={handleActivate}
+                        onUnlink={handleUnlink}
                         sortField={filters.sort}
                         sortOrder={filters.order}
                         onSort={handleSort}
@@ -479,33 +498,16 @@ export function TransactionsPage() {
 
 
 
-            {/* Delete Confirmation Dialog */}
-            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle className="text-red-500">{t("transactions.confirmDelete", "Delete transaction?")}</DialogTitle>
-                        <DialogDescription className="py-4 text-base">
-                            Are you sure you want to delete transaction <span className="font-bold underline">#{transactionToDelete?.internal_id}</span>?
-                            This will mark it as inactive.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="gap-2 sm:gap-0">
-                        <Button
-                            variant="ghost"
-                            onClick={() => setDeleteDialogOpen(false)}
-                        >
-                            {t("common.cancel", "Cancel")}
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            onClick={handleConfirmDelete}
-                            disabled={deleteMutation.isPending}
-                        >
-                            {deleteMutation.isPending ? t("common.deleting", "Deleting...") : t("common.delete", "Delete")}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            {/* Smart Delete Confirmation Dialog */}
+            <SmartDeleteModal
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                entityType="transaction"
+                entityId={transactionToDelete?.internal_id ?? null}
+                entityName={transactionToDelete ? `Transaction #${transactionToDelete.internal_id}` : ""}
+                onConfirm={handleConfirmDelete}
+                isPending={deleteMutation.isPending}
+            />
 
             {/* Import Transactions Modal */}
             <ImportTransactionsModal

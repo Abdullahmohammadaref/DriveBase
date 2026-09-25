@@ -39,10 +39,11 @@ from .schemas import (
     TaxPercentageOut, TaxPercentageCreate, VehicleModelOut,
     VehicleModelCreate, LegalEntityOut, LegalEntityCreate,
     LegalEntityListOut, LegalEntityUpdate, LegalEntityFilters, LegalEntitiesListResponse,
-    BranchOut, ErrorResponse, SuccessResponse,
+    BranchOut, ErrorResponse, SuccessResponse, DeleteCheckResponse,
     ChoiceUpdatePayload, KeyNumberOut,
     VehicleExpenseEarningOut, VehicleExpenseEarningCreate
 )
+from .delete_helpers import check_entity_dependencies, execute_cascade_delete, execute_unlink_and_delete, CHOICE_MODEL_MAP
 from .image_processing import process_vehicle_image
 
 # Create router with session authentication
@@ -859,32 +860,103 @@ def update_vehicle(
     return build_vehicle_detail_response(business, vehicle)
 
 
-@router.delete("/vehicles/{internal_id}", response={200: SuccessResponse, 404: ErrorResponse})
-def delete_vehicle(request, internal_id: int):
-    """Soft delete a vehicle (set status to inactive)"""
+@router.get("/delete-check", response={200: DeleteCheckResponse, 400: ErrorResponse, 404: ErrorResponse})
+def api_delete_check(request, entity_type: str = Query(...), entity_id: int = Query(...), choice_type: Optional[str] = Query(None)):
+    """Pre-flight check to see if an entity can be permanently deleted or must be deactivated."""
+    business = get_user_business(request)
+    if entity_type not in ["vehicle", "transaction", "legal_entity", "choice"]:
+        return 400, {"detail": f"Unsupported entity type: {entity_type}"}
+    
+    res = check_entity_dependencies(business, entity_type, entity_id, choice_type)
+    return 200, res
+
+
+@router.delete("/vehicles/{internal_id}", response={200: SuccessResponse, 403: ErrorResponse, 404: ErrorResponse})
+def delete_vehicle(request, internal_id: int, force_cascade: bool = False, unlink_delete: bool = False, delete_mode: Optional[str] = None):
+    """Conditionally delete a vehicle:
+    - cascade: permanently deletes vehicle AND purges all connected transactions and expenses
+    - unlink_delete: safely unlinks transactions (standalone ledger preservation) and permanently deletes vehicle
+    - deactivate / default: soft deactivation to inactive (or hard delete if zero history)
+    """
     business = get_user_business(request)
     
     vehicle = get_object_or_404(Vehicle, business=business, internal_id=internal_id)
-    old_status = vehicle.status
-    vehicle.status = 'inactive'
-    vehicle.save()
-    
-    # Log the delete action
+    dep_check = check_entity_dependencies(business, "vehicle", internal_id)
     vehicle_name = f"{vehicle.make.name if vehicle.make else ''} {vehicle.model.name if vehicle.model else ''}".strip() or f"Vehicle #{vehicle.internal_id}"
-    old_status_de = VEHICLE_STATUS_MAP_DE.get(old_status, old_status)
-    log_activity(
-        request,
-        action='delete',
-        entity_type='vehicle',
-        entity_id=vehicle.internal_id,
-        entity_name=vehicle_name,
-        details={
-            "en": f"Status changed from {old_status} to inactive",
-            "de": f"Status geändert von {old_status_de} auf Inaktiv"
-        }
-    )
     
-    return {"success": True, "message": "Vehicle deactivated successfully"}
+    is_cascade = (delete_mode == 'cascade') or force_cascade
+    is_unlink_delete = (delete_mode == 'unlink_delete') or unlink_delete
+    
+    if is_cascade:
+        if not getattr(request.user, 'is_manager', False):
+            return 403, {"detail": "Only managers can execute a cascade permanent deletion."}
+        res = execute_cascade_delete(business, "vehicle", internal_id)
+        tx_purged = res.get("purged_counts", {}).get("transactions", 0)
+        log_activity(
+            request,
+            action='permanent_delete_cascade',
+            entity_type='vehicle',
+            entity_id=internal_id,
+            entity_name=vehicle_name,
+            details={
+                "en": f"Vehicle #{internal_id} and {tx_purged} linked transactions permanently deleted (cascade purge)",
+                "de": f"Fahrzeug #{internal_id} und {tx_purged} verknüpfte Transaktionen endgültig gelöscht (Kaskaden-Löschung)",
+                "purged_counts": res.get("purged_counts", {})
+            }
+        )
+        return {"success": True, "message": f"Vehicle and {tx_purged} linked records permanently deleted", "action": "deleted"}
+
+    if is_unlink_delete:
+        res = execute_unlink_and_delete(business, "vehicle", internal_id)
+        unlinked_count = res.get("purged_counts", {}).get("unlinked_transactions", 0)
+        log_activity(
+            request,
+            action='permanent_delete_vehicle',
+            entity_type='vehicle',
+            entity_id=internal_id,
+            entity_name=vehicle_name,
+            details={
+                "en": f"Vehicle #{internal_id} permanently deleted ({unlinked_count} transactions preserved as standalone records)",
+                "de": f"Fahrzeug #{internal_id} endgültig gelöscht ({unlinked_count} Transaktionen als eigenständige Datensätze beibehalten)",
+                "purged_counts": res.get("purged_counts", {})
+            }
+        )
+        return {"success": True, "message": f"Vehicle permanently deleted ({unlinked_count} transactions preserved)", "action": "deleted"}
+
+    if dep_check["can_hard_delete"]:
+        KeyNumber.objects.filter(vehicle=vehicle).update(vehicle=None)
+        vehicle.delete()
+        log_activity(
+            request,
+            action='delete',
+            entity_type='vehicle',
+            entity_id=internal_id,
+            entity_name=vehicle_name,
+            details={
+                "en": f"Vehicle #{internal_id} permanently deleted (zero history)",
+                "de": f"Fahrzeug #{internal_id} endgültig gelöscht (keine Historie)"
+            }
+        )
+        return {"success": True, "message": "Vehicle permanently deleted", "action": "deleted"}
+    else:
+        old_status = vehicle.status
+        vehicle.status = 'inactive'
+        vehicle.save()
+        
+        # Log the delete action
+        old_status_de = VEHICLE_STATUS_MAP_DE.get(old_status, old_status)
+        log_activity(
+            request,
+            action='delete',
+            entity_type='vehicle',
+            entity_id=vehicle.internal_id,
+            entity_name=vehicle_name,
+            details={
+                "en": f"Status changed from {old_status} to inactive",
+                "de": f"Status geändert von {old_status_de} auf Inaktiv"
+            }
+        )
+        return {"success": True, "message": "Vehicle deactivated successfully", "action": "deactivated"}
 
 
 @router.post("/vehicles/{internal_id}/activate", response={200: SuccessResponse, 400: ErrorResponse, 404: ErrorResponse})
@@ -1656,32 +1728,14 @@ def create_choice(
 
 
 @router.post("/choices/{choice_type}/{choice_id}/deactivate", response={200: SuccessResponse, 400: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
-def deactivate_choice(request, choice_type: str, choice_id: int):
-    """Deactivate (soft-delete) a choice option (managers only)."""
+def deactivate_choice(request, choice_type: str, choice_id: int, force_cascade: bool = False):
+    """Deactivate (soft-delete) or cascade delete a choice option (managers only)."""
     if not request.user.is_manager:
         return 403, {"detail": "Only managers can deactivate choices."}
     
     business = get_user_business(request)
     
-    # Map choice_type to model class
-    model_map = {
-        'payment_method': PaymentMethod,
-        'vehicle_type': VehicleType,
-        'body_type': BodyType,
-        'make': Make,
-        'vehicle_model': VehicleModel,
-        'color': Color,
-        'fuel_type': FuelType,
-        'damage_type': DamageType,
-        'doors': DoorsChoice,
-        'tax_percentage': TaxPercentage,
-        'category': Category,
-        'subcategory': Subcategory,
-        'currency': Currency,
-        'key_number': KeyNumber,
-    }
-    
-    model_class = model_map.get(choice_type)
+    model_class = CHOICE_MODEL_MAP.get(choice_type)
     if not model_class:
         return 400, {"detail": f"Invalid choice type: {choice_type}"}
     
@@ -1695,13 +1749,28 @@ def deactivate_choice(request, choice_type: str, choice_id: int):
         # Unassign vehicle when deactivating a key number
         if choice_type == 'key_number' and hasattr(choice, 'vehicle') and choice.vehicle:
             choice.vehicle = None
+            
+        if force_cascade:
+            execute_cascade_delete(business, "choice", choice_id, choice_type)
+            return {"success": True, "message": "Choice permanently deleted (cascade purge)", "action": "deleted"}
         
-        choice.is_active = False
-        choice.save()
-        
-        return {"success": True, "message": f"Choice deactivated successfully"}
+        # Check if choice can be permanently deleted
+        dep_check = check_entity_dependencies(business, "choice", choice_id, choice_type)
+        if dep_check["can_hard_delete"]:
+            choice.delete()
+            return {"success": True, "message": "Choice permanently deleted", "action": "deleted"}
+        else:
+            choice.is_active = False
+            choice.save()
+            return {"success": True, "message": "Choice deactivated successfully", "action": "deactivated"}
     except model_class.DoesNotExist:
         return 404, {"detail": "Choice not found"}
+
+
+@router.delete("/choices/{choice_type}/{choice_id}", response={200: SuccessResponse, 400: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+def delete_choice_endpoint(request, choice_type: str, choice_id: int, force_cascade: bool = False):
+    """Delete or deactivate a choice option (managers only)."""
+    return deactivate_choice(request, choice_type, choice_id, force_cascade=force_cascade)
 
 
 @router.post("/choices/{choice_type}/{choice_id}/reactivate", response={200: SuccessResponse, 400: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
@@ -1712,25 +1781,7 @@ def reactivate_choice(request, choice_type: str, choice_id: int):
     
     business = get_user_business(request)
     
-    # Map choice_type to model class
-    model_map = {
-        'payment_method': PaymentMethod,
-        'vehicle_type': VehicleType,
-        'body_type': BodyType,
-        'make': Make,
-        'vehicle_model': VehicleModel,
-        'color': Color,
-        'fuel_type': FuelType,
-        'damage_type': DamageType,
-        'doors': DoorsChoice,
-        'tax_percentage': TaxPercentage,
-        'category': Category,
-        'subcategory': Subcategory,
-        'currency': Currency,
-        'key_number': KeyNumber,
-    }
-    
-    model_class = model_map.get(choice_type)
+    model_class = CHOICE_MODEL_MAP.get(choice_type)
     if not model_class:
         return 400, {"detail": f"Invalid choice type: {choice_type}"}
     
@@ -1752,25 +1803,7 @@ def update_choice(request, choice_type: str, choice_id: int, payload: ChoiceUpda
     
     business = get_user_business(request)
     
-    # Map choice_type to model class
-    model_map = {
-        'payment_method': PaymentMethod,
-        'vehicle_type': VehicleType,
-        'body_type': BodyType,
-        'make': Make,
-        'vehicle_model': VehicleModel,
-        'color': Color,
-        'fuel_type': FuelType,
-        'damage_type': DamageType,
-        'doors': DoorsChoice,
-        'tax_percentage': TaxPercentage,
-        'category': Category,
-        'subcategory': Subcategory,
-        'currency': Currency,
-        'key_number': KeyNumber,
-    }
-    
-    model_class = model_map.get(choice_type)
+    model_class = CHOICE_MODEL_MAP.get(choice_type)
     if not model_class:
         return 400, {"detail": f"Invalid choice type: {choice_type}"}
     
@@ -2101,25 +2134,61 @@ def update_legal_entity(request, internal_id: int, payload: LegalEntityUpdate):
     }
 
 
-@router.post("/legal-entities/{internal_id}/deactivate", response={200: SuccessResponse, 404: ErrorResponse})
-def deactivate_legal_entity(request, internal_id: int):
-    """Deactivate a legal entity (set status to inactive)"""
+@router.post("/legal-entities/{internal_id}/deactivate", response={200: SuccessResponse, 403: ErrorResponse, 404: ErrorResponse})
+@router.delete("/legal-entities/{internal_id}", response={200: SuccessResponse, 403: ErrorResponse, 404: ErrorResponse})
+def deactivate_legal_entity(request, internal_id: int, force_cascade: bool = False):
+    """Conditionally delete a legal entity (hard delete if zero history, else soft-delete to inactive or cascade purge)"""
     business = get_user_business(request)
     
     entity = get_object_or_404(LegalEntity, business=business, internal_id=internal_id)
-    entity.status = 'inactive'
-    entity.save()
+    dep_check = check_entity_dependencies(business, "legal_entity", internal_id)
     
-    # Log the delete action
-    log_activity(
-        request,
-        action='delete',
-        entity_type='legal_entity',
-        entity_id=entity.internal_id,
-        entity_name=entity.name
-    )
-    
-    return {"success": True, "message": "Legal entity deactivated successfully"}
+    if force_cascade:
+        if not getattr(request.user, 'is_manager', False):
+            return 403, {"detail": "Only managers can execute a cascade permanent deletion."}
+        res = execute_cascade_delete(business, "legal_entity", internal_id)
+        log_activity(
+            request,
+            action='permanent_delete_cascade',
+            entity_type='legal_entity',
+            entity_id=internal_id,
+            entity_name=entity.name,
+            details={
+                "en": f"Legal entity #{internal_id} permanently deleted (cascade purge)",
+                "de": f"Rechtsträger #{internal_id} endgültig gelöscht (Kaskaden-Löschung)",
+                "purged_counts": res.get("purged_counts", {})
+            }
+        )
+        return {"success": True, "message": "Legal entity and linked records permanently deleted", "action": "deleted"}
+
+    if dep_check["can_hard_delete"]:
+        entity_name = entity.name
+        entity.delete()
+        log_activity(
+            request,
+            action='delete',
+            entity_type='legal_entity',
+            entity_id=internal_id,
+            entity_name=entity_name,
+            details={
+                "en": f"Legal entity #{internal_id} permanently deleted (zero history)",
+                "de": f"Rechtsträger #{internal_id} endgültig gelöscht (keine Historie)"
+            }
+        )
+        return {"success": True, "message": "Legal entity permanently deleted", "action": "deleted"}
+    else:
+        entity.status = 'inactive'
+        entity.save()
+        
+        # Log the delete action
+        log_activity(
+            request,
+            action='delete',
+            entity_type='legal_entity',
+            entity_id=entity.internal_id,
+            entity_name=entity.name
+        )
+        return {"success": True, "message": "Legal entity deactivated successfully", "action": "deactivated"}
 
 
 @router.post("/legal-entities/{internal_id}/activate", response={200: SuccessResponse, 400: ErrorResponse, 404: ErrorResponse})

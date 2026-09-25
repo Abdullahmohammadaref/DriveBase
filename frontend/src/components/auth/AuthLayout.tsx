@@ -74,13 +74,29 @@ export function AuthLayout() {
     const nextLocale = getNextLocale(currentLocale)
     const NextFlag = FLAGS[nextLocale]
 
-    // Initialize states from localStorage
+    // Initialize theme & states (Forced Light Mode per user requirement)
     useEffect(() => {
+        /* =========================================================================
+           DEACTIVATED FEATURE: Dark Mode System Preference & LocalStorage Check
+           WARNING: DO NOT DELETE THIS COMMENTED CODE!
+           The user requested light mode by default with no switching to dark mode.
+           To restore dark mode in the future:
+           1. Uncomment the lines below (const stored, prefersDark, isDark, etc.)
+           2. Uncomment the dark mode toggle button in the JSX below
+           3. Remove the classList.remove("dark") override
+           ========================================================================= */
+        /*
         const stored = localStorage.getItem("theme")
         const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
         const isDark = stored === "dark" || (!stored && prefersDark)
         setDarkMode(isDark)
         document.documentElement.classList.toggle("dark", isDark)
+        */
+
+        // Enforce light mode strictly:
+        setDarkMode(false)
+        document.documentElement.classList.remove("dark")
+        localStorage.setItem("theme", "light")
 
         // Initialize UI scale
         const storedScale = localStorage.getItem("ui-scale")

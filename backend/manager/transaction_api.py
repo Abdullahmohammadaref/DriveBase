@@ -29,6 +29,7 @@ from .transaction_schemas import (
     TransactionsResponse, TransactionChoices, SubcategoriesResponse, ImportTransactionsResponse
 )
 from .schemas import ErrorResponse, SuccessResponse
+from .delete_helpers import check_entity_dependencies, execute_cascade_delete, execute_unlink_and_delete
 
 # Create router with session authentication
 router = Router(auth=django_auth, tags=["Transactions"])
@@ -817,25 +818,80 @@ def update_transaction_status(request, internal_id: int, payload: TransactionSta
     return 200, serialize_transaction_detail(tx, business)
 
 
-@router.delete("/{internal_id}", response={200: SuccessResponse, 404: ErrorResponse})
-def delete_transaction(request, internal_id: int):
-    """Soft delete a transaction (set status to inactive)"""
+@router.delete("/{internal_id}", response={200: SuccessResponse, 403: ErrorResponse, 404: ErrorResponse})
+def delete_transaction(request, internal_id: int, force_cascade: bool = False, unlink_delete: bool = False, delete_mode: Optional[str] = None):
+    """Conditionally delete a transaction:
+    - cascade: permanently deletes transaction
+    - unlink_delete: detaches from vehicle and permanently deletes transaction (vehicle preserved intact)
+    - deactivate / default: soft deactivation to inactive (or hard delete if zero history)
+    """
     business = get_user_business(request)
     
     tx = get_object_or_404(Transaction, business=business, internal_id=internal_id)
-    tx.status = 'inactive'
-    tx.save()
+    dep_check = check_entity_dependencies(business, "transaction", internal_id)
     
-    # Log the delete action
-    log_activity(
-        request,
-        action='delete',
-        entity_type='transaction',
-        entity_id=tx.internal_id,
-        entity_name=f"Transaction #{tx.internal_id}"
-    )
+    is_cascade = (delete_mode == 'cascade') or force_cascade
+    is_unlink_delete = (delete_mode == 'unlink_delete') or unlink_delete
     
-    return 200, SuccessResponse(message="Transaction deactivated successfully")
+    if is_cascade:
+        if not getattr(request.user, 'is_manager', False):
+            return 403, {"detail": "Only managers can execute a cascade permanent deletion."}
+        tx.delete()
+        log_activity(
+            request,
+            action='permanent_delete_cascade',
+            entity_type='transaction',
+            entity_id=internal_id,
+            entity_name=f"Transaction #{internal_id}",
+            details={
+                "en": f"Transaction #{internal_id} permanently deleted (cascade override)",
+                "de": f"Transaktion #{internal_id} endgültig gelöscht (Kaskaden-Überschreibung)"
+            }
+        )
+        return 200, SuccessResponse(message="Transaction permanently deleted", action="deleted")
+
+    if is_unlink_delete:
+        execute_unlink_and_delete(business, "transaction", internal_id)
+        log_activity(
+            request,
+            action='permanent_delete_transaction',
+            entity_type='transaction',
+            entity_id=internal_id,
+            entity_name=f"Transaction #{internal_id}",
+            details={
+                "en": f"Transaction #{internal_id} unlinked from vehicle and permanently deleted",
+                "de": f"Transaktion #{internal_id} vom Fahrzeug getrennt und endgültig gelöscht"
+            }
+        )
+        return 200, SuccessResponse(message="Transaction permanently deleted (vehicle preserved)", action="deleted")
+
+    if dep_check["can_hard_delete"]:
+        tx.delete()
+        log_activity(
+            request,
+            action='delete',
+            entity_type='transaction',
+            entity_id=internal_id,
+            entity_name=f"Transaction #{internal_id}",
+            details={
+                "en": f"Transaction #{internal_id} permanently deleted",
+                "de": f"Transaktion #{internal_id} endgültig gelöscht"
+            }
+        )
+        return 200, SuccessResponse(message="Transaction permanently deleted", action="deleted")
+    else:
+        tx.status = 'inactive'
+        tx.save()
+        log_activity(
+            request,
+            action='delete',
+            entity_type='transaction',
+            entity_id=tx.internal_id,
+            entity_name=f"Transaction #{tx.internal_id}",
+            details={"en": "Status changed to inactive", "de": "Status auf Inaktiv geändert"}
+        )
+        return 200, SuccessResponse(message="Transaction deactivated successfully", action="deactivated")
+
 
 
 @router.post("/{internal_id}/activate", response={200: SuccessResponse, 404: ErrorResponse})

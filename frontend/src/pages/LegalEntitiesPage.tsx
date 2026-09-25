@@ -34,6 +34,7 @@ import {
 } from "@/hooks/useLegalEntities"
 import { EntityForm } from "@/components/legal-entities/EntityForm"
 import { LegalEntityFiltersSidebar } from "@/components/legal-entities/LegalEntityFilters"
+import { SmartDeleteModal } from "@/components/common/SmartDeleteModal"
 import { StickyFooter } from "@/components/StickyFooter"
 import { PerPageInput } from "@/components/PerPageInput"
 import { PageInput } from "@/components/PageInput"
@@ -286,10 +287,12 @@ export function LegalEntitiesPage() {
     }, [selectedEntity, formData, updateMutation, validateForm])
 
     // Deactivate entity
-    const handleDeactivate = useCallback(async () => {
+    const handleDeactivate = useCallback(async (optsOrCascade?: boolean | { forceCascade?: boolean; mode?: string }) => {
         if (!selectedEntity) return
+        const isObj = typeof optsOrCascade === "object" && optsOrCascade !== null
+        const forceCascade = isObj ? (optsOrCascade.forceCascade || optsOrCascade.mode === "cascade") : Boolean(optsOrCascade)
         try {
-            await deactivateMutation.mutateAsync(selectedEntity.internal_id)
+            await deactivateMutation.mutateAsync({ internalId: selectedEntity.internal_id, forceCascade })
             setDeleteDialogOpen(false)
             setSelectedEntity(null)
         } catch (error) {
@@ -513,7 +516,7 @@ export function LegalEntitiesPage() {
                                                             handleDeleteClick(entity)
                                                         }}
                                                         className="text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-900/20"
-                                                        title={t("legalEntities.deactivate", "Deactivate")}
+                                                        title={t("common.delete", "Delete")}
                                                     >
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>
@@ -662,30 +665,16 @@ export function LegalEntitiesPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Deactivate Dialog */}
-            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle className="text-xl text-red-600">{t("legalEntities.deactivateTitle", "Deactivate Legal Entity")}</DialogTitle>
-                        <DialogDescription className="text-base py-4 text-foreground/80">
-                            {t("legalEntities.deactivateConfirm", "Are you sure you want to deactivate")} <span className="font-bold underline">"{selectedEntity?.name}"</span>?
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button variant="ghost" onClick={() => setDeleteDialogOpen(false)}>
-                            {t("common.cancel", "Cancel")}
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            onClick={handleDeactivate}
-                            disabled={deactivateMutation.isPending}
-                            className="shadow-sm"
-                        >
-                            {deactivateMutation.isPending ? t("common.deactivating", "Deactivating...") : t("legalEntities.deactivate", "Deactivate")}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            {/* Smart Delete Confirmation Modal */}
+            <SmartDeleteModal
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                entityType="legal_entity"
+                entityId={selectedEntity?.internal_id ?? null}
+                entityName={selectedEntity?.name || ""}
+                onConfirm={handleDeactivate}
+                isPending={deactivateMutation.isPending}
+            />
         </div>
     )
 }

@@ -44,13 +44,22 @@ export class VehiclesPage {
             ready_for_sale: /Verkaufsbereit|Ready for Sale/i,
             reserved: /Reserviert|Reserved/i,
             sold: /Verkauft|Sold/i,
-            inactive: /Deactivate|Deaktivieren|Inaktiv|Inactive/i,
+            inactive: /Delete|Löschen|Deactivate|Deaktivieren|Inaktiv|Inactive/i,
         };
         const pattern = labels[status] || new RegExp(status, 'i');
         const statusBtn = this.page.locator('button').filter({ hasText: pattern }).first();
         if (await statusBtn.isVisible() && await statusBtn.isEnabled()) {
             await statusBtn.click();
             await this.page.waitForTimeout(300);
+
+            if (status === 'inactive') {
+                // If SmartDeleteModal opened, click confirm button
+                const confirmBtn = this.page.locator('div[role="dialog"] button:has-text("Deactivate"), div[role="dialog"] button:has-text("Deaktivieren"), div[role="dialog"] button:has-text("Delete Permanently"), div[role="dialog"] button:has-text("Endgültig löschen")').last();
+                if (await confirmBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+                    await confirmBtn.click();
+                    await this.page.waitForTimeout(500);
+                }
+            }
         }
     }
 

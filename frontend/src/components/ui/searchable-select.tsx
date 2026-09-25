@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -27,6 +27,8 @@ interface SearchableSelectProps {
     disabled?: boolean
     /** Search placeholder text */
     searchPlaceholder?: string
+    /** Whether the selection can be cleared */
+    isClearable?: boolean
 }
 
 /**
@@ -41,6 +43,7 @@ export function SearchableSelect({
     placeholder = "Select...",
     disabled = false,
     searchPlaceholder = "Search...",
+    isClearable = false,
 }: SearchableSelectProps) {
     const [open, setOpen] = useState(false)
     const [searchQuery, setSearchQuery] = useState("")
@@ -65,10 +68,34 @@ export function SearchableSelect({
                     className="w-full justify-between text-gray-800 dark:text-foreground font-normal text-xs h-8 px-2.5 bg-[#F3F3F3] dark:bg-secondary hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-200/60 dark:hover:bg-secondary/80 focus:bg-white dark:focus:bg-background focus:border-gray-400 border-gray-200 dark:border-border"
                     disabled={disabled}
                 >
-                    <span className="truncate text-left">
+                    <span className="truncate text-left flex-1 mr-1">
                         {selectedOption ? selectedOption.label : placeholder}
                     </span>
-                    <ChevronsUpDown className="ml-1 size-3.5 shrink-0 opacity-50" />
+                    <div className="flex items-center gap-1 shrink-0">
+                        {isClearable && value && !disabled && (
+                            <span
+                                role="button"
+                                tabIndex={0}
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    e.preventDefault()
+                                    onChange("")
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" || e.key === " ") {
+                                        e.stopPropagation()
+                                        e.preventDefault()
+                                        onChange("")
+                                    }
+                                }}
+                                className="p-0.5 rounded-full hover:bg-gray-300 dark:hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                                title="Clear selection"
+                            >
+                                <X className="size-3" />
+                            </span>
+                        )}
+                        <ChevronsUpDown className="size-3.5 opacity-50" />
+                    </div>
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">

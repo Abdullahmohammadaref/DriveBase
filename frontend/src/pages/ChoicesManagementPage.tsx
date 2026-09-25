@@ -6,6 +6,7 @@ import api from "@/lib/api"
 import { Input } from "@/components/ui/input"
 import { FilterSelect } from "@/components/ui/filter-select"
 import { SortMenuButton } from "@/components/ui/SortMenuButton"
+import { SmartDeleteModal } from "@/components/common/SmartDeleteModal"
 
 interface ChoiceItem {
     id: number
@@ -109,6 +110,13 @@ export default function ChoicesManagementPage() {
     const [modalAppliesToSale, setModalAppliesToSale] = useState(true)
     const [modalAppliesToTransactions, setModalAppliesToTransactions] = useState(true)
 
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+    const [choiceToDelete, setChoiceToDelete] = useState<{
+        choiceType: string
+        choiceId: number
+        name: string
+    } | null>(null)
+
     const { data, isLoading, error } = useQuery<ChoicesManagementData>({
         queryKey: ["choices-management"],
         queryFn: async () => {
@@ -206,8 +214,10 @@ export default function ChoicesManagementPage() {
     })
 
     const deactivateMutation = useMutation({
-        mutationFn: async (params: { choiceType: string; choiceId: number }) => {
-            const response = await api.post(`/choices/${params.choiceType}/${params.choiceId}/deactivate`)
+        mutationFn: async (params: { choiceType: string; choiceId: number; forceCascade?: boolean }) => {
+            const response = await api.post(`/choices/${params.choiceType}/${params.choiceId}/deactivate`, null, {
+                params: params.forceCascade ? { force_cascade: true } : undefined,
+            })
             return response.data
         },
         onSuccess: () => {
@@ -396,9 +406,24 @@ export default function ChoicesManagementPage() {
         }
     }
 
-    const handleDeactivate = (choiceType: string, choiceId: number) => {
-        deactivateMutation.mutate({ choiceType, choiceId })
+    const handleDeleteClick = (choiceType: string, choiceId: number, name: string) => {
+        setChoiceToDelete({ choiceType, choiceId, name })
+        setDeleteModalOpen(true)
     }
+
+    const handleConfirmDelete = async (optsOrCascade?: boolean | { forceCascade?: boolean; mode?: string }) => {
+        if (!choiceToDelete) return
+        const isObj = typeof optsOrCascade === "object" && optsOrCascade !== null
+        const forceCascade = isObj ? (optsOrCascade.forceCascade || optsOrCascade.mode === "cascade") : Boolean(optsOrCascade)
+        await deactivateMutation.mutateAsync({
+            choiceType: choiceToDelete.choiceType,
+            choiceId: choiceToDelete.choiceId,
+            forceCascade,
+        })
+        setDeleteModalOpen(false)
+        setChoiceToDelete(null)
+    }
+
 
     const handleReactivate = (choiceType: string, choiceId: number) => {
         reactivateMutation.mutate({ choiceType, choiceId })
@@ -560,11 +585,11 @@ export default function ChoicesManagementPage() {
                                                     </span>
                                                 ) : (
                                                     <button
-                                                        onClick={() => handleDeactivate(typeKey, item.id)}
+                                                        onClick={() => handleDeleteClick(typeKey, item.id, item.name)}
                                                         disabled={deactivateMutation.isPending}
                                                         className="text-xs font-semibold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 disabled:opacity-50 transition-colors"
                                                     >
-                                                        {t("choices.deactivate", "Deactivate")}
+                                                        {t("common.delete", "Delete")}
                                                     </button>
                                                 )}
                                             </div>
@@ -687,10 +712,11 @@ export default function ChoicesManagementPage() {
                                             type="button"
                                             onClick={(e) => {
                                                 e.stopPropagation()
-                                                handleDeactivate(activeTab === "vehicle_model" ? "make" : "category", activeTab === "vehicle_model" ? (makeGroup as any).id : (makeGroup as any).id)
+                                                handleDeleteClick("make", (makeGroup as any).id, makeGroup.name)
                                             }}
                                             disabled={deactivateMutation.isPending}
                                             className="h-7 w-7 flex items-center justify-center rounded-md text-rose-500 hover:bg-rose-500/10 transition-colors"
+                                            title={t("common.delete", "Delete")}
                                         >
                                             <Trash2 className="h-3.5 w-3.5" />
                                         </button>
@@ -731,11 +757,11 @@ export default function ChoicesManagementPage() {
                                                             {model.name}
                                                         </button>
                                                         <button
-                                                            onClick={() => handleDeactivate("vehicle_model", model.id)}
+                                                            onClick={() => handleDeleteClick("vehicle_model", model.id, model.name)}
                                                             disabled={deactivateMutation.isPending}
                                                             className="text-xs font-semibold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 disabled:opacity-50 transition-colors"
                                                         >
-                                                            {t("choices.deactivate", "Deactivate")}
+                                                            {t("common.delete", "Delete")}
                                                         </button>
                                                     </div>
                                                 ))}
@@ -835,10 +861,11 @@ export default function ChoicesManagementPage() {
                                             type="button"
                                             onClick={(e) => {
                                                 e.stopPropagation()
-                                                handleDeactivate("category", categoryGroup.id)
+                                                handleDeleteClick("category", categoryGroup.id, categoryGroup.name)
                                             }}
                                             disabled={deactivateMutation.isPending}
                                             className="h-7 w-7 flex items-center justify-center rounded-md text-rose-500 hover:bg-rose-500/10 transition-colors"
+                                            title={t("common.delete", "Delete")}
                                         >
                                             <Trash2 className="h-3.5 w-3.5" />
                                         </button>
@@ -879,11 +906,11 @@ export default function ChoicesManagementPage() {
                                                             {sub.name}
                                                         </button>
                                                         <button
-                                                            onClick={() => handleDeactivate("subcategory", sub.id)}
+                                                            onClick={() => handleDeleteClick("subcategory", sub.id, sub.name)}
                                                             disabled={deactivateMutation.isPending}
                                                             className="text-xs font-semibold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 disabled:opacity-50 transition-colors"
                                                         >
-                                                            {t("choices.deactivate", "Deactivate")}
+                                                            {t("common.delete", "Delete")}
                                                         </button>
                                                     </div>
                                                 ))}
@@ -987,10 +1014,11 @@ export default function ChoicesManagementPage() {
                                             type="button"
                                             onClick={(e) => {
                                                 e.stopPropagation()
-                                                handleDeactivate("country", countryGroup.id)
+                                                handleDeleteClick("country", countryGroup.id, countryGroup.name)
                                             }}
                                             disabled={deactivateMutation.isPending}
                                             className="h-7 w-7 flex items-center justify-center rounded-md text-rose-500 hover:bg-rose-500/10 transition-colors"
+                                            title={t("common.delete", "Delete")}
                                         >
                                             <Trash2 className="h-3.5 w-3.5" />
                                         </button>
@@ -1031,11 +1059,11 @@ export default function ChoicesManagementPage() {
                                                             {city.name}
                                                         </button>
                                                         <button
-                                                            onClick={() => handleDeactivate("city", city.id)}
+                                                            onClick={() => handleDeleteClick("city", city.id, city.name)}
                                                             disabled={deactivateMutation.isPending}
                                                             className="text-xs font-semibold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 disabled:opacity-50 transition-colors"
                                                         >
-                                                            {t("choices.deactivate", "Deactivate")}
+                                                            {t("common.delete", "Delete")}
                                                         </button>
                                                     </div>
                                                 ))}
@@ -1330,6 +1358,17 @@ export default function ChoicesManagementPage() {
                     </div>
                 </div>
             )}
+            {/* Smart Delete Confirmation Modal */}
+            <SmartDeleteModal
+                open={deleteModalOpen}
+                onOpenChange={setDeleteModalOpen}
+                entityType="choice"
+                entityId={choiceToDelete?.choiceId ?? null}
+                choiceType={choiceToDelete?.choiceType}
+                entityName={choiceToDelete?.name || ""}
+                onConfirm={handleConfirmDelete}
+                isPending={deactivateMutation.isPending}
+            />
         </div>
     )
 }

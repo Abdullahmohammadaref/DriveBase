@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom"
 import { Plus, ExternalLink, Loader2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { TransactionTable } from "./TransactionTable"
-import { useTransactions, useDeleteTransaction } from "@/hooks/useTransactions"
+import { useTransactions, useDeleteTransaction, useUpdateTransaction } from "@/hooks/useTransactions"
 import { useVehicle } from "@/hooks/useVehicles"
 import type { TransactionListItem } from "@/types/transaction"
 
@@ -47,6 +47,7 @@ export function RelatedTransactionsTable({
     })
 
     const deleteMutation = useDeleteTransaction()
+    const updateMutation = useUpdateTransaction()
 
     // Filter out inactive transactions
     const rawTransactions = (data?.transactions?.items ?? []).filter(
@@ -118,6 +119,20 @@ export function RelatedTransactionsTable({
         console.log("Activate transaction:", transaction.internal_id)
     }
 
+    const handleUnlink = async (transaction: TransactionListItem) => {
+        if (!confirm(t("transactions.confirmUnlink", "Unlink Transaction #{{id}} from this vehicle? It will remain in your ledger as a standalone transaction.", { id: transaction.internal_id }))) {
+            return
+        }
+        try {
+            await updateMutation.mutateAsync({
+                internalId: transaction.internal_id!,
+                data: { vehicle_id: null },
+            })
+        } catch (error) {
+            console.error("Failed to unlink transaction:", error)
+        }
+    }
+
     const displayId = vehicle?.internal_id || vehicleId
     const makeName = vehicle?.make_name || ""
     const modelName = vehicle?.model_name || ""
@@ -175,6 +190,7 @@ export function RelatedTransactionsTable({
                         isLoading={false}
                         onDelete={handleDelete}
                         onActivate={handleActivate}
+                        onUnlink={handleUnlink}
                         highlightedRowId={highlightedTransactionId}
                         showEmptyTable={true}
                         maxHeight="180px"

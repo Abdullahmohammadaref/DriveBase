@@ -25,7 +25,7 @@ from PIL import Image
 from manager.models import (
     Vehicle, Transaction, LegalEntity, Make, VehicleModel,
     Category, Subcategory, PaymentMethod, TaxPercentage,
-    ActivityLog,
+    ActivityLog, Country, City
 )
 from .test_setup import BaseTestCase
 
@@ -189,7 +189,7 @@ class VehicleImageUploadApiTests(BaseTestCase):
 
 
 class VehicleDeleteApiTests(BaseTestCase):
-    """Test DELETE /api/vehicles/{internal_id} (soft delete)."""
+    """Test DELETE /api/vehicles/{internal_id} (conditional safe delete)."""
 
     def test_delete_vehicle_soft_deletes(self):
         self.login_manager_a()
@@ -197,8 +197,134 @@ class VehicleDeleteApiTests(BaseTestCase):
             f"/api/vehicles/{self.vehicle_a.internal_id}"
         )
         self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data.get("action"), "deactivated")
         self.vehicle_a.refresh_from_db()
         self.assertEqual(self.vehicle_a.status, "inactive")
+
+    def test_delete_vehicle_without_history_hard_deletes(self):
+        self.login_manager_a()
+        clean_vehicle = Vehicle.objects.create(
+            business=self.business_a,
+            branch=self.branch_a,
+            status="purchased",
+            make=self.make_a,
+            model=self.model_a,
+        )
+        v_id = clean_vehicle.internal_id
+        response = self.client.delete(f"/api/vehicles/{v_id}")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data.get("action"), "deleted")
+        self.assertFalse(Vehicle.objects.filter(business=self.business_a, internal_id=v_id).exists())
+
+    def test_delete_check_endpoint(self):
+        self.login_manager_a()
+        res_with = self.client.get(f"/api/delete-check?entity_type=vehicle&entity_id={self.vehicle_a.internal_id}")
+        self.assertEqual(res_with.status_code, 200)
+        data_with = res_with.json()
+        self.assertFalse(data_with["can_hard_delete"])
+        self.assertEqual(data_with["action"], "deactivate")
+
+        clean_v = Vehicle.objects.create(business=self.business_a, branch=self.branch_a, status="purchased")
+        res_clean = self.client.get(f"/api/delete-check?entity_type=vehicle&entity_id={clean_v.internal_id}")
+        self.assertEqual(res_clean.status_code, 200)
+        data_clean = res_clean.json()
+        self.assertTrue(data_clean["can_hard_delete"])
+        self.assertEqual(data_clean["action"], "delete")
+
+    def test_delete_vehicle_force_cascade_purges_linked_records(self):
+        self.login_manager_a()
+        test_v = Vehicle.objects.create(
+            business=self.business_a,
+            branch=self.branch_a,
+            status="purchased",
+            make=self.make_a,
+            model=self.model_a,
+        )
+        v_id = test_v.internal_id
+        # Create linked transaction
+        tx = Transaction.objects.create(
+            business=self.business_a,
+            vehicle=test_v,
+            amount=Decimal("250.00"),
+            date=date(2026, 9, 1),
+            category="Repairs",
+            from_or_to="Werkstatt GmbH",
+            description="Repair work",
+        )
+        tx_id = tx.internal_id
+
+        # 1. Test unlink_delete: preserves transaction as standalone record
+        response_unlink = self.client.delete(f"/api/vehicles/{v_id}?unlink_delete=true")
+        self.assertEqual(response_unlink.status_code, 200)
+        self.assertEqual(response_unlink.json().get("action"), "deleted")
+
+        # Verify vehicle is deleted, and transaction is safely preserved with vehicle=None
+        self.assertFalse(Vehicle.objects.filter(business=self.business_a, internal_id=v_id).exists())
+        tx.refresh_from_db()
+        self.assertIsNone(tx.vehicle)
+        self.assertEqual(tx.amount, Decimal("250.00"))
+
+        # 2. Test force_cascade: permanently purges vehicle AND all connected transactions
+        v_cascade = Vehicle.objects.create(
+            business=self.business_a,
+            branch=self.branch_a,
+            status="purchased",
+            make=self.make_a,
+            model=self.model_a,
+        )
+        tx_cascade = Transaction.objects.create(
+            business=self.business_a,
+            vehicle=v_cascade,
+            amount=Decimal("500.00"),
+            date=date(2026, 9, 2),
+            category="Repairs",
+            from_or_to="Werkstatt GmbH",
+        )
+        v_casc_id = v_cascade.internal_id
+        tx_casc_id = tx_cascade.internal_id
+
+        response_cascade = self.client.delete(f"/api/vehicles/{v_casc_id}?force_cascade=true")
+        self.assertEqual(response_cascade.status_code, 200)
+        self.assertEqual(response_cascade.json().get("action"), "deleted")
+        self.assertFalse(Vehicle.objects.filter(business=self.business_a, internal_id=v_casc_id).exists())
+        self.assertFalse(Transaction.objects.filter(business=self.business_a, internal_id=tx_casc_id).exists())
+
+    def test_delete_vehicle_force_cascade_requires_manager(self):
+        self.login_employee_a()
+        response = self.client.delete(f"/api/vehicles/{self.vehicle_a.internal_id}?force_cascade=true")
+        self.assertEqual(response.status_code, 403)
+
+    def test_unlink_transaction_via_put(self):
+        self.login_manager_a()
+        test_v = Vehicle.objects.create(
+            business=self.business_a,
+            branch=self.branch_a,
+            status="purchased",
+            make=self.make_a,
+            model=self.model_a,
+        )
+        tx = Transaction.objects.create(
+            business=self.business_a,
+            vehicle=test_v,
+            amount=Decimal("150.00"),
+            date=date(2026, 9, 1),
+            category="Fuel",
+            from_or_to="Shell Tankstelle",
+        )
+        self.assertEqual(tx.vehicle_id, test_v.id)
+        
+        # Unlink by sending vehicle_id=None
+        import json
+        res = self.client.put(
+            f"/api/transactions/{tx.internal_id}",
+            data=json.dumps({"vehicle_id": None}),
+            content_type="application/json"
+        )
+        self.assertEqual(res.status_code, 200)
+        tx.refresh_from_db()
+        self.assertIsNone(tx.vehicle)
 
 
 # =============================================================================
@@ -611,6 +737,98 @@ class TransactionDeleteApiTests(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.transaction_a.refresh_from_db()
         self.assertEqual(self.transaction_a.status, "inactive")
+
+    def test_transaction_delete_preflight_with_vehicle(self):
+        self.login_manager_a()
+        # transaction_a has vehicle
+        res = self.client.get(f"/api/delete-check?entity_type=transaction&entity_id={self.transaction_a.internal_id}")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertFalse(data["can_hard_delete"])
+        self.assertEqual(data["dependencies_count"], 1)
+        self.assertEqual(len(data["linked_items"]), 1)
+        self.assertEqual(data["linked_items"][0]["type"], "vehicle")
+
+    def test_transaction_cascade_delete(self):
+        self.login_manager_a()
+        tx_id = self.transaction_a.internal_id
+        res = self.client.delete(f"/api/transactions/{tx_id}?force_cascade=true")
+        self.assertEqual(res.status_code, 200)
+        self.assertFalse(Transaction.objects.filter(business=self.business_a, internal_id=tx_id).exists())
+
+    def test_transaction_unlink_and_delete(self):
+        self.login_manager_a()
+        v = self.vehicle_a
+        tx = Transaction.objects.create(
+            business=self.business_a,
+            vehicle=v,
+            amount=Decimal("120.00"),
+            date=date(2026, 9, 3),
+            category="Cleaning",
+            from_or_to="Clean Car",
+        )
+        tx_id = tx.internal_id
+        res = self.client.delete(f"/api/transactions/{tx_id}?unlink_delete=true")
+        self.assertEqual(res.status_code, 200)
+        self.assertFalse(Transaction.objects.filter(business=self.business_a, internal_id=tx_id).exists())
+        self.assertTrue(Vehicle.objects.filter(business=self.business_a, internal_id=v.internal_id).exists())
+
+
+class LegalEntityDeleteApiTests(BaseTestCase):
+    """Test LegalEntity delete preflight and cascade purge."""
+
+    def test_legal_entity_preflight_and_cascade(self):
+        self.login_manager_a()
+        entity = LegalEntity.objects.create(
+            business=self.business_a,
+            name="Autohaus Schmidt",
+            type="company",
+            address_street="Test St",
+            address_street_number=1,
+        )
+        # Link vehicle as seller
+        self.vehicle_a.seller = entity
+        self.vehicle_a.save()
+
+        # Check preflight
+        res = self.client.get(f"/api/delete-check?entity_type=legal_entity&entity_id={entity.internal_id}")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertFalse(data["can_hard_delete"])
+        self.assertGreaterEqual(data["dependencies_count"], 1)
+
+        # Force cascade delete
+        del_res = self.client.delete(f"/api/legal-entities/{entity.internal_id}?force_cascade=true")
+        self.assertEqual(del_res.status_code, 200)
+        self.assertFalse(LegalEntity.objects.filter(business=self.business_a, internal_id=entity.internal_id).exists())
+        self.vehicle_a.refresh_from_db()
+        self.assertIsNone(self.vehicle_a.seller)
+
+
+class ChoiceDeleteApiTests(BaseTestCase):
+    """Test Choice delete preflight and cascade purge."""
+
+    def test_country_and_city_preflight(self):
+        self.login_manager_a()
+        co = Country.objects.create(business=self.business_a, name="Testland")
+        ci = City.objects.create(business=self.business_a, country=co, name="Teststadt")
+
+        # Check city preflight (0 deps)
+        res_ci = self.client.get(f"/api/delete-check?entity_type=choice&entity_id={ci.id}&choice_type=city")
+        self.assertEqual(res_ci.status_code, 200)
+        self.assertTrue(res_ci.json()["can_hard_delete"])
+
+        # Check country preflight (1 dep: city)
+        res_co = self.client.get(f"/api/delete-check?entity_type=choice&entity_id={co.id}&choice_type=country")
+        self.assertEqual(res_co.status_code, 200)
+        self.assertFalse(res_co.json()["can_hard_delete"])
+        self.assertEqual(res_co.json()["dependencies_count"], 1)
+
+        # Cascade delete country
+        del_co = self.client.delete(f"/api/choices/country/{co.id}?force_cascade=true")
+        self.assertEqual(del_co.status_code, 200)
+        self.assertFalse(Country.objects.filter(id=co.id).exists())
+        self.assertFalse(City.objects.filter(id=ci.id).exists())
 
 
 # =============================================================================

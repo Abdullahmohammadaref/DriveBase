@@ -356,7 +356,7 @@ export function TransactionForm({
     }, [mode, onAutoSave, onAutoSaveDebounced])
 
     // Handle field changes - with auto-save support for edit mode
-    const handleChange = useCallback((field: keyof TransactionFormData, value: string | number | undefined) => {
+    const handleChange = useCallback((field: keyof TransactionFormData, value: string | number | null | undefined) => {
         setFormData((prev) => {
             const newData = {
                 ...prev,
@@ -842,13 +842,14 @@ export function TransactionForm({
                                         <Label htmlFor="vehicle">{t("transactions.vehicle") || "Vehicle"}</Label>
                                         <SearchableSelect
                                             options={vehicleOptions}
-                                            value={formData.vehicle_id?.toString() || ""}
+                                            value={formData.vehicle_id ? String(formData.vehicle_id) : ""}
                                             onChange={(v) => {
-                                                const vehicleId = v ? parseInt(v) : undefined
+                                                const vehicleId = v ? parseInt(v) : null
                                                 handleChange("vehicle_id", vehicleId)
                                                 // Trigger immediate auto-save for dropdown
                                                 handleAutoSave({ vehicle_id: vehicleId })
                                             }}
+                                            isClearable={true}
                                             placeholder={t("transactions.form.searchVehicles", "Search vehicles...")}
                                             searchPlaceholder={t("transactions.form.typeToSearch", "Type to search...")}
                                         />

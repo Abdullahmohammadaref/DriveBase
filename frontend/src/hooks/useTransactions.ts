@@ -168,6 +168,8 @@ export function useUpdateTransaction() {
             queryClient.invalidateQueries({
                 queryKey: transactionKeys.detail(variables.internalId),
             })
+            queryClient.invalidateQueries({ queryKey: ['vehicles'] })
+            queryClient.invalidateQueries({ queryKey: ['vehicle'] })
         },
     })
 }
@@ -179,11 +181,24 @@ export function useDeleteTransaction() {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: async (internalId: number) => {
-            const response = await api.delete(`/transactions/${internalId}`)
+        mutationFn: async (args: number | { internalId: number; forceCascade?: boolean; unlinkDelete?: boolean; deleteMode?: string }) => {
+            const internalId = typeof args === "number" ? args : args.internalId
+            const forceCascade = typeof args === "number" ? false : args.forceCascade
+            const unlinkDelete = typeof args === "number" ? false : args.unlinkDelete
+            const deleteMode = typeof args === "number" ? undefined : args.deleteMode
+
+            const params: Record<string, any> = {}
+            if (forceCascade) params.force_cascade = true
+            if (unlinkDelete) params.unlink_delete = true
+            if (deleteMode) params.delete_mode = deleteMode
+
+            const response = await api.delete(`/transactions/${internalId}`, {
+                params: Object.keys(params).length > 0 ? params : undefined,
+            })
             return response.data
         },
-        onSuccess: (_, internalId) => {
+        onSuccess: (_, args) => {
+            const internalId = typeof args === "number" ? args : args.internalId
             queryClient.setQueryData(
                 transactionKeys.detail(internalId),
                 (old: TransactionDetail | undefined) => old ? { ...old, status: 'inactive', status_display: 'Inactive' } : old

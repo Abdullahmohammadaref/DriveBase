@@ -109,8 +109,12 @@ async function updateLegalEntity(internalId: number, payload: LegalEntityUpdateP
     return response.data
 }
 
-async function deactivateLegalEntity(internalId: number): Promise<{ success: boolean; message: string }> {
-    const response = await api.post(`/legal-entities/${internalId}/deactivate`)
+async function deactivateLegalEntity(args: number | { internalId: number; forceCascade?: boolean }): Promise<{ success: boolean; message: string }> {
+    const internalId = typeof args === "number" ? args : args.internalId
+    const forceCascade = typeof args === "number" ? false : args.forceCascade
+    const response = await api.delete(`/legal-entities/${internalId}`, {
+        params: forceCascade ? { force_cascade: true } : undefined,
+    })
     return response.data
 }
 

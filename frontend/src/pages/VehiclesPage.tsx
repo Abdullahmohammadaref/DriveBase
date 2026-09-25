@@ -5,19 +5,12 @@ import { Plus, Search, X, BarChart3, ChevronDown, ChevronUp } from "lucide-react
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SortMenuButton } from "@/components/ui/SortMenuButton"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog"
 import { useVehicles, useDeleteVehicle, useChangeVehicleStatus } from "@/hooks/useVehicles"
 import { VehicleCard } from "@/components/vehicles/VehicleCard"
 import { VehicleFiltersSidebar } from "@/components/vehicles/VehicleFilters"
 import { FinancialSummaryCard } from "@/components/vehicles/FinancialSummary"
 import { ContractModal } from "@/components/vehicles/ContractModal"
+import { SmartDeleteModal } from "@/components/common/SmartDeleteModal"
 import { StickyFooter } from "@/components/StickyFooter"
 import { PerPageInput } from "@/components/PerPageInput"
 import { PageInput } from "@/components/PageInput"
@@ -176,9 +169,19 @@ export function VehiclesPage() {
     }, [])
 
     // Confirm delete
-    const handleConfirmDelete = useCallback(async () => {
+    const handleConfirmDelete = useCallback(async (optsOrCascade?: boolean | { forceCascade?: boolean; unlinkDelete?: boolean; mode?: string }) => {
         if (vehicleToDelete?.internal_id) {
-            await deleteMutation.mutateAsync(vehicleToDelete.internal_id)
+            const isObj = typeof optsOrCascade === "object" && optsOrCascade !== null
+            const forceCascade = isObj ? (optsOrCascade.forceCascade || optsOrCascade.mode === "cascade") : Boolean(optsOrCascade)
+            const unlinkDelete = isObj ? (optsOrCascade.unlinkDelete || optsOrCascade.mode === "unlink_delete") : false
+            const deleteMode = isObj ? optsOrCascade.mode : (forceCascade ? "cascade" : "deactivate")
+
+            await deleteMutation.mutateAsync({
+                internalId: vehicleToDelete.internal_id,
+                forceCascade,
+                unlinkDelete,
+                deleteMode,
+            })
             setDeleteDialogOpen(false)
             setVehicleToDelete(null)
         }
@@ -397,37 +400,16 @@ export function VehiclesPage() {
 
 
 
-            {/* Delete Confirmation Dialog */}
-            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>{t("vehicles.deleteVehicle", "Delete Vehicle")}</DialogTitle>
-                        <DialogDescription>
-                            {t("vehicles.deleteConfirmWithVehicle", {
-                                id: vehicleToDelete?.internal_id,
-                                make: vehicleToDelete?.make_name || "",
-                                model: vehicleToDelete?.model_name || "",
-                                defaultValue: `Are you sure you want to delete vehicle #${vehicleToDelete?.internal_id} (${vehicleToDelete?.make_name} ${vehicleToDelete?.model_name})?`
-                            })}
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button
-                            variant="outline"
-                            onClick={() => setDeleteDialogOpen(false)}
-                        >
-                            {t("common.cancel", "Cancel")}
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            onClick={handleConfirmDelete}
-                            disabled={deleteMutation.isPending}
-                        >
-                            {deleteMutation.isPending ? t("common.deleting", "Deleting...") : t("common.delete", "Delete")}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            {/* Smart Delete Confirmation Dialog */}
+            <SmartDeleteModal
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                entityType="vehicle"
+                entityId={vehicleToDelete?.internal_id ?? null}
+                entityName={vehicleToDelete ? `${vehicleToDelete.make_name || ""} ${vehicleToDelete.model_name || ""}`.trim() || `#${vehicleToDelete.internal_id}` : ""}
+                onConfirm={handleConfirmDelete}
+                isPending={deleteMutation.isPending}
+            />
 
             {/* Contract Generation Modal */}
             <ContractModal

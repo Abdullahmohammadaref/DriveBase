@@ -62,7 +62,7 @@ export interface TransactionDetail extends TransactionListItem {
 export interface TransactionFormData {
     category?: string
     subcategory?: string
-    vehicle_id?: number
+    vehicle_id?: number | null
     amount?: number  // Made optional to support empty state
     currency: string
     tax?: number

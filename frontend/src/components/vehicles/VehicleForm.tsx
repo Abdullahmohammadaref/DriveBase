@@ -33,6 +33,7 @@ import api, { ensureCsrfToken } from "@/lib/api"
 import { formatCurrency, cn } from "@/lib/utils"
 import { calcVehicleFinancials } from "@/lib/vehicleFinancials"
 import { getBoolPref, saveBoolPref } from "@/lib/paginationPrefs"
+import { SmartDeleteModal } from "@/components/common/SmartDeleteModal"
 import type { VehicleDetail } from "@/types/vehicle"
 
 const PREF_SHOW_VEHICLE_FINANCIALS = "acar_pref_show_vehicle_financials"
@@ -301,6 +302,8 @@ export function VehicleForm({
     const [entityFormError, setEntityFormError] = useState<string | null>(null)
     const [entityValidationErrors, setEntityValidationErrors] = useState<Record<string, string>>({})
     const [contractModalOpen, setContractModalOpen] = useState(false)
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
     const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
     const [imageUploadError, setImageUploadError] = useState<string | null>(null)
     const [isUploadingImage, setIsUploadingImage] = useState(false)
@@ -610,6 +613,36 @@ export function VehicleForm({
         }
     }
 
+    const handleConfirmDelete = async (optsOrCascade?: boolean | { forceCascade?: boolean; unlinkDelete?: boolean; mode?: string }) => {
+        if (!vehicle?.internal_id) return
+        setIsDeleting(true)
+        const isObj = typeof optsOrCascade === "object" && optsOrCascade !== null
+        const forceCascade = isObj ? (optsOrCascade.forceCascade || optsOrCascade.mode === "cascade") : Boolean(optsOrCascade)
+        const unlinkDelete = isObj ? (optsOrCascade.unlinkDelete || optsOrCascade.mode === "unlink_delete") : false
+        const deleteMode = isObj ? optsOrCascade.mode : (forceCascade ? "cascade" : "deactivate")
+
+        const params: Record<string, any> = {}
+        if (forceCascade) params.force_cascade = true
+        if (unlinkDelete) params.unlink_delete = true
+        if (deleteMode) params.delete_mode = deleteMode
+
+        try {
+            const res = await api.delete(`/vehicles/${vehicle.internal_id}`, {
+                params: Object.keys(params).length > 0 ? params : undefined,
+            })
+            if (res.data?.action === "deleted") {
+                navigate(`${basePath}/vehicles`)
+            } else {
+                handleStatusChange("inactive")
+            }
+        } catch (err) {
+            console.error("Delete failed:", err)
+        } finally {
+            setIsDeleting(false)
+            setDeleteModalOpen(false)
+        }
+    }
+
     const mutation = useMutation({
         mutationFn: async (data: VehicleCreateInput | VehicleUpdateInput) => {
             if (isEditing && vehicle?.internal_id) {
@@ -771,11 +804,11 @@ export function VehicleForm({
                                     variant="outline"
                                     size="sm"
                                     className="h-7 text-xs gap-1 text-red-500 border-red-300 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/30"
-                                    onClick={() => handleStatusChange("inactive")}
-                                    title={t("common.deactivate", "Deactivate")}
+                                    onClick={() => setDeleteModalOpen(true)}
+                                    title={t("common.delete", "Delete")}
                                 >
                                     <Trash2 className="size-3" />
-                                    {t("common.deactivate", "Deactivate")}
+                                    {t("common.delete", "Delete")}
                                 </Button>
                             )}
 
@@ -1411,6 +1444,19 @@ export function VehicleForm({
                 onOpenChange={setContractModalOpen}
                 vehicle={vehicle ?? null}
             />
+
+            {/* Smart Delete Modal */}
+            {isEditing && vehicle?.internal_id && (
+                <SmartDeleteModal
+                    open={deleteModalOpen}
+                    onOpenChange={setDeleteModalOpen}
+                    entityType="vehicle"
+                    entityId={vehicle.internal_id}
+                    entityName={vehicleTitle}
+                    onConfirm={handleConfirmDelete}
+                    isPending={isDeleting}
+                />
+            )}
         </>
     )
 }
