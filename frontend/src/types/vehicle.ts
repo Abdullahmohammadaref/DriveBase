@@ -221,6 +221,12 @@ export interface TaxPercentage extends Choice {
     is_no_tax: boolean
 }
 
+export interface PaymentMethodChoice extends Choice {
+    applies_to_buy?: boolean
+    applies_to_sale?: boolean
+    applies_to_transactions?: boolean
+}
+
 export interface Branch extends Choice {
     address: string
     is_active: boolean
@@ -257,7 +263,7 @@ export interface AllChoices {
     fuel_types: Choice[]
     damage_types: Choice[]
     doors: Choice[]
-    payment_methods: Choice[]
+    payment_methods: PaymentMethodChoice[]
     tax_percentages: TaxPercentage[]
     legal_entities: LegalEntity[]
     categories: Choice[]

@@ -105,6 +105,9 @@ export default function ChoicesManagementPage() {
     const [modalPercentage, setModalPercentage] = useState("")
     const [modalParentId, setModalParentId] = useState<number | null>(null)
     const [modalError, setModalError] = useState<string | null>(null)
+    const [modalAppliesToBuy, setModalAppliesToBuy] = useState(true)
+    const [modalAppliesToSale, setModalAppliesToSale] = useState(true)
+    const [modalAppliesToTransactions, setModalAppliesToTransactions] = useState(true)
 
     const { data, isLoading, error } = useQuery<ChoicesManagementData>({
         queryKey: ["choices-management"],
@@ -125,6 +128,9 @@ export default function ChoicesManagementPage() {
             name: string
             percentage?: string
             parentId?: number | null
+            applies_to_buy?: boolean
+            applies_to_sale?: boolean
+            applies_to_transactions?: boolean
         }) => {
             const formData = new FormData()
             formData.append("name", params.name)
@@ -141,6 +147,11 @@ export default function ChoicesManagementPage() {
             if (params.choiceType === "city" && params.parentId) {
                 formData.append("country_id", params.parentId.toString())
             }
+            if (params.choiceType === "payment_method") {
+                if (params.applies_to_buy !== undefined) formData.append("applies_to_buy", String(params.applies_to_buy))
+                if (params.applies_to_sale !== undefined) formData.append("applies_to_sale", String(params.applies_to_sale))
+                if (params.applies_to_transactions !== undefined) formData.append("applies_to_transactions", String(params.applies_to_transactions))
+            }
 
             const response = await api.post(`/choices/${params.choiceType}`, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
@@ -150,6 +161,7 @@ export default function ChoicesManagementPage() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["choices-management"] })
             queryClient.invalidateQueries({ queryKey: ["choices"] })
+            queryClient.invalidateQueries({ queryKey: ["transaction-choices"] })
             closeModal()
         },
         onError: (error: any) => {
@@ -164,10 +176,18 @@ export default function ChoicesManagementPage() {
             choiceId: number
             name: string
             percentage?: string
+            applies_to_buy?: boolean
+            applies_to_sale?: boolean
+            applies_to_transactions?: boolean
         }) => {
-            const payload = {
+            const payload: any = {
                 name: params.name,
                 ...(params.percentage && { percentage: parseFloat(params.percentage) })
+            }
+            if (params.choiceType === "payment_method") {
+                payload.applies_to_buy = params.applies_to_buy
+                payload.applies_to_sale = params.applies_to_sale
+                payload.applies_to_transactions = params.applies_to_transactions
             }
             const response = await api.patch(`/choices/${params.choiceType}/${params.choiceId}`, payload)
             return response.data
@@ -175,6 +195,7 @@ export default function ChoicesManagementPage() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["choices-management"] })
             queryClient.invalidateQueries({ queryKey: ["choices"] })
+            queryClient.invalidateQueries({ queryKey: ["transaction-choices"] })
             closeModal()
         },
         onError: (error: any) => {
@@ -292,6 +313,11 @@ export default function ChoicesManagementPage() {
         setModalName("")
         setModalPercentage("")
         setModalParentId(parentId)
+        if (choiceType === "payment_method") {
+            setModalAppliesToBuy(true)
+            setModalAppliesToSale(true)
+            setModalAppliesToTransactions(true)
+        }
         setModalOpen(true)
     }
 
@@ -303,6 +329,11 @@ export default function ChoicesManagementPage() {
         setModalName(item.name)
         setModalPercentage(item.percentage?.toString() || "")
         setModalParentId(null)
+        if (choiceType === "payment_method") {
+            setModalAppliesToBuy((item as any).applies_to_buy ?? true)
+            setModalAppliesToSale((item as any).applies_to_sale ?? true)
+            setModalAppliesToTransactions((item as any).applies_to_transactions ?? true)
+        }
         setModalOpen(true)
     }
 
@@ -314,6 +345,9 @@ export default function ChoicesManagementPage() {
         setModalPercentage("")
         setModalParentId(null)
         setModalError(null)
+        setModalAppliesToBuy(true)
+        setModalAppliesToSale(true)
+        setModalAppliesToTransactions(true)
     }
 
     const handleAddChoice = (event: React.FormEvent) => {
@@ -330,6 +364,13 @@ export default function ChoicesManagementPage() {
             }
         }
 
+        if (modalChoiceType === "payment_method") {
+            if (!modalAppliesToBuy && !modalAppliesToSale && !modalAppliesToTransactions) {
+                setModalError(t("choices.atLeastOneScopeRequired", "Please select at least one applicable area (Buy, Sale, or Transactions)."))
+                return
+            }
+        }
+
         setModalError(null)
 
         if (modalMode === "edit" && modalEditId) {
@@ -338,6 +379,9 @@ export default function ChoicesManagementPage() {
                 choiceId: modalEditId,
                 name: modalName.trim(),
                 percentage: modalPercentage,
+                applies_to_buy: modalAppliesToBuy,
+                applies_to_sale: modalAppliesToSale,
+                applies_to_transactions: modalAppliesToTransactions,
             })
         } else {
             addMutation.mutate({
@@ -345,6 +389,9 @@ export default function ChoicesManagementPage() {
                 name: modalName.trim(),
                 percentage: modalPercentage,
                 parentId: modalParentId,
+                applies_to_buy: modalAppliesToBuy,
+                applies_to_sale: modalAppliesToSale,
+                applies_to_transactions: modalAppliesToTransactions,
             })
         }
     }
@@ -487,6 +534,25 @@ export default function ChoicesManagementPage() {
                                                             — {(item as any).vehicle_name}
                                                         </span>
                                                     )}
+                                                    {typeKey === "payment_method" && (
+                                                        <div className="ml-2 inline-flex items-center gap-1">
+                                                            {(item as any).applies_to_buy && (
+                                                                <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                                                    {t("choices.scopeBuy", "Buy")}
+                                                                </span>
+                                                            )}
+                                                            {(item as any).applies_to_sale && (
+                                                                <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                                                                    {t("choices.scopeSale", "Sale")}
+                                                                </span>
+                                                            )}
+                                                            {(item as any).applies_to_transactions && (
+                                                                <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                                                                    {t("choices.scopeTransactions", "Transactions")}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </button>
                                                 {item.is_protected ? (
                                                     <span className="text-xs italic text-muted-foreground">
@@ -526,6 +592,25 @@ export default function ChoicesManagementPage() {
                                                     className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors text-left flex-1"
                                                 >
                                                     {item.name}
+                                                    {typeKey === "payment_method" && (
+                                                        <div className="ml-2 inline-flex items-center gap-1 opacity-70">
+                                                            {(item as any).applies_to_buy && (
+                                                                <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                                                    {t("choices.scopeBuy", "Buy")}
+                                                                </span>
+                                                            )}
+                                                            {(item as any).applies_to_sale && (
+                                                                <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                                                                    {t("choices.scopeSale", "Sale")}
+                                                                </span>
+                                                            )}
+                                                            {(item as any).applies_to_transactions && (
+                                                                <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                                                                    {t("choices.scopeTransactions", "Transactions")}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </button>
                                                 <button
                                                     onClick={() => handleReactivate(typeKey, item.id)}
@@ -1164,6 +1249,51 @@ export default function ChoicesManagementPage() {
                                             className="w-full rounded-lg border border-input bg-transparent px-4 py-2.5 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
                                             placeholder="e.g. 19.00"
                                         />
+                                    </div>
+                                )}
+
+                                {modalChoiceType === "payment_method" && (
+                                    <div className="mb-4 space-y-2.5 rounded-lg border border-border bg-muted/30 p-3">
+                                        <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                            {t("choices.applicableAreas", "Applicable In")}
+                                        </label>
+                                        <div className="space-y-2">
+                                            <label className="flex items-center gap-2.5 text-xs text-foreground cursor-pointer select-none">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={modalAppliesToBuy}
+                                                    onChange={(e) => setModalAppliesToBuy(e.target.checked)}
+                                                    className="h-4 w-4 rounded border-input text-primary focus:ring-primary/20"
+                                                />
+                                                <span>{t("choices.scopeVehicleBuy", "Vehicle Purchases (Ankauf)")}</span>
+                                            </label>
+                                            <label className="flex items-center gap-2.5 text-xs text-foreground cursor-pointer select-none">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={modalAppliesToSale}
+                                                    onChange={(e) => setModalAppliesToSale(e.target.checked)}
+                                                    className="h-4 w-4 rounded border-input text-primary focus:ring-primary/20"
+                                                />
+                                                <span>{t("choices.scopeVehicleSale", "Vehicle Sales (Verkauf)")}</span>
+                                            </label>
+                                            <label className="flex items-center gap-2.5 text-xs text-foreground cursor-pointer select-none">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={modalAppliesToTransactions}
+                                                    onChange={(e) => setModalAppliesToTransactions(e.target.checked)}
+                                                    className="h-4 w-4 rounded border-input text-primary focus:ring-primary/20"
+                                                />
+                                                <span>{t("choices.scopeBookkeepingTransactions", "Bookkeeping Transactions (Buchhaltung)")}</span>
+                                            </label>
+                                        </div>
+                                        {modalMode === "edit" && (
+                                            <p className="text-[11px] text-muted-foreground italic pt-1 border-t border-border/50">
+                                                {t(
+                                                    "choices.scopeEditWarning",
+                                                    "Disabling an option will hide it from future vehicle and transaction forms. Existing records using this method will keep it intact."
+                                                )}
+                                            </p>
+                                        )}
                                     </div>
                                 )}
 

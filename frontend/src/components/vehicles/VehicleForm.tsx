@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react"
+import { useEffect, useRef, useState, useCallback, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -516,6 +516,28 @@ export function VehicleForm({
             ? [{ id: nextKey.id, name: nextKey.name }]
             : []),
     ]
+
+    const currentBuyMethodId = watch("buy_payment_method_id")
+    const buyPaymentMethodOptions = useMemo(() => {
+        const list = choices?.payment_methods || []
+        return list
+            .filter((m) => m.applies_to_buy || m.id === currentBuyMethodId)
+            .map((m) => ({
+                id: m.id,
+                name: m.name,
+            }))
+    }, [choices?.payment_methods, currentBuyMethodId])
+
+    const currentSaleMethodId = watch("sale_payment_method_id")
+    const salePaymentMethodOptions = useMemo(() => {
+        const list = choices?.payment_methods || []
+        return list
+            .filter((m) => m.applies_to_sale || m.id === currentSaleMethodId)
+            .map((m) => ({
+                id: m.id,
+                name: m.name,
+            }))
+    }, [choices?.payment_methods, currentSaleMethodId])
 
     const txnsForCalc = txData?.transactions?.items
         ?.filter((t) => t.status !== "inactive")
@@ -1118,7 +1140,8 @@ export function VehicleForm({
                             <FieldWrapper label={t("vehicleForm.buyPaymentMethod", "Payment Method")} required error={errors.buy_payment_method_id?.message}>
                                 <DynamicSelect
                                     choiceType="payment_method"
-                                    options={toOptions(choices?.payment_methods)}
+                                    context="buy"
+                                    options={buyPaymentMethodOptions}
                                     value={watch("buy_payment_method_id") ?? null}
                                     onChange={(val) => handleDropdownChange("buy_payment_method_id", val ?? 0)}
                                     placeholder={t("vehicleForm.selectPaymentMethod", "Select method")}
@@ -1212,7 +1235,8 @@ export function VehicleForm({
                                 <FieldWrapper label={t("vehicleForm.salePaymentMethod", "Payment Method")} required>
                                     <DynamicSelect
                                         choiceType="payment_method"
-                                        options={toOptions(choices?.payment_methods)}
+                                        context="sale"
+                                        options={salePaymentMethodOptions}
                                         value={watch("sale_payment_method_id") ?? null}
                                         onChange={(val) => handleDropdownChange("sale_payment_method_id", val)}
                                         placeholder={t("vehicleForm.selectPaymentMethod", "Select method")}

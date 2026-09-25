@@ -851,7 +851,7 @@ def export_business_data(request: HttpRequest):
             "damage_types": list(DamageType.objects.filter(business=business).values('name', 'is_active')),
             "doors": list(DoorsChoice.objects.filter(business=business).values('name', 'is_active')),
             "tax_percentages": list(TaxPercentage.objects.filter(business=business).values('name', 'percentage', 'is_active')),
-            "payment_methods": list(PaymentMethod.objects.filter(business=business).values('name', 'is_active')),
+            "payment_methods": list(PaymentMethod.objects.filter(business=business).values('name', 'is_active', 'applies_to_buy', 'applies_to_sale', 'applies_to_transactions')),
             "currencies": list(Currency.objects.filter(business=business).values('name', 'code', 'is_active')),
             "categories": list(Category.objects.filter(business=business).values('name', 'is_active')),
             "subcategories": [

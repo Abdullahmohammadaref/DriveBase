@@ -27,6 +27,7 @@ export interface TransactionListItem {
     date: string | null
     method: string | null
     method_display: string | null
+    payment_method_id?: number | null
     from_or_to: string | null
 
     // Vehicle info
@@ -67,6 +68,7 @@ export interface TransactionFormData {
     tax?: number
     date: string
     method: string
+    payment_method_id?: number | null
     from_or_to: string
     description?: string
     internal_comments?: string
@@ -83,6 +85,7 @@ export interface TransactionUpdateData {
     tax?: number
     date?: string
     method?: string
+    payment_method_id?: number | null
     from_or_to?: string
     description?: string
     internal_comments?: string
@@ -134,6 +137,7 @@ export interface TransactionFilters {
     subcategory?: string
     currency?: string
     method?: string
+    payment_method_id?: number | null
     vehicle?: number
 
     // Amount range

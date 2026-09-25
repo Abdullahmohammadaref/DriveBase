@@ -281,6 +281,144 @@ class ChoiceManagementApiTests(BaseTestCase):
             ).exists()
         )
 
+    def test_payment_method_scoping_flags_and_context_creation(self):
+        """Test payment method creation with context and updating scope flags."""
+        self.login_manager_a()
+        
+        # 1. Create on the fly in Buy context
+        res_buy = self.client.post(
+            "/api/choices/payment_method",
+            {"name": "Sofortkauf", "context": "buy"},
+        )
+        self.assertEqual(res_buy.status_code, 201)
+        pm_buy = PaymentMethod.objects.get(name="Sofortkauf", business=self.business_a)
+        self.assertTrue(pm_buy.applies_to_buy)
+        self.assertFalse(pm_buy.applies_to_sale)
+        self.assertFalse(pm_buy.applies_to_transactions)
+
+        # 2. Create on the fly in Transaction context via transactions API
+        res_tx = self.client.post(
+            "/api/transactions/choices/method",
+            {"name": "Volksbank Konto 1"},
+        )
+        self.assertEqual(res_tx.status_code, 201)
+        pm_tx = PaymentMethod.objects.get(name="Volksbank Konto 1", business=self.business_a)
+        self.assertFalse(pm_tx.applies_to_buy)
+        self.assertFalse(pm_tx.applies_to_sale)
+        self.assertTrue(pm_tx.applies_to_transactions)
+
+        # 3. GET /api/transactions/choices contains Volksbank Konto 1 but NOT Sofortkauf
+        res_tx_choices = self.client.get("/api/transactions/choices")
+        self.assertEqual(res_tx_choices.status_code, 200)
+        labels = [m["label"] for m in res_tx_choices.json()["method_choices"]]
+        self.assertIn("Volksbank Konto 1", labels)
+        self.assertNotIn("Sofortkauf", labels)
+
+        # 4. Update scoping via PATCH /api/choices/payment_method/{id}
+        res_patch = self.client.patch(
+            f"/api/choices/payment_method/{pm_tx.id}",
+            data={
+                "name": "Volksbank Konto 1",
+                "applies_to_buy": True,
+                "applies_to_sale": True,
+                "applies_to_transactions": True,
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(res_patch.status_code, 200)
+        pm_tx.refresh_from_db()
+        self.assertTrue(pm_tx.applies_to_buy)
+        self.assertTrue(pm_tx.applies_to_sale)
+        self.assertTrue(pm_tx.applies_to_transactions)
+
+    def test_transaction_payment_method_historical_scoping_and_archival(self):
+        """Test transaction payment method linkage, archival preservation, and real-time scoping."""
+        self.login_manager_a()
+
+        # 1. Create a payment method applicable to transactions
+        pm_sparkasse = PaymentMethod.objects.create(
+            business=self.business_a,
+            name="Überweisung Sparkasse",
+            is_active=True,
+            applies_to_buy=True,
+            applies_to_sale=True,
+            applies_to_transactions=True,
+        )
+        pm_bar = PaymentMethod.objects.create(
+            business=self.business_a,
+            name="Barzahlung",
+            is_active=True,
+            applies_to_buy=True,
+            applies_to_sale=True,
+            applies_to_transactions=True,
+        )
+
+        # 2. Create a transaction using this payment method
+        create_res = self.client.post(
+            "/api/transactions/",
+            data={
+                "amount": "150.00",
+                "currency": "EUR",
+                "date": "2026-09-25",
+                "payment_method_id": pm_sparkasse.id,
+                "from_or_to": "Autoteile GmbH",
+                "description": "Parts purchase",
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(create_res.status_code, 201)
+        tx_data = create_res.json()
+        tx_internal_id = tx_data["internal_id"]
+        self.assertEqual(tx_data["payment_method_id"], pm_sparkasse.id)
+        self.assertEqual(tx_data["method"], "Überweisung Sparkasse")
+
+        # 3. Manager removes Sparkasse from transactions in Choice Management
+        patch_res = self.client.patch(
+            f"/api/choices/payment_method/{pm_sparkasse.id}",
+            data={
+                "name": "Überweisung Sparkasse",
+                "applies_to_buy": True,
+                "applies_to_sale": True,
+                "applies_to_transactions": False,
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(patch_res.status_code, 200)
+
+        # 4. Detail endpoint for existing transaction still returns payment_method_id and method
+        detail_res = self.client.get(f"/api/transactions/{tx_internal_id}")
+        self.assertEqual(detail_res.status_code, 200)
+        detail_data = detail_res.json()
+        self.assertEqual(detail_data["payment_method_id"], pm_sparkasse.id)
+        self.assertEqual(detail_data["method"], "Überweisung Sparkasse")
+
+        # 5. Choices endpoint with current_method_id preserves Sparkasse cleanly
+        choices_res = self.client.get(f"/api/transactions/choices?current_method_id={pm_sparkasse.id}")
+        self.assertEqual(choices_res.status_code, 200)
+        method_choices = choices_res.json()["method_choices"]
+        sparkasse_choice = next((m for m in method_choices if m["value"] == str(pm_sparkasse.id)), None)
+        self.assertIsNotNone(sparkasse_choice)
+        self.assertEqual(sparkasse_choice["label"], pm_sparkasse.name)
+
+        # 6. Choices endpoint without current_method_id excludes Sparkasse
+        choices_unscoped = self.client.get("/api/transactions/choices")
+        unscoped_labels = [m["label"] for m in choices_unscoped.json()["method_choices"]]
+        self.assertFalse(any("Sparkasse" in label for label in unscoped_labels))
+
+        # 7. Update transaction to Barzahlung
+        update_res = self.client.put(
+            f"/api/transactions/{tx_internal_id}",
+            data={
+                "payment_method_id": pm_bar.id,
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(update_res.status_code, 200)
+        updated_data = update_res.json()
+        self.assertEqual(updated_data["payment_method_id"], pm_bar.id)
+        self.assertEqual(updated_data["method"], "Barzahlung")
+
+
 
 # =============================================================================
 # Legal Entity API Integration Tests

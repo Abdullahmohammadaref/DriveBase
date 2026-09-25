@@ -166,6 +166,8 @@ export function TransactionForm({
 
     // Fetch choices from API
     const { data: choices, isLoading: choicesLoading } = useTransactionChoices()
+    // Fetch vehicle choices (shared choices with payment_methods scoping and tax_percentages)
+    const { data: vehicleChoices } = useChoices()
 
     // Convert category choices to DynamicSelect format (id, name)
     const categoryOptions = useMemo(() => choices?.category_choices?.map((c) => ({
@@ -173,20 +175,50 @@ export function TransactionForm({
         name: c.label,
     })) ?? [], [choices?.category_choices])
 
+    const allPaymentMethods = useMemo(() => vehicleChoices?.payment_methods || [], [vehicleChoices?.payment_methods])
+
+    // Resolve initial method ID from FK or resilient name match
+    const initialMethodId = useMemo(() => {
+        if (!initialData) return null
+        if (initialData.payment_method_id) {
+            return initialData.payment_method_id
+        }
+        if (initialData.method && allPaymentMethods.length > 0) {
+            const rawMethod = initialData.method.toLowerCase().trim()
+            const found = allPaymentMethods.find(m => 
+                m.name.toLowerCase().trim() === rawMethod ||
+                m.name.toLowerCase().includes(rawMethod) ||
+                rawMethod.includes(m.name.toLowerCase())
+            )
+            return found?.id ?? null
+        }
+        return null
+    }, [initialData?.payment_method_id, initialData?.method, allPaymentMethods])
+
+    // Active method ID is either user selection or resolved initial data
+    const activeMethodId = methodId ?? initialMethodId
+
     // Convert method choices to DynamicSelect format (id, name)
-    const methodOptions = useMemo(() => choices?.method_choices?.map((m) => ({
-        id: parseInt(m.value),
-        name: m.label,
-    })) ?? [], [choices?.method_choices])
+    const methodOptions = useMemo(() => {
+        if (allPaymentMethods.length > 0) {
+            return allPaymentMethods
+                .filter((m) => m.applies_to_transactions || m.id === activeMethodId)
+                .map((m) => ({
+                    id: m.id,
+                    name: m.name,
+                }))
+        }
+        return choices?.method_choices?.map((m) => ({
+            id: parseInt(m.value),
+            name: m.label,
+        })) ?? []
+    }, [allPaymentMethods, choices?.method_choices, activeMethodId])
 
     // Convert currency choices to DynamicSelect format (id, name)
     const currencyOptions = useMemo(() => choices?.currency_choices?.map((c) => ({
         id: parseInt(c.value),
         name: c.label,
     })) ?? [], [choices?.currency_choices])
-
-    // Fetch vehicle choices for tax_percentages (shared with Vehicle forms)
-    const { data: vehicleChoices } = useChoices()
 
     // Convert tax percentage choices to DynamicSelect format with "Name (Percentage%)" display
     const taxOptions = useMemo(() => vehicleChoices?.tax_percentages?.map((t) => ({
@@ -223,6 +255,7 @@ export function TransactionForm({
                     tax: initialData.tax !== undefined && initialData.tax !== null ? parseFloat(String(initialData.tax)) : undefined,
                     date: initialData.date || new Date().toISOString().split("T")[0],
                     method: initialData.method || "",
+                    payment_method_id: initialData.payment_method_id ?? undefined,
                     from_or_to: initialData.from_or_to || "",
                     description: initialData.description || "",
                     internal_comments: initialData.internal_comments || "",
@@ -252,16 +285,17 @@ export function TransactionForm({
                 const matchedCategory = categoryOptions.find(c => c.name === initialData.category)
                 setCategoryId(matchedCategory ? matchedCategory.id : null)
 
-                // Match method by name  
-                const matchedMethod = methodOptions.find(m => m.name === initialData.method)
-                setMethodId(matchedMethod ? matchedMethod.id : null)
+                // Match method by resolved ID
+                if (initialMethodId) {
+                    setMethodId(initialMethodId)
+                }
 
                 // Match currency by name
                 const matchedCurrency = currencyOptions.find(c => c.name === initialData.currency)
                 setCurrencyId(matchedCurrency ? matchedCurrency.id : null)
             }
         }
-    }, [mode, initialData?.internal_id, choices, categoryOptions, methodOptions, currencyOptions])
+    }, [mode, initialData?.internal_id, choices, categoryOptions, initialMethodId, currencyOptions])
 
     // Initialize tax - runs after vehicleChoices loads
     useEffect(() => {
@@ -411,7 +445,7 @@ export function TransactionForm({
         if (!currencyId) {
             errors.currency = "This field is required"
         }
-        if (!methodId) {
+        if (!methodId && !activeMethodId) {
             errors.method = "This field is required"
         }
         if (!taxId) {
@@ -850,20 +884,22 @@ export function TransactionForm({
                                         <Label htmlFor="method">{t("transactions.form.method", "Method")} <span className="text-red-500">*</span></Label>
                                         <DynamicSelect
                                             choiceType="method"
+                                            context="transaction"
                                             options={methodOptions}
-                                            value={methodId}
+                                            value={activeMethodId}
                                             onChange={(id) => {
                                                 setMethodId(id)
                                                 clearError("method")
-                                                // Update formData with method name for backend
-                                                const method = methodOptions.find(m => m.id === id)
+                                                // Update formData with method name and ID for backend
+                                                const method = allPaymentMethods.find(m => m.id === id) || methodOptions.find(m => m.id === id)
                                                 const methodName = method?.name || ""
                                                 setFormData(prev => ({
                                                     ...prev,
                                                     method: methodName,
+                                                    payment_method_id: id,
                                                 }))
                                                 // Trigger immediate auto-save for dropdown
-                                                handleAutoSave({ method: methodName })
+                                                handleAutoSave({ method: methodName, payment_method_id: id })
                                             }}
                                             placeholder={t("transactions.form.selectMethod", "Select method")}
                                             allowCreate={true}
@@ -874,8 +910,9 @@ export function TransactionForm({
                                                 setFormData(prev => ({
                                                     ...prev,
                                                     method: item.name,
+                                                    payment_method_id: item.id,
                                                 }))
-                                                handleAutoSave({ method: item.name })
+                                                handleAutoSave({ method: item.name, payment_method_id: item.id })
                                             }}
                                         />
                                         {validationErrors.method && (

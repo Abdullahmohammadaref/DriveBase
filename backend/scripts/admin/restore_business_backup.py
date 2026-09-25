@@ -225,7 +225,12 @@ def restore_backup(zip_path: str, target_business_id: int = 1, dry_run: bool = F
             for pm in choices_data.get("payment_methods", []):
                 obj, _ = PaymentMethod.objects.update_or_create(
                     business=business, name=pm["name"],
-                    defaults={"is_active": pm.get("is_active", True)}
+                    defaults={
+                        "is_active": pm.get("is_active", True),
+                        "applies_to_buy": pm.get("applies_to_buy", True),
+                        "applies_to_sale": pm.get("applies_to_sale", True),
+                        "applies_to_transactions": pm.get("applies_to_transactions", True),
+                    }
                 )
                 payment_map[obj.name] = obj
 

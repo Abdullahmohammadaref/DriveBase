@@ -229,6 +229,9 @@ class PaymentMethod(models.Model):
         verbose_name=_('business')
     )
     is_active = models.BooleanField(_('is active'), default=True)
+    applies_to_buy = models.BooleanField(_('applies to buy'), default=True)
+    applies_to_sale = models.BooleanField(_('applies to sale'), default=True)
+    applies_to_transactions = models.BooleanField(_('applies to transactions'), default=True)
 
     class Meta:
         ordering = ['name']
@@ -1735,6 +1738,8 @@ class Transaction(models.Model):
     @property
     def method_display(self):
         """Human-readable label for the method choice (e.g. 'Sparkasse')."""
+        if self.payment_method:
+            return self.payment_method.name
         return self.get_method_display() if self.method else ''
 
     @property

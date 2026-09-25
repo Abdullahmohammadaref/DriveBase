@@ -1171,7 +1171,7 @@ def get_all_choices(request, vehicle_id: Optional[int] = Query(None)):
         "fuel_types": list(FuelType.objects.filter(business=business, is_active=True).values('id', 'name')),
         "damage_types": list(DamageType.objects.filter(business=business, is_active=True).values('id', 'name')),
         "doors": list(DoorsChoice.objects.filter(business=business, is_active=True).values('id', 'name')),
-        "payment_methods": list(PaymentMethod.objects.filter(business=business, is_active=True).values('id', 'name')),
+        "payment_methods": list(PaymentMethod.objects.filter(business=business, is_active=True).values('id', 'name', 'applies_to_buy', 'applies_to_sale', 'applies_to_transactions')),
         "tax_percentages": list(TaxPercentage.objects.filter(business=business, is_active=True).values('id', 'name', 'percentage', 'is_no_tax')),
         "legal_entities": list(LegalEntity.objects.filter(business=business).exclude(status='inactive').annotate(
             address_city_name=F('address_city__name'),
@@ -1359,8 +1359,8 @@ def get_choices_for_management(request):
         'payment_method': {
             'name': 'Payment Methods',
             'displayName': 'Zahlungsmethoden',
-            'active': list(PaymentMethod.objects.filter(business=business, is_active=True).values('id', 'name')),
-            'inactive': list(PaymentMethod.objects.filter(business=business, is_active=False).values('id', 'name')),
+            'active': list(PaymentMethod.objects.filter(business=business, is_active=True).values('id', 'name', 'applies_to_buy', 'applies_to_sale', 'applies_to_transactions')),
+            'inactive': list(PaymentMethod.objects.filter(business=business, is_active=False).values('id', 'name', 'applies_to_buy', 'applies_to_sale', 'applies_to_transactions')),
         },
         'tax_percentage': {
             'name': 'Tax Percentages',
@@ -1448,6 +1448,10 @@ def create_choice(
     make_id: Optional[int] = Form(None),
     category_id: Optional[int] = Form(None),
     country_id: Optional[int] = Form(None),
+    applies_to_buy: Optional[bool] = Form(None),
+    applies_to_sale: Optional[bool] = Form(None),
+    applies_to_transactions: Optional[bool] = Form(None),
+    context: Optional[str] = Form(None),
 ):
     """
     Create a new dynamic choice option (managers only).
@@ -1589,11 +1593,33 @@ def create_choice(
         if model_class.objects.filter(business=business, name=name).exists():
             return 400, {"detail": f"'{name}' already exists"}
         
-        obj = model_class.objects.create(
-            business=business,
-            name=name,
-            is_active=True
-        )
+        create_kwargs = {
+            'business': business,
+            'name': name,
+            'is_active': True,
+        }
+        if choice_type == 'payment_method':
+            if context == 'buy':
+                create_kwargs['applies_to_buy'] = True
+                create_kwargs['applies_to_sale'] = False
+                create_kwargs['applies_to_transactions'] = False
+            elif context == 'sale':
+                create_kwargs['applies_to_buy'] = False
+                create_kwargs['applies_to_sale'] = True
+                create_kwargs['applies_to_transactions'] = False
+            elif context == 'transaction':
+                create_kwargs['applies_to_buy'] = False
+                create_kwargs['applies_to_sale'] = False
+                create_kwargs['applies_to_transactions'] = True
+            else:
+                if applies_to_buy is not None:
+                    create_kwargs['applies_to_buy'] = applies_to_buy
+                if applies_to_sale is not None:
+                    create_kwargs['applies_to_sale'] = applies_to_sale
+                if applies_to_transactions is not None:
+                    create_kwargs['applies_to_transactions'] = applies_to_transactions
+
+        obj = model_class.objects.create(**create_kwargs)
         return 201, {
             "success": True,
             "id": obj.id,
@@ -1816,6 +1842,15 @@ def update_choice(request, choice_type: str, choice_id: int, payload: ChoiceUpda
         if choice_type == 'tax_percentage' and payload.percentage is not None:
             choice.percentage = payload.percentage
         
+        # Handle payment method scoping flags
+        if choice_type == 'payment_method':
+            if payload.applies_to_buy is not None:
+                choice.applies_to_buy = payload.applies_to_buy
+            if payload.applies_to_sale is not None:
+                choice.applies_to_sale = payload.applies_to_sale
+            if payload.applies_to_transactions is not None:
+                choice.applies_to_transactions = payload.applies_to_transactions
+
         choice.save()
         
         # Log the update action

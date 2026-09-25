@@ -39,6 +39,7 @@ class TransactionListItem(Schema):
     date: Optional[DateType] = None
     method: Optional[str] = None
     method_display: Optional[str] = None
+    payment_method_id: Optional[int] = None
     from_or_to: Optional[str] = None
     
     # Vehicle info
@@ -77,6 +78,7 @@ class TransactionDetail(Schema):
     datetime: Optional[str] = None
     method: Optional[str] = None
     method_display: Optional[str] = None
+    payment_method_id: Optional[int] = None
     from_or_to: Optional[str] = None
     
     # Vehicle info
@@ -111,7 +113,8 @@ class TransactionCreate(Schema):
     
     # Date & method (required)
     date: DateType
-    method: str = Field(..., min_length=1)
+    method: Optional[str] = None
+    payment_method_id: Optional[int] = None
     from_or_to: str = Field(..., min_length=1, description="Sender or recipient name")
     
     # Optional fields
@@ -137,6 +140,7 @@ class TransactionUpdate(Schema):
     
     date: Optional[DateType] = None
     method: Optional[str] = None
+    payment_method_id: Optional[int] = None
     from_or_to: Optional[str] = None
     
     description: Optional[str] = None

@@ -57,6 +57,8 @@ interface DynamicSelectProps {
     onAddClick?: () => void
     /** Optional styling flag to indicate error state */
     hasError?: boolean
+    /** Context for scoped choices like payment methods ("buy" | "sale" | "transaction") */
+    context?: "buy" | "sale" | "transaction"
 }
 
 export function DynamicSelect({
@@ -74,6 +76,7 @@ export function DynamicSelect({
     onCreated,
     onAddClick,
     hasError = false,
+    context,
 }: DynamicSelectProps) {
     const [open, setOpen] = useState(false)
     const [dialogOpen, setDialogOpen] = useState(false)
@@ -113,6 +116,9 @@ export function DynamicSelect({
             }
             if (data.code !== undefined) {
                 formData.append("code", data.code)
+            }
+            if (context) {
+                formData.append("context", context)
             }
 
             // Use transactions API for transaction-related types, otherwise use choices API
@@ -154,7 +160,10 @@ export function DynamicSelect({
             }
 
             // Invalidate appropriate queries based on choice type
-            if (choiceType === "category" || choiceType === "method" || choiceType === "currency") {
+            if (choiceType === "payment_method" || choiceType === "method") {
+                queryClient.invalidateQueries({ queryKey: ["choices"] })
+                queryClient.invalidateQueries({ queryKey: transactionKeys.choices() })
+            } else if (choiceType === "category" || choiceType === "currency") {
                 // These create new items in transaction choices - invalidate transaction choices
                 queryClient.invalidateQueries({ queryKey: transactionKeys.choices() })
             } else if (choiceType === "subcategory" && parentId) {

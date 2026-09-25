@@ -97,6 +97,19 @@ def log_activity(
 
 def serialize_transaction_list(tx: Transaction):
     """Serialize a Transaction for list display"""
+    pm_id = tx.payment_method_id
+    pm_name = tx.payment_method.name if tx.payment_method else None
+    
+    # Fallback to string matching if payment_method wasn't linked yet
+    if not pm_id and tx.method and tx.business_id:
+        matched_pm = PaymentMethod.objects.filter(business_id=tx.business_id, name__icontains=tx.method.strip()).first()
+        if matched_pm:
+            pm_id = matched_pm.id
+            pm_name = matched_pm.name
+
+    method_val = pm_name or tx.get_method_display() or tx.method
+    method_display_val = pm_name or tx.get_method_display() or tx.method
+
     return {
         "id": tx.id,
         "internal_id": tx.internal_id,
@@ -115,8 +128,9 @@ def serialize_transaction_list(tx: Transaction):
         
         # Date & method
         "date": tx.date,
-        "method": tx.method,
-        "method_display": tx.get_method_display() if tx.method else None,
+        "method": method_val,
+        "method_display": method_display_val,
+        "payment_method_id": pm_id,
         "from_or_to": tx.from_or_to,
         
         # Vehicle info
@@ -342,7 +356,7 @@ def get_next_transaction_id(request):
 
 
 @router.get("/choices", response=TransactionChoices)
-def get_transaction_choices(request):
+def get_transaction_choices(request, current_method_id: Optional[int] = None):
     """
     Get all form dropdown options.
     Called once when the transaction form loads.
@@ -356,10 +370,16 @@ def get_transaction_choices(request):
         for c in categories
     ]
     
-    # Get method choices from PaymentMethod model (dynamic, user-created)
-    methods = PaymentMethod.objects.filter(business=business, is_active=True).order_by('name')
+    # Get method choices from PaymentMethod model (dynamic, user-created, scoped to transactions)
+    method_query = Q(business=business, is_active=True, applies_to_transactions=True)
+    if current_method_id:
+        method_query |= Q(business=business, id=current_method_id)
+    methods = PaymentMethod.objects.filter(method_query).order_by('name')
     method_choices = [
-        {"value": str(m.id), "label": m.name}
+        {
+            "value": str(m.id), 
+            "label": m.name
+        }
         for m in methods
     ]
     
@@ -465,7 +485,7 @@ def create_subcategory(request, name: str = Form(...), category_id: int = Form(.
 @router.post("/choices/method", response={201: dict, 400: ErrorResponse})
 def create_method(request, name: str = Form(...)):
     """
-    Create a new payment method.
+    Create a new payment method scoped to transactions.
     Validates uniqueness within the business (active records only).
     """
     business = get_user_business(request)
@@ -474,14 +494,23 @@ def create_method(request, name: str = Form(...)):
     if PaymentMethod.objects.filter(business=business, name__iexact=name.strip(), is_active=True).exists():
         return 400, ErrorResponse(message=f"Payment method '{name}' already exists")
     
-    # Create new method
+    # Create new method scoped strictly to transactions
     method = PaymentMethod.objects.create(
         business=business,
         name=name.strip(),
-        is_active=True
+        is_active=True,
+        applies_to_buy=False,
+        applies_to_sale=False,
+        applies_to_transactions=True,
     )
     
-    return 201, {"id": method.id, "name": method.name}
+    return 201, {
+        "id": method.id, 
+        "name": method.name,
+        "applies_to_buy": method.applies_to_buy,
+        "applies_to_sale": method.applies_to_sale,
+        "applies_to_transactions": method.applies_to_transactions,
+    }
 
 
 @router.post("/choices/currency", response={201: dict, 400: ErrorResponse})
@@ -615,6 +644,19 @@ def create_transaction(request, payload: TransactionCreate):
     """Create a new transaction"""
     business = get_user_business(request)
     
+    # Resolve payment_method if payment_method_id or method is provided
+    payment_method = None
+    if payload.payment_method_id:
+        payment_method = PaymentMethod.objects.filter(business=business, id=payload.payment_method_id).first()
+    elif payload.method:
+        payment_method = PaymentMethod.objects.filter(business=business, name__iexact=payload.method.strip()).first()
+        if not payment_method:
+            payment_method = PaymentMethod.objects.filter(business=business, name__icontains=payload.method.strip()).first()
+
+    method_val = payload.method
+    if payment_method and not method_val:
+        method_val = payment_method.name
+
     # Build transaction data
     tx_data = {
         'business': business,
@@ -624,7 +666,8 @@ def create_transaction(request, payload: TransactionCreate):
         'currency': payload.currency,
         'tax': payload.tax,
         'date': payload.date,
-        'method': payload.method,
+        'method': method_val,
+        'payment_method': payment_method,
         'from_or_to': payload.from_or_to,
         'description': payload.description,
         'internal_comments': payload.internal_comments,
@@ -668,6 +711,25 @@ def update_transaction(request, internal_id: int, payload: TransactionUpdate):
             tx.vehicle = get_object_or_404(Vehicle, business=business, internal_id=vehicle_internal_id)
         else:
             tx.vehicle = None
+
+    # Handle payment_method FK
+    if 'payment_method_id' in update_data:
+        pm_id = update_data.pop('payment_method_id')
+        if pm_id:
+            pm = PaymentMethod.objects.filter(business=business, id=pm_id).first()
+            tx.payment_method = pm
+            if pm:
+                tx.method = pm.name
+        else:
+            tx.payment_method = None
+    elif 'method' in update_data:
+        method_val = update_data.get('method')
+        if method_val:
+            pm = PaymentMethod.objects.filter(business=business, name__iexact=method_val.strip()).first()
+            if not pm:
+                pm = PaymentMethod.objects.filter(business=business, name__icontains=method_val.strip()).first()
+            if pm:
+                tx.payment_method = pm
     
     # Apply other updates
     for field, value in update_data.items():
@@ -679,7 +741,7 @@ def update_transaction(request, internal_id: int, payload: TransactionUpdate):
         has_subcategory = bool((tx.subcategory and str(tx.subcategory).strip()) or tx.subcategory_fk_id)
         has_tax = tx.tax is not None
         has_date = bool(tx.date)
-        has_method = bool((tx.method and str(tx.method).strip()) or tx.payment_method_fk_id)
+        has_method = bool((tx.method and str(tx.method).strip()) or tx.payment_method_id)
         has_from_or_to = bool(tx.from_or_to and str(tx.from_or_to).strip())
         has_amount = tx.amount is not None
         has_currency = bool((tx.currency and str(tx.currency).strip()) or tx.currency_fk_id)
@@ -722,7 +784,7 @@ def update_transaction_status(request, internal_id: int, payload: TransactionSta
         has_subcategory = bool((tx.subcategory and str(tx.subcategory).strip()) or tx.subcategory_fk_id)
         has_tax = tx.tax is not None
         has_date = bool(tx.date)
-        has_method = bool((tx.method and str(tx.method).strip()) or tx.payment_method_fk_id)
+        has_method = bool((tx.method and str(tx.method).strip()) or tx.payment_method_id)
         has_from_or_to = bool(tx.from_or_to and str(tx.from_or_to).strip())
         has_amount = tx.amount is not None
         has_currency = bool((tx.currency and str(tx.currency).strip()) or tx.currency_fk_id)

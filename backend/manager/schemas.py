@@ -45,6 +45,9 @@ class ChoiceUpdatePayload(Schema):
     name: str
     percentage: Optional[float] = None
     vehicle_id: Optional[int] = None  # Only used for key_number type
+    applies_to_buy: Optional[bool] = None
+    applies_to_sale: Optional[bool] = None
+    applies_to_transactions: Optional[bool] = None
 
 
 
@@ -56,6 +59,15 @@ class ChoiceBase(Schema):
     """Base schema for simple choice models (name + id)"""
     id: int
     name: str
+
+
+class PaymentMethodOut(Schema):
+    """Payment method output schema with domain scoping flags"""
+    id: int
+    name: str
+    applies_to_buy: bool = True
+    applies_to_sale: bool = True
+    applies_to_transactions: bool = True
 
 
 class ChoiceCreate(Schema):
@@ -661,7 +673,7 @@ class AllChoices(Schema):
     fuel_types: List[ChoiceBase]
     damage_types: List[ChoiceBase]
     doors: List[ChoiceBase]
-    payment_methods: List[ChoiceBase]
+    payment_methods: List[PaymentMethodOut]
     tax_percentages: List[TaxPercentageOut]
     legal_entities: List[LegalEntityOut]
     categories: List[CategoryOut] = []
@@ -728,3 +740,6 @@ class ChoiceCreatedResponse(Schema):
     id: int
     name: str
     message: Optional[str] = None
+    applies_to_buy: Optional[bool] = None
+    applies_to_sale: Optional[bool] = None
+    applies_to_transactions: Optional[bool] = None
