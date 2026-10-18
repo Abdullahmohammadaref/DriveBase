@@ -4227,8 +4227,8 @@ def manage_choices(request, business_name):
         },
         'tax_percentage': {
             'name': 'Tax Percentages',
-            'active': [{'id': t.id, 'name': str(t), 'is_protected': t.is_no_tax} for t in TaxPercentage.objects.filter(business=business, is_active=True)],
-            'inactive': [{'id': t.id, 'name': str(t), 'is_protected': t.is_no_tax} for t in TaxPercentage.objects.filter(business=business, is_active=False)],
+            'active': [{'id': t.id, 'name': str(t), 'is_protected': t.name in ['0% Steuerfrei', 'Differenzbesteuerung gem. § 25a UStG', 'No Tax']} for t in TaxPercentage.objects.filter(business=business, is_active=True)],
+            'inactive': [{'id': t.id, 'name': str(t), 'is_protected': t.name in ['0% Steuerfrei', 'Differenzbesteuerung gem. § 25a UStG', 'No Tax']} for t in TaxPercentage.objects.filter(business=business, is_active=False)],
         },
         'currency': {
             'name': 'Currencies',

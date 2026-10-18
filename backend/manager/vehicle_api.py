@@ -76,6 +76,16 @@ class VehicleListSchema(Schema):
     # Pipeline availability
     can_move_to: List[str] = []
     
+    # mobile.de status and insights
+    mobile_de_status: Optional[str] = 'not_listed'
+    mobile_de_ad_id: Optional[str] = None
+    mobile_de_url: Optional[str] = None
+    mobile_de_detail_views: int = 0
+    mobile_de_search_hits: int = 0
+    mobile_de_parkings: int = 0
+    mobile_de_leads_count: int = 0
+    mobile_de_price_rating: Optional[str] = None
+    
     @staticmethod
     def resolve_make_name(obj):
         return obj.make.name if obj.make else None
@@ -205,6 +215,9 @@ class FilterParams(Schema):
     # Status
     status: Optional[str] = None
     
+    # mobile.de filter
+    listed_on_mobile_de: Optional[str] = None  # 'all', 'yes', 'no'
+    
     # Vehicle identifiers search
     vehicle_id_search: Optional[int] = None
     chassis_number_search: Optional[str] = None
@@ -268,6 +281,12 @@ def list_vehicles(request: HttpRequest, filters: FilterParams = Query(...)):
         queryset = queryset.filter(status=filters.status)
     else:
         queryset = queryset.exclude(status='inactive')
+    
+    # Apply mobile.de marketplace filter
+    if filters.listed_on_mobile_de == 'yes':
+        queryset = queryset.filter(mobile_de_status='active')
+    elif filters.listed_on_mobile_de == 'no':
+        queryset = queryset.exclude(mobile_de_status='active')
     
     # Apply search filters
     if filters.vehicle_id_search:

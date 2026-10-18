@@ -173,6 +173,21 @@ export function VehicleFiltersSidebar({
                         </div>
 
                         <div className="space-y-2">
+                            <Label className="text-foreground">{t("vehicles.listedOnMobileDe", "Listed on mobile.de?")}</Label>
+                            <FilterSelect
+                                options={[
+                                    { value: "yes", label: t("common.yes", "Yes") },
+                                    { value: "no", label: t("common.no", "No") },
+                                ]}
+                                value={localFilters.listed_on_mobile_de}
+                                onChange={(value) => updateFilter("listed_on_mobile_de", (value as "yes" | "no") || undefined, true)}
+                                placeholder={t("common.all", "All")}
+                                allLabel={t("common.all", "All")}
+                                searchPlaceholder=""
+                            />
+                        </div>
+
+                        <div className="space-y-2">
                             <Label className="text-foreground">{t("vehicles.keyNumber", "Key Number")}</Label>
                             <FilterSelect
                                 options={choices?.key_numbers?.map((kn) => ({

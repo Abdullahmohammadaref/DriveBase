@@ -60,8 +60,8 @@ export function VehiclePipeline({
     return (
         <div
             className={cn(
-                "flex",
-                orientation === "vertical" ? "flex-col items-stretch gap-0.5" : "flex-row items-center gap-1",
+                "flex shrink-0",
+                orientation === "vertical" ? "flex-col items-stretch gap-0.5" : "flex-row items-center gap-0.5 sm:gap-1",
                 className
             )}
         >
@@ -80,7 +80,7 @@ export function VehiclePipeline({
                             "flex shrink-0",
                             orientation === "vertical"
                                 ? "flex-col items-center"
-                                : "flex-row items-center gap-1"
+                                : "flex-row items-center gap-0.5 sm:gap-1"
                         )}
                     >
                         <button
@@ -92,7 +92,7 @@ export function VehiclePipeline({
                                 }
                             }}
                             className={cn(
-                                "inline-flex h-5 shrink-0 items-center gap-1 rounded-md border px-2 text-[11px] font-medium leading-none transition-all",
+                                "inline-flex h-5 shrink-0 items-center gap-1 rounded-md border px-1.5 sm:px-2 text-[10px] sm:text-[11px] font-medium leading-none transition-all",
                                 orientation === "vertical" ? "w-full justify-center" : "",
                                 pillStyle,
                                 isCurrent && "font-semibold",
@@ -107,9 +107,9 @@ export function VehiclePipeline({
 
                         {index < PIPELINE_ORDER.length - 1 && (
                             orientation === "vertical" ? (
-                                <ChevronDown className="size-3 shrink-0 text-muted-foreground/60 my-0.5" />
+                                <ChevronDown className="size-2.5 sm:size-3 shrink-0 text-muted-foreground/60 my-0.5" />
                             ) : (
-                                <ChevronRight className="size-3 shrink-0 text-muted-foreground/60" />
+                                <ChevronRight className="size-2.5 sm:size-3 shrink-0 text-muted-foreground/60" />
                             )
                         )}
                     </div>

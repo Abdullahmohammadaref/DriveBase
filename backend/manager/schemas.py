@@ -6,7 +6,7 @@ matching the Django models in manager/models.py.
 """
 
 from ninja import Schema, Field
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import date, datetime
 from decimal import Decimal
 from pydantic import field_validator, model_validator
@@ -56,6 +56,8 @@ class ChoiceUpdatePayload(Schema):
     applies_to_buy: Optional[bool] = None
     applies_to_sale: Optional[bool] = None
     applies_to_transactions: Optional[bool] = None
+    mobile_de_mapping: Optional[str] = None
+    vehicle_classes: Optional[List[str]] = None
 
 
 
@@ -67,6 +69,9 @@ class ChoiceBase(Schema):
     """Base schema for simple choice models (name + id)"""
     id: int
     name: str
+    mobile_de_mapping: Optional[str] = None
+    vehicle_classes: List[str] = Field(default_factory=list)
+    is_protected: bool = False
 
 
 class PaymentMethodOut(Schema):
@@ -112,6 +117,10 @@ class VehicleModelOut(Schema):
     name: str
     make_id: int
     make_name: Optional[str] = None
+    vehicle_classes: List[str] = Field(default_factory=list)
+    mobile_de_mapping: Optional[str] = None
+    is_protected: bool = False
+
 
 
 class CityOut(Schema):
@@ -450,13 +459,13 @@ class VehicleCreate(Schema):
     # Branch (required)
     branch_id: int
     
-    # Vehicle details (required)
+    # Vehicle details (optional for edge cases like E-Bikes, Trailers, etc.)
     vehicle_type_id: int
-    body_type_id: int
-    make_id: int
-    model_id: Optional[int] = None  # Optional during transition, will use model FK
+    body_type_id: Optional[int] = None
+    make_id: Optional[int] = None
+    model_id: Optional[int] = None
     color_id: int
-    doors_id: int
+    doors_id: Optional[int] = None
     fuel_type_id: int
     power_kw: int = Field(..., gt=0)
     
@@ -580,6 +589,7 @@ class VehicleFilters(Schema):
         default=None,
         pattern="^(purchased|ready_for_sale|reserved|sold|inactive)$"
     )
+    listed_on_mobile_de: Optional[str] = None  # 'all', 'yes', 'no'
     make: Optional[int] = None
     model: Optional[int] = None
     branch: Optional[int] = None
@@ -769,6 +779,140 @@ class ChoiceCreatedResponse(Schema):
     id: int
     name: str
     message: Optional[str] = None
+    mobile_de_mapping: Optional[str] = None
+    is_protected: bool = False
+    vehicle_classes: List[str] = Field(default_factory=list)
     applies_to_buy: Optional[bool] = None
     applies_to_sale: Optional[bool] = None
     applies_to_transactions: Optional[bool] = None
+
+
+# =============================================================================
+# mobile.de Integration Schemas
+# =============================================================================
+
+class MarketplaceModelsOut(Schema):
+    make: str
+    models: List[str]
+
+
+class MobileDeSettingsOut(Schema):
+    is_configured: bool
+    seller_id: Optional[str] = None
+    api_username: Optional[str] = None
+    last_connection_test: Optional[datetime] = None
+    last_connection_status: Optional[str] = None
+    last_connection_error: Optional[str] = None
+
+
+class MobileDeSettingsIn(Schema):
+    seller_id: Optional[str] = None
+    api_username: Optional[str] = None
+    api_password: Optional[str] = None
+
+
+class MobileDeTestConnectionOut(Schema):
+    success: bool
+    message: str
+
+
+class VehicleGalleryImageOut(Schema):
+    id: int
+    image_url: str
+    order: int
+    uploaded_at: datetime
+
+
+class MobileDeListingDetailOut(Schema):
+    internal_id: int
+    status: Optional[str] = None
+    mobile_de_status: str
+    mobile_de_ad_id: Optional[str] = None
+    mobile_de_url: Optional[str] = None
+    mobile_de_last_synced_at: Optional[datetime] = None
+    mobile_de_last_error: Optional[str] = None
+
+    # Specs & Pricing
+    make_name: Optional[str] = None
+    model_name: Optional[str] = None
+    body_type_name: Optional[str] = None
+    kilometer: Optional[int] = None
+    first_registration_date: Optional[date] = None
+    year_of_construction: Optional[int] = None
+    color_name: Optional[str] = None
+    doors_name: Optional[str] = None
+    fuel_type_name: Optional[str] = None
+    vehicle_type_name: Optional[str] = None
+    vehicle_class: Optional[str] = 'Car'
+    power_kw: Optional[int] = None
+    sale_price: Optional[float] = None
+    sale_tax_percentage: Optional[float] = None
+
+    # Marketplace-specific fields
+    transmission: Optional[str] = None
+    condition: Optional[str] = 'USED'
+    hu_date: Optional[str] = None
+    features: List[str] = []
+
+    # EnVKV
+    emission_class: Optional[str] = 'EURO6'
+    emission_badge: Optional[str] = 'GREEN'
+    fuel_consumption_combined: Optional[float] = None
+    co2_emission_combined: Optional[int] = None
+    efficiency_class: Optional[str] = None
+
+    # Description
+    mobile_de_description: Optional[str] = None
+
+    # Gallery images
+    primary_image_url: Optional[str] = None
+    gallery_images: List[VehicleGalleryImageOut] = []
+
+    # Live stats
+    detail_views: int = 0
+    search_hits: int = 0
+    parkings: int = 0
+    leads_count: int = 0
+    price_rating: Optional[str] = None
+    stats_updated_at: Optional[datetime] = None
+    mapping_issues: List[Dict[str, Any]] = []
+
+
+class MobileDePublishIn(Schema):
+    # Core fields that sync to Vehicle
+    sale_price: Optional[Decimal] = None
+    kilometer: Optional[int] = None
+
+    # Marketplace fields
+    transmission: str
+    condition: str = 'USED'
+    hu_date: Optional[str] = None
+    features: List[str] = []
+
+    # EnVKV
+    emission_class: Optional[str] = 'EURO6'
+    emission_badge: Optional[str] = 'GREEN'
+    fuel_consumption_combined: Optional[Decimal] = None
+    co2_emission_combined: Optional[int] = None
+    efficiency_class: Optional[str] = None
+
+    # Description
+    mobile_de_description: Optional[str] = None
+
+
+class MobileDePublishOut(Schema):
+    success: bool
+    message: str
+    ad_id: Optional[str] = None
+    url: Optional[str] = None
+    status: str
+
+
+class MobileDeInsightsOut(Schema):
+    detail_views: int
+    search_hits: int
+    parkings: int
+    leads_count: int
+    price_rating: Optional[str] = None
+    stats_updated_at: Optional[str] = None
+

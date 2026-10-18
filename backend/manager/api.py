@@ -15,14 +15,20 @@ from ninja.files import UploadedFile
 from ninja.security import django_auth
 from django.shortcuts import get_object_or_404
 from django.http import FileResponse, HttpResponse
-from django.db.models import Q, Sum, Case, When, F, Value, DecimalField
+from django.db.models import Q, Sum, Case, When, F, Value, DecimalField, Count
 from django.db.models.functions import Coalesce
+from django.conf import settings
 from django.core.paginator import Paginator
 from django.utils import timezone
-from typing import Optional, List
+from typing import Optional, List, Dict
 from decimal import Decimal
 from datetime import datetime
 import io
+import json
+import logging
+import os
+
+logger = logging.getLogger(__name__)
 
 from .models import (
     Vehicle, Business, Branch, LegalEntity,
@@ -30,7 +36,7 @@ from .models import (
     Color, FuelType, DamageType, DoorsChoice,
     PaymentMethod, TaxPercentage, Currency, Category, Subcategory,
     ActivityLog, KeyNumber, Country, City,
-    VehicleExpenseEarning
+    VehicleExpenseEarning, VehicleListingImage
 )
 from .schemas import (
     VehicleListOut, VehicleDetailOut, VehicleCreate, VehicleUpdate,
@@ -41,7 +47,13 @@ from .schemas import (
     LegalEntityListOut, LegalEntityUpdate, LegalEntityFilters, LegalEntitiesListResponse,
     BranchOut, ErrorResponse, SuccessResponse, DeleteCheckResponse,
     ChoiceUpdatePayload, KeyNumberOut,
-    VehicleExpenseEarningOut, VehicleExpenseEarningCreate, VehicleExpenseEarningUpdate
+    VehicleExpenseEarningOut, VehicleExpenseEarningCreate, VehicleExpenseEarningUpdate,
+    MobileDeListingDetailOut, MobileDePublishIn, MobileDePublishOut, MobileDeInsightsOut,
+    VehicleGalleryImageOut, MarketplaceModelsOut
+)
+from .services.mobile_de_service import (
+    get_mobile_de_service, MOBILE_DE_MAPPINGS,
+    resolve_fuel, resolve_category, resolve_color, resolve_doors
 )
 from .delete_helpers import check_entity_dependencies, execute_cascade_delete, execute_unlink_and_delete, CHOICE_MODEL_MAP
 from .image_processing import process_vehicle_image
@@ -420,6 +432,11 @@ def apply_vehicle_filters(qs, filters: VehicleFilters):
     # Vehicle detail filters
     if filters.status:
         qs = qs.filter(status=filters.status)
+
+    if filters.listed_on_mobile_de == 'yes':
+        qs = qs.filter(mobile_de_status='active')
+    elif filters.listed_on_mobile_de == 'no':
+        qs = qs.exclude(mobile_de_status='active')
     
     if filters.make:
         qs = qs.filter(make_id=filters.make)
@@ -707,11 +724,87 @@ def create_vehicle(
     # Validate foreign keys belong to the same business
     branch = get_object_or_404(Branch, id=payload.branch_id, business=business)
     vehicle_type = get_object_or_404(VehicleType, id=payload.vehicle_type_id, business=business)
-    body_type = get_object_or_404(BodyType, id=payload.body_type_id, business=business)
-    make = get_object_or_404(Make, id=payload.make_id, business=business)
+    vt_name = (vehicle_type.name or '').strip().lower()
+    vt_map = (vehicle_type.mobile_de_mapping or '').strip()
+
+    # Determine class capabilities
+    no_doors_classes = ['motorrad', 'motorbike', 'anhänger', 'anhanger', 'anhnger', 'trailer', 'semitrailer', 'auflieger', 'ebike', 'e-bike', 'constructionmachine', 'forklifttruck', 'baumaschine', 'gabelstapler']
+    is_non_doors_class = (any(c in vt_name for c in no_doors_classes)) or (vt_map in ['Motorbike', 'Trailer', 'SemiTrailer', 'EBike', 'ConstructionMachine', 'ForkliftTruck'])
+
+    no_fuel_classes = ['anhänger', 'anhanger', 'anhnger', 'trailer', 'semitrailer', 'auflieger']
+    is_non_fuel_class = (any(c in vt_name for c in no_fuel_classes)) or (vt_map in ['Trailer', 'SemiTrailer'])
+
+    no_make_classes = ['anhänger', 'anhanger', 'anhnger', 'trailer', 'semitrailer', 'auflieger', 'ebike', 'e-bike', 'baumaschine', 'gabelstapler', 'constructionmachine', 'forklifttruck', 'agrarfahrzeug', 'agriculturalvehicle']
+    is_non_make_class = (any(c in vt_name for c in no_make_classes)) or (vt_map in ['Trailer', 'SemiTrailer', 'EBike', 'ConstructionMachine', 'ForkliftTruck', 'AgriculturalVehicle'])
+
+    no_body_classes = ['ebike', 'e-bike', 'baumaschine', 'gabelstapler', 'constructionmachine', 'forklifttruck', 'agrarfahrzeug', 'agriculturalvehicle']
+    is_non_body_class = (any(c in vt_name for c in no_body_classes)) or (vt_map in ['EBike', 'ConstructionMachine', 'ForkliftTruck', 'AgriculturalVehicle'])
+
+    make = get_object_or_404(Make, id=payload.make_id, business=business) if payload.make_id else None
+    if is_non_make_class and not make:
+        sonstige_make = Make.objects.filter(business=business, name__iexact='Sonstige').first()
+        if not sonstige_make:
+            sonstige_make = Make.objects.create(
+                business=business,
+                name='Sonstige',
+                mobile_de_mapping='Sonstige',
+                is_protected=True,
+                vehicle_classes=['Car', 'Motorbike', 'Motorhome', 'VanUpTo7500', 'TruckOver7500', 'SemiTrailerTruck', 'Trailer', 'SemiTrailer', 'ConstructionMachine', 'AgriculturalVehicle', 'ForkliftTruck', 'Bus', 'EBike']
+            )
+        make = sonstige_make
+
+    vehicle_model = None
+    if payload.model_id:
+        if make:
+            vehicle_model = get_object_or_404(VehicleModel, id=payload.model_id, make=make, business=business)
+        else:
+            vehicle_model = get_object_or_404(VehicleModel, id=payload.model_id, business=business)
+    elif make and make.name.lower() in ['sonstige', 'keine']:
+        vehicle_model = VehicleModel.objects.filter(business=business, make=make, name__iexact='Sonstige').first()
+        if not vehicle_model:
+            vehicle_model = VehicleModel.objects.create(business=business, make=make, name='Sonstige', mobile_de_mapping='Sonstige', is_protected=True)
+
+    body_type = get_object_or_404(BodyType, id=payload.body_type_id, business=business) if payload.body_type_id else None
+    if is_non_body_class and not body_type:
+        keine_body = BodyType.objects.filter(business=business, name__iexact='Keine').first()
+        if not keine_body:
+            keine_body = BodyType.objects.create(business=business, name='Keine', mobile_de_mapping='NONE', is_protected=True)
+        body_type = keine_body
+
     color = get_object_or_404(Color, id=payload.color_id, business=business)
-    doors = get_object_or_404(DoorsChoice, id=payload.doors_id, business=business)
-    fuel_type = get_object_or_404(FuelType, id=payload.fuel_type_id, business=business)
+    doors = None
+    if payload.doors_id:
+        doors = get_object_or_404(DoorsChoice, id=payload.doors_id, business=business)
+
+    if is_non_doors_class:
+        if not doors or doors.name.lower() != 'keine':
+            keine_door = DoorsChoice.objects.filter(business=business, name__iexact='Keine').first()
+            if not keine_door:
+                keine_door = DoorsChoice.objects.create(business=business, name='Keine', mobile_de_mapping='NONE', is_protected=True)
+            doors = keine_door
+    else:
+        if not doors or doors.name.lower() == 'keine' or (doors.mobile_de_mapping and doors.mobile_de_mapping.upper() == 'NONE'):
+            return 400, {
+                "detail": "Doors selection is required for this vehicle class.",
+                "message": "Doors selection is required for this vehicle class."
+            }
+
+    fuel_type = None
+    if payload.fuel_type_id:
+        fuel_type = get_object_or_404(FuelType, id=payload.fuel_type_id, business=business)
+
+    if is_non_fuel_class:
+        if not fuel_type or 'keine' not in fuel_type.name.lower():
+            keine_fuel = FuelType.objects.filter(business=business, name__icontains='Keine').first()
+            if not keine_fuel:
+                keine_fuel = FuelType.objects.create(business=business, name='Keine / Nicht zutreffend', mobile_de_mapping='NONE', is_protected=True)
+            fuel_type = keine_fuel
+    elif not fuel_type:
+        return 400, {
+            "detail": "Fuel type is required for this vehicle class.",
+            "message": "Fuel type is required for this vehicle class."
+        }
+    
     damage_type = get_object_or_404(DamageType, id=payload.damage_type_id, business=business)
     payment_method = get_object_or_404(PaymentMethod, id=payload.buy_payment_method_id, business=business)
     seller = get_object_or_404(LegalEntity, id=payload.seller_id, business=business)
@@ -721,11 +814,6 @@ def create_vehicle(
         buy_tax = get_object_or_404(TaxPercentage, id=payload.buy_tax_id, business=business)
     else:
         buy_tax = TaxPercentage.objects.filter(business=business, is_no_tax=True, is_active=True).first()
-    
-    # Get model if provided
-    vehicle_model = None
-    if payload.model_id:
-        vehicle_model = get_object_or_404(VehicleModel, id=payload.model_id, make=make, business=business)
     
     # Create vehicle
     vehicle = Vehicle(
@@ -830,6 +918,62 @@ def update_vehicle(
             continue  # handled below
         setattr(vehicle, field, value)
     
+    # If vehicle_type is a class with specific requirements, handle Keine assignment
+    if vehicle.vehicle_type:
+        vt_name = (vehicle.vehicle_type.name or '').strip().lower()
+        vt_map = (vehicle.vehicle_type.mobile_de_mapping or '').strip()
+        no_doors_classes = ['motorrad', 'motorbike', 'anhänger', 'anhanger', 'anhnger', 'trailer', 'semitrailer', 'auflieger', 'ebike', 'e-bike', 'constructionmachine', 'forklifttruck', 'baumaschine', 'gabelstapler']
+        is_non_doors_class = (any(c in vt_name for c in no_doors_classes)) or (vt_map in ['Motorbike', 'Trailer', 'SemiTrailer', 'EBike', 'ConstructionMachine', 'ForkliftTruck'])
+
+        no_fuel_classes = ['anhänger', 'anhanger', 'anhnger', 'trailer', 'semitrailer', 'auflieger']
+        is_non_fuel_class = (any(c in vt_name for c in no_fuel_classes)) or (vt_map in ['Trailer', 'SemiTrailer'])
+
+        no_make_classes = ['anhänger', 'anhanger', 'anhnger', 'trailer', 'semitrailer', 'auflieger', 'ebike', 'e-bike', 'baumaschine', 'gabelstapler', 'constructionmachine', 'forklifttruck', 'agrarfahrzeug', 'agriculturalvehicle']
+        is_non_make_class = (any(c in vt_name for c in no_make_classes)) or (vt_map in ['Trailer', 'SemiTrailer', 'EBike', 'ConstructionMachine', 'ForkliftTruck', 'AgriculturalVehicle'])
+
+        no_body_classes = ['ebike', 'e-bike', 'baumaschine', 'gabelstapler', 'constructionmachine', 'forklifttruck', 'agrarfahrzeug', 'agriculturalvehicle']
+        is_non_body_class = (any(c in vt_name for c in no_body_classes)) or (vt_map in ['EBike', 'ConstructionMachine', 'ForkliftTruck', 'AgriculturalVehicle'])
+
+        if is_non_doors_class:
+            keine_door = DoorsChoice.objects.filter(business=business, name__iexact='Keine').first()
+            if not keine_door:
+                keine_door = DoorsChoice.objects.create(business=business, name='Keine', mobile_de_mapping='NONE', is_protected=True)
+            vehicle.doors = keine_door
+        else:
+            if vehicle.doors and (vehicle.doors.name.lower() == 'keine' or (vehicle.doors.mobile_de_mapping and vehicle.doors.mobile_de_mapping.upper() == 'NONE')):
+                return 400, {
+                    "detail": "Doors selection is required for this vehicle class.",
+                    "message": "Doors selection is required for this vehicle class."
+                }
+
+        if is_non_fuel_class:
+            keine_fuel = FuelType.objects.filter(business=business, name__icontains='Keine').first()
+            if not keine_fuel:
+                keine_fuel = FuelType.objects.create(business=business, name='Keine / Nicht zutreffend', mobile_de_mapping='NONE', is_protected=True)
+            vehicle.fuel_type = keine_fuel
+
+        if is_non_make_class and not vehicle.make:
+            sonstige_make = Make.objects.filter(business=business, name__iexact='Sonstige').first()
+            if not sonstige_make:
+                sonstige_make = Make.objects.create(
+                    business=business,
+                    name='Sonstige',
+                    mobile_de_mapping='Sonstige',
+                    is_protected=True,
+                    vehicle_classes=['Car', 'Motorbike', 'Motorhome', 'VanUpTo7500', 'TruckOver7500', 'SemiTrailerTruck', 'Trailer', 'SemiTrailer', 'ConstructionMachine', 'AgriculturalVehicle', 'ForkliftTruck', 'Bus', 'EBike']
+                )
+            vehicle.make = sonstige_make
+            sonstige_model = VehicleModel.objects.filter(business=business, make=sonstige_make, name__iexact='Sonstige').first()
+            if not sonstige_model:
+                sonstige_model = VehicleModel.objects.create(business=business, make=sonstige_make, name='Sonstige', mobile_de_mapping='Sonstige', is_protected=True)
+            vehicle.model = sonstige_model
+
+        if is_non_body_class and not vehicle.body_type:
+            keine_body = BodyType.objects.filter(business=business, name__iexact='Keine').first()
+            if not keine_body:
+                keine_body = BodyType.objects.create(business=business, name='Keine', mobile_de_mapping='NONE', is_protected=True)
+            vehicle.body_type = keine_body
+
     vehicle.save()
 
     # Handle key_number assignment (reverse OneToOne, not a direct FK on Vehicle)
@@ -1277,6 +1421,277 @@ def delete_vehicle_expense_earning(request, internal_id: int, ee_id: int):
 
 
 # =============================================================================
+# mobile.de Marketplace Endpoints
+# =============================================================================
+
+@router.get("/vehicles/{internal_id}/mobile-de", response={200: MobileDeListingDetailOut, 404: ErrorResponse})
+def get_vehicle_mobile_de_detail(request, internal_id: int):
+    """Retrieve pre-filled listing data, marketplace attributes, gallery images, and insights."""
+    business = get_user_business(request)
+    vehicle = get_object_or_404(
+        Vehicle.objects.select_related(
+            'make', 'model', 'body_type', 'color', 'doors', 'fuel_type', 'sale_tax'
+        ).prefetch_related('listing_images'),
+        business=business,
+        internal_id=internal_id
+    )
+
+    gallery_images = [
+        {
+            "id": img.id,
+            "image_url": img.image.url if img.image else "",
+            "order": img.order,
+            "uploaded_at": img.uploaded_at,
+        }
+        for img in vehicle.listing_images.all().order_by('order', 'id')
+    ]
+
+    v_class = 'Car'
+    if vehicle.vehicle_type:
+        vt_map = (vehicle.vehicle_type.mobile_de_mapping or '').strip()
+        vt_name = (vehicle.vehicle_type.name or '').strip().lower()
+        if vt_map:
+            v_class = vt_map
+        elif 'motorrad' in vt_name or 'bike' in vt_name:
+            v_class = 'Motorbike'
+        elif 'wohnmobil' in vt_name or 'camper' in vt_name:
+            v_class = 'Motorhome'
+        elif 'transporter' in vt_name or 'van' in vt_name:
+            v_class = 'VanUpTo7500'
+        elif 'lkw' in vt_name or 'truck' in vt_name:
+            v_class = 'TruckOver7500'
+        elif 'anhänger' in vt_name or 'trailer' in vt_name:
+            v_class = 'Trailer'
+
+    requires_doors = v_class in ['Car', 'VanUpTo7500']
+
+    return 200, {
+        "internal_id": vehicle.internal_id,
+        "status": vehicle.status,
+        "mobile_de_status": vehicle.mobile_de_status or "not_listed",
+        "mobile_de_ad_id": vehicle.mobile_de_ad_id,
+        "mobile_de_url": vehicle.mobile_de_url,
+        "mobile_de_last_synced_at": vehicle.mobile_de_last_synced_at,
+        "mobile_de_last_error": vehicle.mobile_de_last_error,
+        "make_name": vehicle.make.name if vehicle.make else None,
+        "model_name": vehicle.model.name if vehicle.model else (vehicle.manufacturer_model or None),
+        "body_type_name": vehicle.body_type.name if vehicle.body_type else None,
+        "vehicle_type_name": vehicle.vehicle_type.name if vehicle.vehicle_type else None,
+        "vehicle_class": v_class,
+        "kilometer": vehicle.kilometer,
+        "first_registration_date": vehicle.first_registration_date,
+        "year_of_construction": vehicle.year_of_construction,
+        "color_name": vehicle.color.name if vehicle.color else None,
+        "doors_name": str(vehicle.doors.name) if vehicle.doors else None,
+        "fuel_type_name": vehicle.fuel_type.name if vehicle.fuel_type else None,
+        "power_kw": vehicle.power_kw,
+        "sale_price": float(vehicle.sale_price) if vehicle.sale_price else None,
+        "sale_tax_percentage": float(vehicle.sale_tax.percentage) if (vehicle.sale_tax and vehicle.sale_tax.percentage) else 19.00,
+        "transmission": vehicle.transmission,
+        "condition": vehicle.condition or "USED",
+        "hu_date": vehicle.hu_date,
+        "features": vehicle.features or [],
+        "emission_class": vehicle.emission_class or "EURO6",
+        "emission_badge": vehicle.emission_badge or "GREEN",
+        "fuel_consumption_combined": float(vehicle.fuel_consumption_combined) if vehicle.fuel_consumption_combined else None,
+        "co2_emission_combined": vehicle.co2_emission_combined,
+        "efficiency_class": vehicle.efficiency_class,
+        "mobile_de_description": vehicle.mobile_de_description or vehicle.description,
+        "primary_image_url": vehicle.image.url if vehicle.image else None,
+        "gallery_images": gallery_images,
+        "detail_views": vehicle.mobile_de_detail_views or 0,
+        "search_hits": vehicle.mobile_de_search_hits or 0,
+        "parkings": vehicle.mobile_de_parkings or 0,
+        "leads_count": vehicle.mobile_de_leads_count or 0,
+        "price_rating": vehicle.mobile_de_price_rating,
+        "stats_updated_at": vehicle.mobile_de_stats_updated_at,
+        "mapping_issues": [
+            *([] if (v_class in ['Trailer', 'SemiTrailer'] or resolve_fuel(vehicle.fuel_type)) else [{
+                "field": "fuel_type",
+                "name": vehicle.fuel_type.name if vehicle.fuel_type else None,
+                "message": f"Fuel type '{vehicle.fuel_type.name if vehicle.fuel_type else 'Not set'}' has no mobile.de mapping.",
+            }]),
+            *([] if (v_class != 'Car' or resolve_category(vehicle.body_type)) else [{
+                "field": "body_type",
+                "name": vehicle.body_type.name if vehicle.body_type else None,
+                "message": f"Body type '{vehicle.body_type.name if vehicle.body_type else 'Not set'}' has no mobile.de mapping.",
+            }]),
+            *([] if resolve_color(vehicle.color) else [{
+                "field": "color",
+                "name": vehicle.color.name if vehicle.color else None,
+                "message": f"Color '{vehicle.color.name if vehicle.color else 'Not set'}' has no mobile.de mapping.",
+            }]),
+            *([] if (not requires_doors or resolve_doors(vehicle.doors)) else [{
+                "field": "doors",
+                "name": str(vehicle.doors.name) if vehicle.doors else None,
+                "message": f"Door count '{vehicle.doors.name if vehicle.doors else 'Not set'}' has no mobile.de mapping.",
+            }]),
+        ],
+    }
+
+
+@router.post("/vehicles/{internal_id}/mobile-de/publish", response={200: MobileDePublishOut, 400: ErrorResponse, 404: ErrorResponse})
+def publish_vehicle_mobile_de(request, internal_id: int, payload: MobileDePublishIn):
+    """
+    Publish or update a vehicle on mobile.de.
+    Executes universal two-way sync: updates Vehicle core fields and marketplace attributes,
+    then dispatches the ad payload to mobile.de (or simulator).
+    """
+    business = get_user_business(request)
+    vehicle = get_object_or_404(
+        Vehicle.objects.select_related('make', 'model', 'body_type', 'color', 'doors', 'fuel_type', 'sale_tax'),
+        business=business,
+        internal_id=internal_id
+    )
+
+    # Status check: must be ready_for_sale or reserved
+    if vehicle.status not in ['ready_for_sale', 'reserved']:
+        return 400, {"detail": "Vehicle must be in 'Ready for Sale' or 'Reserved' status to list on mobile.de."}
+
+    # Integration credentials check
+    service = get_mobile_de_service(business)
+    if not service:
+        return 400, {"detail": "mobile.de integration is not configured in Business Settings."}
+
+    # Universal Two-Way Synchronization: save all values to database
+    if payload.sale_price is not None:
+        vehicle.sale_price = payload.sale_price
+    if payload.kilometer is not None:
+        vehicle.kilometer = payload.kilometer
+
+    vehicle.transmission = payload.transmission
+    vehicle.condition = payload.condition or 'USED'
+    vehicle.hu_date = payload.hu_date
+    vehicle.features = payload.features or []
+    vehicle.emission_class = payload.emission_class or 'EURO6'
+    vehicle.emission_badge = payload.emission_badge or 'GREEN'
+    vehicle.fuel_consumption_combined = payload.fuel_consumption_combined
+    vehicle.co2_emission_combined = payload.co2_emission_combined
+    vehicle.efficiency_class = payload.efficiency_class
+    vehicle.mobile_de_description = payload.mobile_de_description
+    vehicle.save()
+
+    # Dispatch to mobile.de / simulator
+    success, message, result_data = service.publish_or_update_ad(vehicle)
+    if not success:
+        return 400, {"detail": message}
+
+    log_activity(
+        request,
+        action='update',
+        entity_type='vehicle',
+        entity_id=vehicle.internal_id,
+        entity_name=str(vehicle),
+        details={
+            "en": f"Vehicle published to mobile.de ({vehicle.mobile_de_status})",
+            "de": f"Fahrzeug auf mobile.de veröffentlicht ({vehicle.mobile_de_status})"
+        }
+    )
+
+    return 200, {
+        "success": True,
+        "message": message,
+        "ad_id": vehicle.mobile_de_ad_id,
+        "url": vehicle.mobile_de_url,
+        "status": vehicle.mobile_de_status,
+    }
+
+
+@router.post("/vehicles/{internal_id}/mobile-de/delist", response={200: SuccessResponse, 400: ErrorResponse, 404: ErrorResponse})
+def delist_vehicle_mobile_de(request, internal_id: int):
+    """Remove a vehicle listing from mobile.de."""
+    business = get_user_business(request)
+    vehicle = get_object_or_404(Vehicle, business=business, internal_id=internal_id)
+
+    service = get_mobile_de_service(business)
+    if not service:
+        return 400, {"detail": "mobile.de service is not configured."}
+
+    success, message = service.delist_vehicle(vehicle)
+    if not success:
+        return 400, {"detail": message}
+
+    log_activity(
+        request,
+        action='update',
+        entity_type='vehicle',
+        entity_id=vehicle.internal_id,
+        entity_name=str(vehicle),
+        details={
+            "en": "Vehicle delisted from mobile.de",
+            "de": "Fahrzeug von mobile.de entfernt"
+        }
+    )
+
+    return 200, {"success": True, "message": message}
+
+
+@router.post("/vehicles/{internal_id}/mobile-de/gallery-images", response={200: VehicleGalleryImageOut, 400: ErrorResponse, 404: ErrorResponse})
+def upload_vehicle_gallery_image(request, internal_id: int, image: UploadedFile = File(...)):
+    """Upload an additional gallery photo for the vehicle listing."""
+    business = get_user_business(request)
+    vehicle = get_object_or_404(Vehicle, business=business, internal_id=internal_id)
+
+    # Validate file size (max 10MB)
+    if image.size > 10 * 1024 * 1024:
+        return 400, {"detail": "File too large. Maximum size is 10MB."}
+
+    last_img = vehicle.listing_images.order_by('-order').first()
+    next_order = (last_img.order + 1) if last_img else 1
+
+    gallery_img = VehicleListingImage.objects.create(
+        vehicle=vehicle,
+        image=image,
+        order=next_order
+    )
+
+    return 200, {
+        "id": gallery_img.id,
+        "image_url": gallery_img.image.url,
+        "order": gallery_img.order,
+        "uploaded_at": gallery_img.uploaded_at
+    }
+
+
+@router.delete("/vehicles/{internal_id}/mobile-de/gallery-images/{image_id}", response={200: SuccessResponse, 404: ErrorResponse})
+def delete_vehicle_gallery_image(request, internal_id: int, image_id: int):
+    """Delete a gallery photo from the vehicle listing."""
+    business = get_user_business(request)
+    vehicle = get_object_or_404(Vehicle, business=business, internal_id=internal_id)
+
+    gallery_img = get_object_or_404(VehicleListingImage, id=image_id, vehicle=vehicle)
+    if gallery_img.image:
+        gallery_img.image.delete(save=False)
+    gallery_img.delete()
+
+    return 200, {"success": True, "message": "Gallery image deleted."}
+
+
+@router.get("/vehicles/{internal_id}/mobile-de/insights", response={200: MobileDeInsightsOut, 400: ErrorResponse, 404: ErrorResponse})
+def get_vehicle_mobile_de_insights(request, internal_id: int):
+    """Refresh live statistics and price rating from mobile.de."""
+    business = get_user_business(request)
+    vehicle = get_object_or_404(Vehicle, business=business, internal_id=internal_id)
+
+    service = get_mobile_de_service(business)
+    if not service:
+        return 400, {"detail": "mobile.de service is not configured."}
+
+    success, data = service.fetch_insights(vehicle)
+    if not success:
+        return 400, {"detail": data.get("error", "Failed to retrieve mobile.de insights.")}
+
+    return 200, {
+        "detail_views": data["detail_views"],
+        "search_hits": data["search_hits"],
+        "parkings": data["parkings"],
+        "leads_count": data["leads_count"],
+        "price_rating": data["price_rating"],
+        "stats_updated_at": data["stats_updated_at"]
+    }
+
+
+# =============================================================================
 # Dynamic Choices Endpoints
 # =============================================================================
 
@@ -1302,13 +1717,13 @@ def get_all_choices(request, vehicle_id: Optional[int] = Query(None)):
     
     return {
         "branches": list(Branch.objects.filter(business=business, is_active=True).values('id', 'name', 'address', 'is_active')),
-        "vehicle_types": list(VehicleType.objects.filter(business=business, is_active=True).values('id', 'name')),
-        "body_types": list(BodyType.objects.filter(business=business, is_active=True).values('id', 'name')),
-        "makes": list(Make.objects.filter(business=business, is_active=True).values('id', 'name')),
-        "colors": list(Color.objects.filter(business=business, is_active=True).values('id', 'name')),
-        "fuel_types": list(FuelType.objects.filter(business=business, is_active=True).values('id', 'name')),
+        "vehicle_types": list(VehicleType.objects.filter(business=business, is_active=True).values('id', 'name', 'mobile_de_mapping', 'is_protected')),
+        "body_types": list(BodyType.objects.filter(business=business, is_active=True).values('id', 'name', 'mobile_de_mapping', 'vehicle_classes', 'is_protected')),
+        "makes": list(Make.objects.filter(business=business, is_active=True).values('id', 'name', 'mobile_de_mapping', 'vehicle_classes', 'is_protected')),
+        "colors": list(Color.objects.filter(business=business, is_active=True).values('id', 'name', 'mobile_de_mapping', 'is_protected')),
+        "fuel_types": list(FuelType.objects.filter(business=business, is_active=True).values('id', 'name', 'mobile_de_mapping', 'vehicle_classes', 'is_protected')),
         "damage_types": list(DamageType.objects.filter(business=business, is_active=True).values('id', 'name')),
-        "doors": list(DoorsChoice.objects.filter(business=business, is_active=True).values('id', 'name')),
+        "doors": list(DoorsChoice.objects.filter(business=business, is_active=True).values('id', 'name', 'mobile_de_mapping', 'vehicle_classes', 'is_protected')),
         "payment_methods": list(PaymentMethod.objects.filter(business=business, is_active=True).values('id', 'name', 'applies_to_buy', 'applies_to_sale', 'applies_to_transactions')),
         "tax_percentages": list(TaxPercentage.objects.filter(business=business, is_active=True).values('id', 'name', 'percentage', 'is_no_tax')),
         "legal_entities": list(LegalEntity.objects.filter(business=business).exclude(status='inactive').annotate(
@@ -1354,6 +1769,8 @@ def get_models_for_make(request, make_id: int):
             "name": m.name,
             "make_id": m.make_id,
             "make_name": m.make.name,
+            "vehicle_classes": m.vehicle_classes or [],
+            "mobile_de_mapping": m.mobile_de_mapping,
         }
         for m in models
     ]
@@ -1450,131 +1867,299 @@ def get_choices_for_management(request):
     """
     business = get_user_business(request)
     
+    v_filter = Q(vehicles__business=business)
+    t_filter = Q(transactions__business=business)
+    le_filter = Q(legal_entities__business=business)
+
     # Gather all choice types with active/inactive items
     choice_types = {
         'make': {
             'name': 'Manufacturers',
             'displayName': 'Hersteller',
-            'active': list(Make.objects.filter(business=business, is_active=True).values('id', 'name')),
-            'inactive': list(Make.objects.filter(business=business, is_active=False).values('id', 'name')),
+            'active': list(Make.objects.filter(business=business, is_active=True).annotate(usage_count=Count('vehicles', filter=v_filter)).values('id', 'name', 'mobile_de_mapping', 'is_protected', 'vehicle_classes', 'usage_count')),
+            'inactive': list(Make.objects.filter(business=business, is_active=False).annotate(usage_count=Count('vehicles', filter=v_filter)).values('id', 'name', 'mobile_de_mapping', 'is_protected', 'vehicle_classes', 'usage_count')),
         },
         'vehicle_type': {
             'name': 'Vehicle Types',
             'displayName': 'Fahrzeugtypen',
-            'active': list(VehicleType.objects.filter(business=business, is_active=True).values('id', 'name')),
-            'inactive': list(VehicleType.objects.filter(business=business, is_active=False).values('id', 'name')),
+            'active': list(VehicleType.objects.filter(business=business, is_active=True).annotate(usage_count=Count('vehicles', filter=v_filter)).values('id', 'name', 'mobile_de_mapping', 'is_protected', 'usage_count')),
+            'inactive': list(VehicleType.objects.filter(business=business, is_active=False).annotate(usage_count=Count('vehicles', filter=v_filter)).values('id', 'name', 'mobile_de_mapping', 'is_protected', 'usage_count')),
         },
         'body_type': {
             'name': 'Body Types',
             'displayName': 'Karosserietypen',
-            'active': list(BodyType.objects.filter(business=business, is_active=True).values('id', 'name')),
-            'inactive': list(BodyType.objects.filter(business=business, is_active=False).values('id', 'name')),
+            'active': list(BodyType.objects.filter(business=business, is_active=True).annotate(usage_count=Count('vehicles', filter=v_filter)).values('id', 'name', 'mobile_de_mapping', 'is_protected', 'vehicle_classes', 'usage_count')),
+            'inactive': list(BodyType.objects.filter(business=business, is_active=False).annotate(usage_count=Count('vehicles', filter=v_filter)).values('id', 'name', 'mobile_de_mapping', 'is_protected', 'vehicle_classes', 'usage_count')),
         },
         'color': {
             'name': 'Colors',
             'displayName': 'Farben',
-            'active': list(Color.objects.filter(business=business, is_active=True).values('id', 'name')),
-            'inactive': list(Color.objects.filter(business=business, is_active=False).values('id', 'name')),
+            'active': list(Color.objects.filter(business=business, is_active=True).annotate(usage_count=Count('vehicles', filter=v_filter)).values('id', 'name', 'mobile_de_mapping', 'is_protected', 'usage_count')),
+            'inactive': list(Color.objects.filter(business=business, is_active=False).annotate(usage_count=Count('vehicles', filter=v_filter)).values('id', 'name', 'mobile_de_mapping', 'is_protected', 'usage_count')),
         },
         'fuel_type': {
             'name': 'Fuel Types',
             'displayName': 'Kraftstoffarten',
-            'active': list(FuelType.objects.filter(business=business, is_active=True).values('id', 'name')),
-            'inactive': list(FuelType.objects.filter(business=business, is_active=False).values('id', 'name')),
+            'active': list(FuelType.objects.filter(business=business, is_active=True).annotate(usage_count=Count('vehicles', filter=v_filter)).values('id', 'name', 'mobile_de_mapping', 'is_protected', 'vehicle_classes', 'usage_count')),
+            'inactive': list(FuelType.objects.filter(business=business, is_active=False).annotate(usage_count=Count('vehicles', filter=v_filter)).values('id', 'name', 'mobile_de_mapping', 'is_protected', 'vehicle_classes', 'usage_count')),
         },
         'damage_type': {
             'name': 'Damage Types',
             'displayName': 'Schadensarten',
-            'active': list(DamageType.objects.filter(business=business, is_active=True).values('id', 'name')),
-            'inactive': list(DamageType.objects.filter(business=business, is_active=False).values('id', 'name')),
+            'active': list(DamageType.objects.filter(business=business, is_active=True).annotate(usage_count=Count('vehicles', filter=v_filter)).values('id', 'name', 'usage_count')),
+            'inactive': list(DamageType.objects.filter(business=business, is_active=False).annotate(usage_count=Count('vehicles', filter=v_filter)).values('id', 'name', 'usage_count')),
         },
         'doors': {
             'name': 'Door Options',
             'displayName': 'Türoptionen',
-            'active': list(DoorsChoice.objects.filter(business=business, is_active=True).values('id', 'name')),
-            'inactive': list(DoorsChoice.objects.filter(business=business, is_active=False).values('id', 'name')),
+            'active': list(DoorsChoice.objects.filter(business=business, is_active=True).annotate(usage_count=Count('vehicles', filter=v_filter)).values('id', 'name', 'mobile_de_mapping', 'is_protected', 'vehicle_classes', 'usage_count')),
+            'inactive': list(DoorsChoice.objects.filter(business=business, is_active=False).annotate(usage_count=Count('vehicles', filter=v_filter)).values('id', 'name', 'mobile_de_mapping', 'is_protected', 'vehicle_classes', 'usage_count')),
         },
         'payment_method': {
             'name': 'Payment Methods',
             'displayName': 'Zahlungsmethoden',
-            'active': list(PaymentMethod.objects.filter(business=business, is_active=True).values('id', 'name', 'applies_to_buy', 'applies_to_sale', 'applies_to_transactions')),
-            'inactive': list(PaymentMethod.objects.filter(business=business, is_active=False).values('id', 'name', 'applies_to_buy', 'applies_to_sale', 'applies_to_transactions')),
+            'active': list(PaymentMethod.objects.filter(business=business, is_active=True).annotate(usage_count=Count('transactions', filter=t_filter)).values('id', 'name', 'applies_to_buy', 'applies_to_sale', 'applies_to_transactions', 'usage_count')),
+            'inactive': list(PaymentMethod.objects.filter(business=business, is_active=False).annotate(usage_count=Count('transactions', filter=t_filter)).values('id', 'name', 'applies_to_buy', 'applies_to_sale', 'applies_to_transactions', 'usage_count')),
         },
         'tax_percentage': {
             'name': 'Tax Percentages',
             'displayName': 'Steuersätze',
-            'active': [{'id': t.id, 'name': str(t), 'percentage': float(t.percentage) if t.percentage else 0, 'is_protected': t.is_no_tax} for t in TaxPercentage.objects.filter(business=business, is_active=True)],
-            'inactive': [{'id': t.id, 'name': str(t), 'percentage': float(t.percentage) if t.percentage else 0, 'is_protected': t.is_no_tax} for t in TaxPercentage.objects.filter(business=business, is_active=False)],
+            'active': [{'id': t.id, 'name': str(t), 'percentage': float(t.percentage) if t.percentage else 0, 'is_protected': t.name in ['0% Steuerfrei', 'Differenzbesteuerung gem. § 25a UStG', 'No Tax'], 'usage_count': t.usage_count} for t in TaxPercentage.objects.filter(business=business, is_active=True).annotate(usage_count=Count('buy_vehicles', filter=Q(buy_vehicles__business=business)) + Count('sale_vehicles', filter=Q(sale_vehicles__business=business)))],
+            'inactive': [{'id': t.id, 'name': str(t), 'percentage': float(t.percentage) if t.percentage else 0, 'is_protected': t.name in ['0% Steuerfrei', 'Differenzbesteuerung gem. § 25a UStG', 'No Tax'], 'usage_count': t.usage_count} for t in TaxPercentage.objects.filter(business=business, is_active=False).annotate(usage_count=Count('buy_vehicles', filter=Q(buy_vehicles__business=business)) + Count('sale_vehicles', filter=Q(sale_vehicles__business=business)))],
         },
         'currency': {
             'name': 'Currencies',
             'displayName': 'Währungen',
-            'active': [{'id': c.id, 'name': str(c)} for c in Currency.objects.filter(business=business, is_active=True)],
-            'inactive': [{'id': c.id, 'name': str(c)} for c in Currency.objects.filter(business=business, is_active=False)],
+            'active': [{'id': c.id, 'name': str(c), 'usage_count': 0} for c in Currency.objects.filter(business=business, is_active=True)],
+            'inactive': [{'id': c.id, 'name': str(c), 'usage_count': 0} for c in Currency.objects.filter(business=business, is_active=False)],
         },
         'category': {
             'name': 'Categories',
             'displayName': 'Kategorien',
-            'active': list(Category.objects.filter(business=business, is_active=True).values('id', 'name')),
-            'inactive': list(Category.objects.filter(business=business, is_active=False).values('id', 'name')),
+            'active': list(Category.objects.filter(business=business, is_active=True).annotate(usage_count=Count('transactions', filter=t_filter)).values('id', 'name', 'usage_count')),
+            'inactive': list(Category.objects.filter(business=business, is_active=False).annotate(usage_count=Count('transactions', filter=t_filter)).values('id', 'name', 'usage_count')),
         },
         'country': {
             'name': 'Countries',
             'displayName': 'Länder',
-            'active': list(Country.objects.filter(business=business, is_active=True).values('id', 'name')),
-            'inactive': list(Country.objects.filter(business=business, is_active=False).values('id', 'name')),
+            'active': list(Country.objects.filter(business=business, is_active=True).annotate(usage_count=Count('legal_entities', filter=le_filter)).values('id', 'name', 'usage_count')),
+            'inactive': list(Country.objects.filter(business=business, is_active=False).annotate(usage_count=Count('legal_entities', filter=le_filter)).values('id', 'name', 'usage_count')),
         },
         'key_number': {
             'name': 'Key Numbers',
             'displayName': 'Schlüsselnummern',
-            'active': [{'id': k.id, 'name': str(k.number), 'vehicle_id': k.vehicle_id, 'vehicle_name': f"{k.vehicle.make.name if k.vehicle and k.vehicle.make else ''} {k.vehicle.model.name if k.vehicle and k.vehicle.model else ''} (#{k.vehicle.internal_id})" if k.vehicle else None} for k in KeyNumber.objects.filter(business=business, is_active=True).select_related('vehicle', 'vehicle__make', 'vehicle__model')],
-            'inactive': [{'id': k.id, 'name': str(k.number)} for k in KeyNumber.objects.filter(business=business, is_active=False)],
+            'active': [{'id': k.id, 'name': str(k.number), 'usage_count': 1 if k.vehicle_id else 0, 'vehicle_id': k.vehicle_id, 'vehicle_name': f"{k.vehicle.make.name if k.vehicle and k.vehicle.make else ''} {k.vehicle.model.name if k.vehicle and k.vehicle.model else ''} (#{k.vehicle.internal_id})" if k.vehicle else None} for k in KeyNumber.objects.filter(business=business, is_active=True).select_related('vehicle', 'vehicle__make', 'vehicle__model')],
+            'inactive': [{'id': k.id, 'name': str(k.number), 'usage_count': 0} for k in KeyNumber.objects.filter(business=business, is_active=False)],
         },
     }
     
     # Get makes with their models for parent-child management
     makes_with_models = []
-    for mk in Make.objects.filter(business=business, is_active=True).order_by('name'):
-        models_active = list(VehicleModel.objects.filter(make=mk, is_active=True).values('id', 'name'))
-        models_inactive = list(VehicleModel.objects.filter(make=mk, is_active=False).values('id', 'name'))
+    for mk in Make.objects.filter(business=business, is_active=True).annotate(usage_count=Count('vehicles', filter=v_filter)).order_by('-usage_count', 'name'):
+        models_active = list(VehicleModel.objects.filter(make=mk, is_active=True).annotate(usage_count=Count('vehicles', filter=v_filter)).values('id', 'name', 'mobile_de_mapping', 'is_protected', 'vehicle_classes', 'usage_count'))
+        models_inactive = list(VehicleModel.objects.filter(make=mk, is_active=False).annotate(usage_count=Count('vehicles', filter=v_filter)).values('id', 'name', 'mobile_de_mapping', 'is_protected', 'vehicle_classes', 'usage_count'))
         makes_with_models.append({
             'id': mk.id,
             'name': mk.name,
+            'mobile_de_mapping': mk.mobile_de_mapping,
+            'is_protected': mk.is_protected,
+            'vehicle_classes': mk.vehicle_classes or [],
+            'usage_count': mk.usage_count,
             'models_active': models_active,
             'models_inactive': models_inactive,
         })
     
     # Get categories with their subcategories for parent-child management
     categories_with_subcategories = []
-    for cat in Category.objects.filter(business=business, is_active=True).order_by('name'):
-        subs_active = list(Subcategory.objects.filter(category=cat, is_active=True).values('id', 'name'))
-        subs_inactive = list(Subcategory.objects.filter(category=cat, is_active=False).values('id', 'name'))
+    for cat in Category.objects.filter(business=business, is_active=True).annotate(usage_count=Count('transactions', filter=t_filter)).order_by('-usage_count', 'name'):
+        subs_active = list(Subcategory.objects.filter(category=cat, is_active=True).annotate(usage_count=Count('transactions', filter=t_filter)).values('id', 'name', 'usage_count'))
+        subs_inactive = list(Subcategory.objects.filter(category=cat, is_active=False).annotate(usage_count=Count('transactions', filter=t_filter)).values('id', 'name', 'usage_count'))
         categories_with_subcategories.append({
             'id': cat.id,
             'name': cat.name,
+            'usage_count': cat.usage_count,
             'subs_active': subs_active,
             'subs_inactive': subs_inactive,
         })
     
     # Get countries with their cities for parent-child management
     countries_with_cities = []
-    for country in Country.objects.filter(business=business, is_active=True).order_by('name'):
-        cities_active = list(City.objects.filter(country=country, is_active=True).values('id', 'name'))
-        cities_inactive = list(City.objects.filter(country=country, is_active=False).values('id', 'name'))
+    for country in Country.objects.filter(business=business, is_active=True).annotate(usage_count=Count('legal_entities', filter=le_filter)).order_by('-usage_count', 'name'):
+        cities_active = list(City.objects.filter(country=country, is_active=True).annotate(usage_count=Count('legal_entities', filter=le_filter)).values('id', 'name', 'usage_count'))
+        cities_inactive = list(City.objects.filter(country=country, is_active=False).annotate(usage_count=Count('legal_entities', filter=le_filter)).values('id', 'name', 'usage_count'))
         countries_with_cities.append({
             'id': country.id,
             'name': country.name,
+            'usage_count': country.usage_count,
             'cities_active': cities_active,
             'cities_inactive': cities_inactive,
         })
     
+    # Annotate mapped_to_name for unprotected choices across all choice types
+    for ct_key in ['make', 'vehicle_type', 'body_type', 'color', 'fuel_type', 'doors']:
+        if ct_key in choice_types:
+            ct_active = choice_types[ct_key]['active']
+            ct_inactive = choice_types[ct_key]['inactive']
+            prot_lookup = {}
+            for item in ct_active:
+                if item.get('is_protected'):
+                    if item.get('mobile_de_mapping'):
+                        m_code = item['mobile_de_mapping'].strip()
+                        prot_lookup[m_code] = item['name']
+                        prot_lookup[m_code.lower()] = item['name']
+                    prot_lookup[item['name'].strip().lower()] = item['name']
+            
+            for item in ct_active + ct_inactive:
+                if not item.get('is_protected') and item.get('mobile_de_mapping'):
+                    raw_m = str(item['mobile_de_mapping']).strip()
+                    item['mapped_to_name'] = prot_lookup.get(raw_m) or prot_lookup.get(raw_m.lower()) or raw_m
+                else:
+                    item['mapped_to_name'] = None
+
+    # Annotate mapped_to_name for makes and their models
+    make_prot_lookup = {}
+    for mk_dict in makes_with_models:
+        if mk_dict.get('is_protected'):
+            if mk_dict.get('mobile_de_mapping'):
+                m_code = mk_dict['mobile_de_mapping'].strip()
+                make_prot_lookup[m_code] = mk_dict['name']
+                make_prot_lookup[m_code.lower()] = mk_dict['name']
+            make_prot_lookup[mk_dict['name'].strip().lower()] = mk_dict['name']
+
+    for mk_dict in makes_with_models:
+        if not mk_dict.get('is_protected') and mk_dict.get('mobile_de_mapping'):
+            raw_m = str(mk_dict['mobile_de_mapping']).strip()
+            mk_dict['mapped_to_name'] = make_prot_lookup.get(raw_m) or make_prot_lookup.get(raw_m.lower()) or raw_m
+        else:
+            mk_dict['mapped_to_name'] = None
+
+        # Build protected lookup for models under this make
+        model_prot_lookup = {}
+        for m in mk_dict.get('models_active', []):
+            if m.get('is_protected'):
+                if m.get('mobile_de_mapping'):
+                    m_code = m['mobile_de_mapping'].strip()
+                    model_prot_lookup[m_code] = m['name']
+                    model_prot_lookup[m_code.lower()] = m['name']
+                model_prot_lookup[m['name'].strip().lower()] = m['name']
+
+        for m in mk_dict.get('models_active', []) + mk_dict.get('models_inactive', []):
+            if not m.get('is_protected') and m.get('mobile_de_mapping'):
+                raw_m = str(m['mobile_de_mapping']).strip()
+                m['mapped_to_name'] = model_prot_lookup.get(raw_m) or model_prot_lookup.get(raw_m.lower()) or raw_m
+            else:
+                m['mapped_to_name'] = None
+
     return {
         'choice_types': choice_types,
         'makes_with_models': makes_with_models,
         'manufacturers_with_models': makes_with_models,
         'categories_with_subcategories': categories_with_subcategories,
         'countries_with_cities': countries_with_cities,
+        'marketplace_options': MOBILE_DE_MAPPINGS,
     }
+
+
+@router.get("/choices/marketplace-options")
+def get_marketplace_choice_options(request):
+    """Return available mobile.de mapping choices for fuel_type, body_type, color, and doors."""
+    return 200, MOBILE_DE_MAPPINGS
+
+
+_MARKETPLACE_CAR_CATALOG: Optional[Dict[str, List[str]]] = None
+
+def _get_marketplace_catalog() -> Dict[str, List[str]]:
+    global _MARKETPLACE_CAR_CATALOG
+    if _MARKETPLACE_CAR_CATALOG is None:
+        catalog_path = os.path.join(settings.BASE_DIR, 'scripts', 'data', 'mobile_de_car_catalog.json')
+        catalog: Dict[str, List[str]] = {}
+        if os.path.exists(catalog_path):
+            try:
+                with open(catalog_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                for entry in data:
+                    make = entry.get('make')
+                    code = entry.get('code')
+                    models = entry.get('models', [])
+                    if make:
+                        catalog[make.strip().lower()] = models
+                    if code and code.strip().lower() not in catalog:
+                        catalog[code.strip().lower()] = models
+            except Exception as e:
+                logger.error(f"Failed to load mobile.de car catalog: {e}")
+        _MARKETPLACE_CAR_CATALOG = catalog
+    return _MARKETPLACE_CAR_CATALOG
+
+
+@router.get("/choices/marketplace-models/{make_name}", response=MarketplaceModelsOut)
+def get_marketplace_models_for_make(request, make_name: str):
+    """
+    Returns official mobile.de model choices scoped for a specific make.
+    Always includes 'Sonstige' for unlisted or custom models.
+    """
+    clean_make = make_name.strip().lower()
+    catalog = _get_marketplace_catalog()
+    raw_models = catalog.get(clean_make, [])
+
+    seen = set()
+    cleaned_models = []
+    for m in raw_models:
+        if m and m.lower() not in seen:
+            seen.add(m.lower())
+            cleaned_models.append(m)
+
+    if 'sonstige' not in seen and 'other' not in seen:
+        cleaned_models.append('Sonstige')
+
+    cleaned_models.sort(key=lambda x: (x.lower() == 'sonstige', x.lower()))
+    return 200, {"make": make_name, "models": cleaned_models}
+
+
+def get_protected_choice_match(model_class, business, mapping_val: Optional[str], parent_make=None):
+    """
+    Find the matching protected choice instance if mapping_val corresponds to one.
+    """
+    if not mapping_val or not str(mapping_val).strip():
+        return None
+    val = str(mapping_val).strip()
+
+    # 1. Try resolving by numeric ID of protected choice
+    if val.isdigit():
+        q = Q(business=business, id=int(val), is_protected=True)
+        if parent_make and hasattr(model_class, 'make'):
+            q &= Q(make=parent_make)
+        prot = model_class.objects.filter(q).first()
+        if prot:
+            return prot
+
+    # 2. Try resolving by name of protected choice (case-insensitive)
+    q = Q(business=business, is_protected=True, name__iexact=val)
+    if parent_make and hasattr(model_class, 'make'):
+        q &= Q(make=parent_make)
+    prot = model_class.objects.filter(q).first()
+    if prot:
+        return prot
+
+    # 3. Try resolving by mobile_de_mapping of protected choice
+    q = Q(business=business, is_protected=True, mobile_de_mapping__iexact=val)
+    if parent_make and hasattr(model_class, 'make'):
+        q &= Q(make=parent_make)
+    prot = model_class.objects.filter(q).first()
+    if prot:
+        return prot
+
+    return None
+
+
+def resolve_protected_choice_mapping(model_class, business, mapping_val: Optional[str], parent_make=None) -> Optional[str]:
+    """
+    Resolve a user-provided mapping (which can be a protected choice's name, ID, or raw code)
+    to the official mobile_de_mapping value of that protected choice.
+    """
+    prot = get_protected_choice_match(model_class, business, mapping_val, parent_make=parent_make)
+    if prot and prot.mobile_de_mapping:
+        return prot.mobile_de_mapping.strip()
+    return str(mapping_val).strip() if mapping_val else None
 
 
 @router.post("/choices/{choice_type}", response={201: ChoiceCreatedResponse, 400: ErrorResponse, 403: ErrorResponse})
@@ -1590,6 +2175,8 @@ def create_choice(
     applies_to_sale: Optional[bool] = Form(None),
     applies_to_transactions: Optional[bool] = Form(None),
     context: Optional[str] = Form(None),
+    mobile_de_mapping: Optional[str] = Form(None),
+    vehicle_classes: Optional[str] = Form(None),
 ):
     """
     Create a new dynamic choice option (managers only).
@@ -1663,16 +2250,43 @@ def create_choice(
         ).exists():
             return 400, {"detail": f"Model '{name}' already exists for this make"}
         
-        obj = VehicleModel.objects.create(
-            business=business,
-            make=make,
-            name=name,
-            is_active=True
-        )
+        model_kwargs = {
+            'business': business,
+            'make': make,
+            'name': name,
+            'is_active': True,
+        }
+        prot = get_protected_choice_match(VehicleModel, business, mobile_de_mapping, parent_make=make) if mobile_de_mapping else None
+        if prot:
+            model_kwargs['mobile_de_mapping'] = (prot.mobile_de_mapping or mobile_de_mapping).strip()
+            if hasattr(prot, 'vehicle_classes') and prot.vehicle_classes:
+                model_kwargs['vehicle_classes'] = list(prot.vehicle_classes)
+        elif mobile_de_mapping:
+            model_kwargs['mobile_de_mapping'] = mobile_de_mapping.strip()
+
+        if 'vehicle_classes' not in model_kwargs and vehicle_classes:
+            try:
+                classes_list = json.loads(vehicle_classes) if isinstance(vehicle_classes, str) else vehicle_classes
+                if isinstance(classes_list, list):
+                    make_classes = set(make.vehicle_classes or [])
+                    invalid_classes = set(classes_list) - make_classes
+                    if invalid_classes:
+                        return 400, {
+                            "detail": f"Cannot assign class(es) '{', '.join(sorted(invalid_classes))}' to model '{name}' because make '{make.name}' does not support them."
+                        }
+                    model_kwargs['vehicle_classes'] = classes_list
+            except (json.JSONDecodeError, TypeError):
+                pass
+        elif 'vehicle_classes' not in model_kwargs:
+            model_kwargs['vehicle_classes'] = list(make.vehicle_classes or ['Car'])
+        obj = VehicleModel.objects.create(**model_kwargs)
         return 201, {
             "success": True,
             "id": obj.id,
             "name": obj.name,
+            "mobile_de_mapping": getattr(obj, 'mobile_de_mapping', None),
+            "vehicle_classes": getattr(obj, 'vehicle_classes', []) or [],
+            "is_protected": getattr(obj, 'is_protected', False),
             "message": f"Model '{name}' created successfully"
         }
 
@@ -1757,11 +2371,40 @@ def create_choice(
                 if applies_to_transactions is not None:
                     create_kwargs['applies_to_transactions'] = applies_to_transactions
 
+        prot = None
+        if choice_type in ['vehicle_type', 'fuel_type', 'body_type', 'color', 'doors']:
+            prot = get_protected_choice_match(model_class, business, mobile_de_mapping) if mobile_de_mapping else None
+            resolved_map = prot.mobile_de_mapping if (prot and prot.mobile_de_mapping) else resolve_protected_choice_mapping(model_class, business, mobile_de_mapping)
+            default_map = 'Car' if choice_type == 'vehicle_type' else ('OtherCar' if choice_type == 'body_type' else ('TWO_OR_THREE' if choice_type == 'doors' else 'OTHER'))
+            create_kwargs['mobile_de_mapping'] = (resolved_map or mobile_de_mapping or '').strip() or default_map
+        elif choice_type == 'make':
+            if mobile_de_mapping:
+                prot = get_protected_choice_match(Make, business, mobile_de_mapping)
+                resolved_map = prot.mobile_de_mapping if (prot and prot.mobile_de_mapping) else resolve_protected_choice_mapping(Make, business, mobile_de_mapping)
+                create_kwargs['mobile_de_mapping'] = (resolved_map or mobile_de_mapping).strip()
+
+        if choice_type in ['body_type', 'make', 'fuel_type', 'doors']:
+            if prot and hasattr(prot, 'vehicle_classes') and prot.vehicle_classes:
+                create_kwargs['vehicle_classes'] = list(prot.vehicle_classes)
+            else:
+                parsed_classes = []
+                if vehicle_classes:
+                    try:
+                        parsed_classes = json.loads(vehicle_classes)
+                    except Exception:
+                        parsed_classes = [c.strip() for c in vehicle_classes.split(',') if c.strip()]
+                if not parsed_classes or len(parsed_classes) == 0:
+                    parsed_classes = ['Car']
+                create_kwargs['vehicle_classes'] = parsed_classes
+
         obj = model_class.objects.create(**create_kwargs)
         return 201, {
             "success": True,
             "id": obj.id,
             "name": obj.name,
+            "mobile_de_mapping": getattr(obj, 'mobile_de_mapping', None),
+            "is_protected": getattr(obj, 'is_protected', False),
+            "vehicle_classes": getattr(obj, 'vehicle_classes', []),
             "message": f"'{name}' created successfully"
         }
     
@@ -1808,9 +2451,18 @@ def deactivate_choice(request, choice_type: str, choice_id: int, force_cascade: 
     try:
         choice = model_class.objects.get(id=choice_id, business=business)
         
-        # Prevent deactivation of protected No Tax option
-        if choice_type == 'tax_percentage' and hasattr(choice, 'is_no_tax') and choice.is_no_tax:
-            return 400, {"detail": "Cannot deactivate the No Tax option"}
+        # Prevent deletion / deactivation of protected choices
+        if getattr(choice, 'is_protected', False):
+            return 400, {"detail": "System-protected choices cannot be deleted or deactivated."}
+
+        # Prevent deactivation of protected tax options or the only remaining No Tax option
+        if choice_type == 'tax_percentage':
+            if choice.name in ['0% Steuerfrei', 'Differenzbesteuerung gem. § 25a UStG', 'No Tax']:
+                return 400, {"detail": "System-protected choices cannot be deleted or deactivated."}
+            if getattr(choice, 'is_no_tax', False):
+                active_no_tax = TaxPercentage.objects.filter(business=business, is_no_tax=True, is_active=True).exclude(id=choice.id).count()
+                if active_no_tax == 0:
+                    return 400, {"detail": "Cannot deactivate the only active No Tax option"}
         
         # Unassign vehicle when deactivating a key number
         if choice_type == 'key_number' and hasattr(choice, 'vehicle') and choice.vehicle:
@@ -1908,7 +2560,6 @@ def update_choice(request, choice_type: str, choice_id: int, payload: ChoiceUpda
             key.vehicle = vehicle
         elif payload.vehicle_id is None and hasattr(payload, 'vehicle_id'):
             # Explicitly check if vehicle_id was sent as null (to unassign)
-            import json
             raw_body = request.body.decode('utf-8', errors='ignore')
             try:
                 body_data = json.loads(raw_body)
@@ -1924,6 +2575,10 @@ def update_choice(request, choice_type: str, choice_id: int, payload: ChoiceUpda
     try:
         choice = model_class.objects.get(id=choice_id, business=business)
         
+        # Check if system-protected choice is being modified
+        if getattr(choice, 'is_protected', False):
+            return 400, {"detail": "System-protected choices cannot be modified."}
+
         # Check for duplicate name (excluding self)
         if choice_type == 'vehicle_model':
             if VehicleModel.objects.filter(make=choice.make, name=new_name).exclude(id=choice_id).exists():
@@ -1949,6 +2604,87 @@ def update_choice(request, choice_type: str, choice_id: int, payload: ChoiceUpda
                 choice.applies_to_sale = payload.applies_to_sale
             if payload.applies_to_transactions is not None:
                 choice.applies_to_transactions = payload.applies_to_transactions
+
+        # Handle mobile.de mapping update
+        prot_match = None
+        if hasattr(choice, 'mobile_de_mapping'):
+            if payload.mobile_de_mapping is not None:
+                parent_make = getattr(choice, 'make', None)
+                prot_match = get_protected_choice_match(model_class, business, payload.mobile_de_mapping, parent_make=parent_make)
+                resolved_map = prot_match.mobile_de_mapping if (prot_match and prot_match.mobile_de_mapping) else resolve_protected_choice_mapping(model_class, business, payload.mobile_de_mapping, parent_make=parent_make)
+                if choice_type in ['vehicle_type', 'fuel_type', 'body_type', 'color', 'doors']:
+                    default_map = 'Car' if choice_type == 'vehicle_type' else ('OtherCar' if choice_type == 'body_type' else ('TWO_OR_THREE' if choice_type == 'doors' else 'OTHER'))
+                    choice.mobile_de_mapping = (resolved_map or payload.mobile_de_mapping).strip() or default_map
+                else:
+                    choice.mobile_de_mapping = (resolved_map or payload.mobile_de_mapping).strip() or None
+
+        # Handle vehicle_classes update
+        if prot_match and hasattr(prot_match, 'vehicle_classes') and prot_match.vehicle_classes:
+            inherited_classes = list(prot_match.vehicle_classes)
+            if choice_type == 'vehicle_model':
+                make_classes = set(choice.make.vehicle_classes or [])
+                invalid_classes = set(inherited_classes) - make_classes
+                if invalid_classes:
+                    return 400, {
+                        "detail": f"Cannot assign class(es) '{', '.join(sorted(invalid_classes))}' to model '{choice.name}' because make '{choice.make.name}' does not support them."
+                    }
+            if choice_type == 'make':
+                current_classes = set(choice.vehicle_classes or [])
+                new_classes = set(inherited_classes)
+                removed_classes = current_classes - new_classes
+                if removed_classes:
+                    conflicting_models = []
+                    for model in choice.models.filter(business=business):
+                        model_classes = set(model.vehicle_classes or [])
+                        overlap = model_classes.intersection(removed_classes)
+                        if overlap:
+                            conflicting_models.append((model.name, list(overlap)))
+
+                    if conflicting_models:
+                        bullet_items = []
+                        for i, m in enumerate(conflicting_models):
+                            suffix = "." if i == len(conflicting_models) - 1 else ","
+                            bullet_items.append(f"- {m[0]} ({', '.join(sorted(m[1]))}){suffix}")
+                        bullet_text = "\n".join(bullet_items)
+                        return 400, {
+                            "detail": f"Cannot remove vehicle class(es) '{', '.join(sorted(removed_classes))}' from make '{choice.name}' because {len(conflicting_models)} model(s) depend on them:\n{bullet_text}\nPlease update these models first."
+                        }
+            choice.vehicle_classes = inherited_classes
+        elif hasattr(choice, 'vehicle_classes') and payload.vehicle_classes is not None:
+            if choice_type in ['make', 'body_type', 'vehicle_model', 'fuel_type', 'doors'] and len(payload.vehicle_classes) == 0:
+                return 400, {"detail": "At least one vehicle class must be selected for this choice."}
+
+            if choice_type == 'vehicle_model':
+                make_classes = set(choice.make.vehicle_classes or [])
+                invalid_classes = set(payload.vehicle_classes) - make_classes
+                if invalid_classes:
+                    return 400, {
+                        "detail": f"Cannot assign class(es) '{', '.join(sorted(invalid_classes))}' to model '{choice.name}' because make '{choice.make.name}' does not support them."
+                    }
+
+            if choice_type == 'make':
+                current_classes = set(choice.vehicle_classes or [])
+                new_classes = set(payload.vehicle_classes)
+                removed_classes = current_classes - new_classes
+                if removed_classes:
+                    conflicting_models = []
+                    for model in choice.models.filter(business=business):
+                        model_classes = set(model.vehicle_classes or [])
+                        overlap = model_classes.intersection(removed_classes)
+                        if overlap:
+                            conflicting_models.append((model.name, list(overlap)))
+
+                    if conflicting_models:
+                        bullet_items = []
+                        for i, m in enumerate(conflicting_models):
+                            suffix = "." if i == len(conflicting_models) - 1 else ","
+                            bullet_items.append(f"- {m[0]} ({', '.join(sorted(m[1]))}){suffix}")
+                        bullet_text = "\n".join(bullet_items)
+                        return 400, {
+                            "detail": f"Cannot remove vehicle class(es) '{', '.join(sorted(removed_classes))}' from make '{choice.name}' because {len(conflicting_models)} model(s) depend on them:\n{bullet_text}\nPlease update these models first."
+                        }
+
+            choice.vehicle_classes = payload.vehicle_classes
 
         choice.save()
         

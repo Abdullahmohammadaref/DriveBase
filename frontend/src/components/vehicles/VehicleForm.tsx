@@ -4,13 +4,14 @@ import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query"
-import { Loader2, Save, ArrowLeft, AlertTriangle, X, FileText, Trash2, RotateCcw, BarChart3, ChevronDown, ChevronUp } from "lucide-react"
+import { Loader2, Save, ArrowLeft, AlertTriangle, X, FileText, Trash2, RotateCcw, BarChart3, ChevronDown, ChevronUp, Globe } from "lucide-react"
 import { ContractModal } from "./ContractModal"
+import { MobileDeListingModal } from "./MobileDeListingModal"
 import { VehicleImageUpload } from "./VehicleImageUpload"
 import { FinancialMetricsStrip } from "./FinancialMetricsStrip"
 import { VehiclePipeline } from "./VehiclePipeline"
 import { VehicleExpensesEarningsCard } from "./VehicleExpensesEarningsCard"
-import { AutoSaveIndicator } from "@/components/AutoSaveIndicator"
+import { AutoSaveToast } from "@/components/AutoSaveIndicator"
 import { RecordNavigation } from "@/components/RecordNavigation"
 import { useTransactions } from "@/hooks/useTransactions"
 import { Button } from "@/components/ui/button"
@@ -28,7 +29,7 @@ import { EntityForm } from "@/components/legal-entities/EntityForm"
 import type { AutoSaveStatus } from "@/hooks/useAutoSave"
 import { useCreateLegalEntity, type LegalEntityCreatePayload } from "@/hooks/useLegalEntities"
 import { useChoices, useModels, useNextVehicleId, useNextAvailableKey, vehicleKeys } from "@/hooks/useVehicles"
-import { vehicleCreateSchema, vehicleUpdateSchema, type VehicleCreateInput, type VehicleUpdateInput } from "@/lib/validations"
+import { getVehicleCreateSchema, getVehicleUpdateSchema, vehicleUpdateSchema, type VehicleCreateInput, type VehicleUpdateInput } from "@/lib/validations"
 import api, { ensureCsrfToken } from "@/lib/api"
 import { formatCurrency, cn } from "@/lib/utils"
 import { calcVehicleFinancials } from "@/lib/vehicleFinancials"
@@ -106,35 +107,51 @@ interface ModelSelectProps {
     value: number | null
     onChange: (value: number | null) => void
     error?: string
+    isTypeSelected?: boolean
+    activeVehicleClass?: string
 }
 
-function ModelSelect({ makeId, value, onChange, error }: ModelSelectProps) {
+function ModelSelect({ makeId, value, onChange, error, isTypeSelected = true, activeVehicleClass }: ModelSelectProps) {
     const { t } = useTranslation()
     const { data: models, isLoading } = useModels(makeId)
 
-    const options = models?.map((model) => ({
-        id: model.id,
-        name: model.name,
-    })) ?? []
+    const options = useMemo(() => {
+        if (!models) return []
+        return models
+            .filter((model) => {
+                if (!activeVehicleClass) return true
+                if (!model.vehicle_classes || model.vehicle_classes.length === 0) return true
+                return model.vehicle_classes.includes(activeVehicleClass)
+            })
+            .map((model) => ({
+                id: model.id,
+                name: model.name,
+            }))
+    }, [models, activeVehicleClass])
 
     return (
-        <FieldWrapper label={t("vehicleForm.model", "Model")} required error={error}>
+        <FieldWrapper label={t("vehicleForm.model", "Model")} error={error}>
             <DynamicSelect
                 choiceType="vehicle_model"
                 options={options}
                 value={value}
                 onChange={onChange}
                 placeholder={
-                    !makeId
-                        ? t("vehicleForm.selectMakeFirst", "Select make first")
-                        : isLoading
-                            ? t("common.loading", "Loading...")
-                            : t("vehicleForm.selectModel", "Select model")
+                    !isTypeSelected
+                        ? t("vehicleForm.selectTypeFirst", "Select vehicle type first...")
+                        : !makeId
+                            ? t("vehicleForm.noMakeSelected", "Keine / Nicht erforderlich")
+                            : isLoading
+                                ? t("common.loading", "Loading...")
+                                : options.length === 0
+                                    ? t("vehicleForm.noModelsAvailable", "Keine Modelle (Optional)")
+                                    : t("vehicleForm.selectModel", "Select model")
                 }
-                disabled={!makeId || isLoading}
+                disabled={!isTypeSelected || !makeId || isLoading}
                 allowCreate={Boolean(makeId)}
                 createLabel={t("vehicleForm.model", "Model")}
                 parentId={makeId}
+                activeVehicleClass={activeVehicleClass}
             />
         </FieldWrapper>
     )
@@ -219,16 +236,63 @@ export function VehicleForm({
         return axiosError.message || fallback
     }
 
+    // --- Data Fetching (Choices) ---
+    const { data: choices, isLoading: choicesLoading } = useChoices(vehicle?.id)
+
+    // --- Dynamic Form Validation Resolver ---
+    const formResolver = useCallback(
+        (values: any, context: any, options: any) => {
+            if (isEditing) {
+                return (zodResolver(vehicleUpdateSchema) as any)(values, context, options)
+            }
+            const vtId = values.vehicle_type_id
+            let reqDoors = true
+            let reqMakeAndBody = true
+            if (choices?.vehicle_types && vtId) {
+                const vt = choices.vehicle_types.find((t) => t.id === vtId)
+                if (vt) {
+                    const name = (vt.name || "").toLowerCase().trim()
+                    const mapping = (vt.mobile_de_mapping || "").trim()
+                    const NO_DOORS_CLASSES = [
+                        "motorrad", "motorbike", "anhänger", "anhanger", "anhnger",
+                        "trailer", "semitrailer", "auflieger", "ebike", "e-bike",
+                        "constructionmachine", "forklifttruck", "baumaschine", "gabelstapler"
+                    ]
+                    if (["Motorbike", "Trailer", "SemiTrailer", "EBike", "ConstructionMachine", "ForkliftTruck"].includes(mapping) ||
+                        NO_DOORS_CLASSES.some((c) => name.includes(c))) {
+                        reqDoors = false
+                    }
+                    const OPTIONAL_MAKE_BODY_CLASSES = [
+                        "trailer", "semitrailer", "anhänger", "anhanger", "anhnger", "auflieger",
+                        "ebike", "e-bike", "pedelec", "constructionmachine",
+                        "forklifttruck", "baumaschine", "gabelstapler", "agrarfahrzeug", "agriculturalvehicle"
+                    ]
+                    if (["Trailer", "SemiTrailer", "EBike", "ConstructionMachine", "ForkliftTruck", "AgriculturalVehicle"].includes(mapping) ||
+                        OPTIONAL_MAKE_BODY_CLASSES.some((c) => name.includes(c))) {
+                        reqMakeAndBody = false
+                    }
+                }
+            }
+            const keineOption = choices?.doors?.find(d => d.name.toLowerCase() === 'keine')
+            if (isEditing) {
+                return (zodResolver(getVehicleUpdateSchema(reqDoors, keineOption?.id)) as any)(values, context, options)
+            }
+            return (zodResolver(getVehicleCreateSchema(reqDoors, keineOption?.id, reqMakeAndBody)) as any)(values, context, options)
+        },
+        [isEditing, choices?.vehicle_types, choices?.doors]
+    )
+
     // --- Form Foundation ---
-    const schema = isEditing ? vehicleUpdateSchema : vehicleCreateSchema
     const {
         handleSubmit,
         setValue,
+        getValues,
         watch,
         reset,
+        clearErrors,
         formState: { errors },
     } = useForm<VehicleCreateInput | VehicleUpdateInput>({
-        resolver: zodResolver(schema) as any,
+        resolver: formResolver as any,
         defaultValues: isEditing ? {
             status: (vehicle?.status ?? "purchased") as VehicleStatus,
             branch_id: vehicle?.branch_id ?? undefined,
@@ -292,6 +356,102 @@ export function VehicleForm({
         },
     })
 
+    // --- Cascading Taxonomy & Vehicle Class Resolution ---
+    const watchedVehicleTypeId = watch("vehicle_type_id")
+    const selectedVehicleType = useMemo(() => {
+        if (!choices?.vehicle_types || !watchedVehicleTypeId) return null
+        return choices.vehicle_types.find((vt) => vt.id === watchedVehicleTypeId) || null
+    }, [choices?.vehicle_types, watchedVehicleTypeId])
+
+    const hasDoors = useMemo(() => {
+        if (!selectedVehicleType) return false
+        const name = (selectedVehicleType.name || "").toLowerCase().trim()
+        const mapping = (selectedVehicleType.mobile_de_mapping || "").trim()
+        const NO_DOORS_CLASSES = [
+            "motorrad", "motorbike", "anhänger", "anhanger", "anhnger",
+            "trailer", "semitrailer", "auflieger", "ebike", "e-bike",
+            "constructionmachine", "forklifttruck", "baumaschine", "gabelstapler"
+        ]
+        if (["Motorbike", "Trailer", "SemiTrailer", "EBike", "ConstructionMachine", "ForkliftTruck"].includes(mapping)) {
+            return false
+        }
+        if (NO_DOORS_CLASSES.some((c) => name.includes(c))) {
+            return false
+        }
+        return true
+    }, [selectedVehicleType])
+
+    const targetClass = useMemo(() => {
+        if (!selectedVehicleType) return "Car"
+        if (selectedVehicleType.mobile_de_mapping) return selectedVehicleType.mobile_de_mapping
+        const name = (selectedVehicleType.name || "").toLowerCase().trim()
+        if (name.includes("motorrad") || name.includes("bike")) return "Motorbike"
+        if (name.includes("wohnmobil") || name.includes("camper") || name.includes("caravan")) return "Motorhome"
+        if (name.includes("transporter") || name.includes("van")) return "VanUpTo7500"
+        if (name.includes("lkw") || name.includes("truck")) return "TruckOver7500"
+        if (name.includes("anhänger") || name.includes("trailer")) return "Trailer"
+        return "Car"
+    }, [selectedVehicleType])
+
+    const requiresMakeAndBody = useMemo(() => {
+        if (!selectedVehicleType) return true
+        const name = (selectedVehicleType.name || "").toLowerCase().trim()
+        const mapping = (selectedVehicleType.mobile_de_mapping || "").trim()
+        const OPTIONAL_MAKE_BODY_CLASSES = [
+            "trailer", "semitrailer", "anhänger", "anhanger", "anhnger", "auflieger",
+            "ebike", "e-bike", "pedelec", "constructionmachine",
+            "forklifttruck", "baumaschine", "gabelstapler", "agrarfahrzeug", "agriculturalvehicle"
+        ]
+        if (["Trailer", "SemiTrailer", "EBike", "ConstructionMachine", "ForkliftTruck", "AgriculturalVehicle"].includes(mapping)) {
+            return false
+        }
+        if (OPTIONAL_MAKE_BODY_CLASSES.some((c) => name.includes(c))) {
+            return false
+        }
+        return true
+    }, [selectedVehicleType])
+
+    const watchedMakeId = watch("make_id")
+    const watchedBodyTypeId = watch("body_type_id")
+
+    const filteredMakes = useMemo(() => {
+        if (!choices?.makes) return []
+        const list = choices.makes.filter((m) => {
+            const mName = (m.name || "").toLowerCase()
+            if (mName === "sonstige" || mName === "keine" || mName === "andere" || m.mobile_de_mapping === "OTHER") {
+                return true
+            }
+            if (!m.vehicle_classes || m.vehicle_classes.length === 0) {
+                return targetClass === "Car"
+            }
+            return m.vehicle_classes.includes(targetClass)
+        })
+        if (watchedMakeId && !list.some((m) => m.id === watchedMakeId)) {
+            const cur = choices.makes.find((m) => m.id === watchedMakeId)
+            if (cur) return [cur, ...list]
+        }
+        return list
+    }, [choices?.makes, targetClass, watchedMakeId])
+
+    const filteredBodyTypes = useMemo(() => {
+        if (!choices?.body_types) return []
+        const list = choices.body_types.filter((b) => {
+            const bName = (b.name || "").toLowerCase()
+            if (bName.includes("sonstige") || bName.includes("andere") || b.mobile_de_mapping === "Other" || b.mobile_de_mapping === "OtherCar") {
+                return true
+            }
+            if (!b.vehicle_classes || b.vehicle_classes.length === 0) {
+                return targetClass === "Car"
+            }
+            return b.vehicle_classes.includes(targetClass)
+        })
+        if (watchedBodyTypeId && !list.some((b) => b.id === watchedBodyTypeId)) {
+            const cur = choices.body_types.find((b) => b.id === watchedBodyTypeId)
+            if (cur) return [cur, ...list]
+        }
+        return list
+    }, [choices?.body_types, targetClass, watchedBodyTypeId])
+
     // --- State and Refs ---
     const isInitializingRef = useRef(isEditing)
     const [mutationError, setMutationError] = useState<string | null>(null)
@@ -302,12 +462,22 @@ export function VehicleForm({
     const [entityFormError, setEntityFormError] = useState<string | null>(null)
     const [entityValidationErrors, setEntityValidationErrors] = useState<Record<string, string>>({})
     const [contractModalOpen, setContractModalOpen] = useState(false)
+    const [mobileDeModalOpen, setMobileDeModalOpen] = useState(false)
     const [deleteModalOpen, setDeleteModalOpen] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
     const [imageUploadError, setImageUploadError] = useState<string | null>(null)
     const [isUploadingImage, setIsUploadingImage] = useState(false)
     const createEntityMutation = useCreateLegalEntity()
+
+    // mobile.de integration settings query
+    const { data: mobileDeSettings } = useQuery<{ is_configured: boolean }>({
+        queryKey: ["mobile-de-settings"],
+        queryFn: async () => {
+            const res = await api.get("/settings/mobile-de")
+            return res.data
+        },
+    })
 
     // --- Basic Handlers ---
     const handleBack = useCallback(() => {
@@ -335,6 +505,88 @@ export function VehicleForm({
             invalidateKeyChoiceCaches()
         }
     }, [setValue, isEditing, onAutoSave, invalidateKeyChoiceCaches])
+
+    const handleVehicleTypeChange = useCallback(
+        (val: number | null) => {
+            const newTypeId = val ?? 0
+            const prevTypeId = watch("vehicle_type_id")
+            if (isEditing && prevTypeId && newTypeId && prevTypeId !== newTypeId) {
+                const confirmChange = window.confirm(
+                    t("vehicleForm.confirmChangeVehicleType", "Changing vehicle class may reset incompatible body type, make, and door selections. Do you want to proceed?")
+                )
+                if (!confirmChange) return
+            }
+
+            handleDropdownChange("vehicle_type_id", newTypeId)
+
+            const newVt = choices?.vehicle_types?.find((t) => t.id === newTypeId)
+            const newVtName = (newVt?.name || "").toLowerCase().trim()
+            const newVtMap = (newVt?.mobile_de_mapping || "").trim()
+            const NO_DOORS_CLASSES = [
+                "motorrad", "motorbike", "anhänger", "anhanger", "trailer", "semitrailer", "auflieger", "ebike", "constructionmachine", "forklifttruck"
+            ]
+            const noDoors = [
+                "Motorbike", "Trailer", "SemiTrailer", "EBike", "ConstructionMachine", "ForkliftTruck"
+            ].includes(newVtMap) || NO_DOORS_CLASSES.some((c) => newVtName.includes(c))
+            const keineOption = choices?.doors?.find(d => d.name.toLowerCase() === 'keine')
+            if (noDoors) {
+                if (keineOption) {
+                    setValue("doors_id", keineOption.id)
+                    clearErrors("doors_id")
+                    if (isEditing && onAutoSave && !isInitializingRef.current) {
+                        onAutoSave({ doors_id: keineOption.id })
+                    }
+                }
+            } else {
+                if (watch("doors_id") === keineOption?.id) {
+                    setValue("doors_id", undefined as any)
+                    if (isEditing && onAutoSave && !isInitializingRef.current) {
+                        onAutoSave({ doors_id: undefined })
+                    }
+                }
+            }
+
+            const newTarget = newVtMap || (
+                newVtName.includes("motorrad") || newVtName.includes("bike") ? "Motorbike" :
+                newVtName.includes("wohnmobil") || newVtName.includes("camper") ? "Motorhome" :
+                newVtName.includes("transporter") || newVtName.includes("van") ? "VanUpTo7500" :
+                newVtName.includes("lkw") || newVtName.includes("truck") ? "TruckOver7500" :
+                newVtName.includes("anhänger") || newVtName.includes("trailer") ? "Trailer" : "Car"
+            )
+
+            // Incompatible Make check
+            const curMakeId = watch("make_id")
+            if (curMakeId) {
+                const curMake = choices?.makes?.find((m) => m.id === curMakeId)
+                if (curMake) {
+                    const makeClasses = curMake.vehicle_classes || (newTarget === "Car" ? ["Car"] : [])
+                    if (!makeClasses.includes(newTarget)) {
+                        setValue("make_id", undefined as any)
+                        setValue("model_id", undefined as any)
+                        if (isEditing && onAutoSave && !isInitializingRef.current) {
+                            onAutoSave({ make_id: undefined, model_id: undefined })
+                        }
+                    }
+                }
+            }
+
+            // Incompatible Body Type check
+            const curBodyId = watch("body_type_id")
+            if (curBodyId) {
+                const curBody = choices?.body_types?.find((b) => b.id === curBodyId)
+                if (curBody) {
+                    const bodyClasses = curBody.vehicle_classes || (newTarget === "Car" ? ["Car"] : [])
+                    if (!bodyClasses.includes(newTarget)) {
+                        setValue("body_type_id", undefined as any)
+                        if (isEditing && onAutoSave && !isInitializingRef.current) {
+                            onAutoSave({ body_type_id: undefined })
+                        }
+                    }
+                }
+            }
+        },
+        [isEditing, watch, handleDropdownChange, choices, setValue, clearErrors, onAutoSave, t]
+    )
 
     const handleTextChange = useCallback((field: string, value: string) => {
         setValue(field as any, value as any)
@@ -405,7 +657,6 @@ export function VehicleForm({
     }, [entityFormData, createEntityMutation, createEntityTarget, queryClient, handleDropdownChange, validateEntityForm])
 
     // --- Data Fetching ---
-    const { data: choices, isLoading: choicesLoading } = useChoices(vehicle?.id)
     const { data: txData } = useTransactions(
         { vehicle: vehicle?.internal_id ?? undefined, per_page: 500 },
         isEditing && Boolean(vehicle?.internal_id)
@@ -490,6 +741,7 @@ export function VehicleForm({
         }
     }, [choices?.tax_percentages, setValue, watch])
 
+
     useEffect(() => {
         setSelectedImageFile(null)
         setImageUploadError(null)
@@ -511,6 +763,20 @@ export function VehicleForm({
     const watchedSaleTaxId = watch("sale_tax_id")
     const watchedBuyDate = watch("buy_date") as string | undefined
     const watchedSaleDate = watch("sale_date") as string | undefined
+
+    // mobile.de Listing States
+    const isLiveOnMobileDe = vehicle?.mobile_de_status === "active"
+    const isMobileDeConfigured = !!mobileDeSettings?.is_configured
+    const isStatusEligible = watchedStatus === "ready_for_sale" || watchedStatus === "reserved"
+    const isEligibleForMobileDe = isMobileDeConfigured && isStatusEligible
+
+    const mobileDeTooltip = isLiveOnMobileDe
+        ? t("mobileDe.liveListingTooltip", "Live on mobile.de - Click to manage or view insights")
+        : !isMobileDeConfigured
+        ? t("mobileDe.configureCredentialsTooltip", "Configure mobile.de credentials in Settings first.")
+        : !isStatusEligible
+        ? t("mobileDe.statusNotEligibleTooltip", "Vehicle must be 'Ready for Sale' or 'Reserved' to list on mobile.de.")
+        : t("mobileDe.availableToListTooltip", "Available to list on mobile.de")
 
     const buyTaxRate = choices?.tax_percentages?.find((tax) => tax.id === watchedBuyTaxId)?.percentage ?? 0
     const saleTaxRate = choices?.tax_percentages?.find((tax) => tax.id === watchedSaleTaxId)?.percentage ?? 0
@@ -733,9 +999,9 @@ export function VehicleForm({
             <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-3">
                 {/* Header */}
                 {isEditing ? (
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-1.5 mb-2.5">
-                        {/* Left: Back + Vehicle Title/ID + AutoSave */}
-                        <div className="flex min-w-0 items-center gap-2.5">
+                    <div className="@container/header flex flex-nowrap items-center justify-between gap-1 sm:gap-2 border-b border-border pb-1.5 mb-2.5 min-w-0 w-full overflow-x-auto no-scrollbar">
+                        {/* Left: Back + Vehicle Title/ID */}
+                        <div className="flex min-w-0 items-center gap-1 sm:gap-1.5 shrink">
                             <Button
                                 type="button"
                                 variant="outline"
@@ -746,69 +1012,91 @@ export function VehicleForm({
                             >
                                 <ArrowLeft className="size-3.5" />
                             </Button>
-                            <div className="flex items-center gap-2 min-w-0">
-                                <h1 className="truncate text-sm font-semibold tracking-tight text-heading">
-                                    {vehicleTitle} <span className="text-muted-foreground font-normal">#{vehicle?.internal_id}</span>
-                                </h1>
-                                <AutoSaveIndicator
-                                    status={autoSaveStatus}
-                                    errorMessage={autoSaveErrorMessage}
-                                />
-                            </div>
+                            <h1
+                                className="truncate min-w-0 shrink max-w-[90px] sm:max-w-[130px] md:max-w-[170px] lg:max-w-[220px] text-xs sm:text-sm font-semibold tracking-tight text-heading"
+                                title={`${vehicleTitle} #${vehicle?.internal_id}`}
+                            >
+                                {vehicleTitle} <span className="text-muted-foreground font-normal">#{vehicle?.internal_id}</span>
+                            </h1>
                         </div>
 
                         {/* Middle: Status Pipeline + Days on Stock */}
-                        <div className="mx-1.5 flex min-w-0 items-center gap-1.5 overflow-x-auto">
+                        <div className="flex min-w-0 items-center gap-1 sm:gap-1.5 shrink-0">
                             <VehiclePipeline
+                                className="shrink-0"
                                 currentStatus={watchedStatus as VehicleStatus}
                                 canMoveTo={vehicle?.can_move_to || []}
                                 onStatusChange={handleStatusChange}
                                 orientation="horizontal"
                             />
                             {vehicleFinancials.daysOnStock !== null && (
-                                <span className="hidden md:inline-flex h-5 shrink-0 items-center gap-1 rounded border border-amber-200 bg-amber-50 px-1.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800">
+                                <span
+                                    className="inline-flex h-5 shrink-0 items-center gap-1 rounded border border-amber-200 bg-amber-50 px-1 sm:px-1.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800"
+                                    title={`${vehicleFinancials.daysOnStock} ${t("vehicles.daysOnStock", "Days on Stock")}`}
+                                >
                                     <span className="size-1 shrink-0 rounded-full bg-current" />
-                                    {vehicleFinancials.daysOnStock}d {t("vehicles.daysOnStock", "on Stock")}
+                                    <span>{vehicleFinancials.daysOnStock}d</span>
+                                    <span className="hidden @[1200px]/header:inline 2xl:inline">{t("vehicles.daysOnStock", "on Stock")}</span>
                                 </span>
                             )}
                             {watchedStatus === "sold" && vehicleFinancials.grossProfit !== null && (
-                                <span className={cn(
-                                    "hidden sm:inline-flex h-5 shrink-0 items-center gap-1 rounded border px-1.5 text-[10px] font-semibold",
-                                    vehicleFinancials.grossProfit >= 0
-                                        ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800"
-                                        : "border-rose-300 bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800"
-                                )}>
+                                <span
+                                    className={cn(
+                                        "hidden @[1300px]/header:inline-flex 2xl:inline-flex h-5 shrink-0 items-center gap-1 rounded border px-1.5 text-[10px] font-semibold",
+                                        vehicleFinancials.grossProfit >= 0
+                                            ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800"
+                                            : "border-rose-300 bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800"
+                                    )}
+                                    title={`${t("vehicles.metrics.grossProfit", "Gross Profit")}: ${vehicleFinancials.grossProfit >= 0 ? "+" : ""}{formatCurrency(vehicleFinancials.grossProfit)}`}
+                                >
                                     <span className="size-1 shrink-0 rounded-full bg-current" />
-                                    {t("vehicles.metrics.grossProfit", "Gross Profit")}: {vehicleFinancials.grossProfit >= 0 ? "+" : ""}{formatCurrency(vehicleFinancials.grossProfit)}
+                                    {vehicleFinancials.grossProfit >= 0 ? "+" : ""}{formatCurrency(vehicleFinancials.grossProfit)}
                                 </span>
                             )}
                         </div>
 
                         {/* Right: Actions */}
-                        <div className="flex shrink-0 items-center gap-1.5">
+                        <div className="flex shrink-0 items-center gap-1">
+                            {/* Manual Save Button (triggers auto-save & toast immediately) */}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-7 px-1.5 sm:px-2 text-xs gap-1 font-medium border-border/80 hover:bg-accent text-foreground shadow-2xs shrink-0"
+                                onClick={() => {
+                                    if (onAutoSave && autoSaveStatus !== "saving") {
+                                        onAutoSave(getValues() as Partial<VehicleUpdateInput>)
+                                    }
+                                }}
+                                title={t("common.save", "Save")}
+                            >
+                                <Save className="size-3 shrink-0" />
+                                <span>{t("common.save", "Save")}</span>
+                            </Button>
+
                             {watchedStatus === "inactive" ? (
                                 <Button
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    className="h-7 text-xs gap-1 text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/30"
+                                    className="h-7 px-1.5 sm:px-2 text-xs gap-1 text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/30 shrink-0"
                                     onClick={() => handleStatusChange("purchased")}
                                     title={t("common.activate", "Activate")}
                                 >
-                                    <RotateCcw className="size-3" />
-                                    {t("common.activate", "Activate")}
+                                    <RotateCcw className="size-3 shrink-0" />
+                                    <span className="hidden @[1200px]/header:inline xl:inline">{t("common.activate", "Activate")}</span>
                                 </Button>
                             ) : (
                                 <Button
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    className="h-7 text-xs gap-1 text-red-500 border-red-300 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/30"
+                                    className="h-7 px-1.5 sm:px-2 text-xs gap-1 text-red-500 border-red-300 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/30 shrink-0"
                                     onClick={() => setDeleteModalOpen(true)}
                                     title={t("common.delete", "Delete")}
                                 >
-                                    <Trash2 className="size-3" />
-                                    {t("common.delete", "Delete")}
+                                    <Trash2 className="size-3 shrink-0" />
+                                    <span className="hidden @[1200px]/header:inline xl:inline">{t("common.delete", "Delete")}</span>
                                 </Button>
                             )}
 
@@ -822,24 +1110,49 @@ export function VehicleForm({
                                     setShowFinancialSummary(next)
                                     saveBoolPref(PREF_SHOW_VEHICLE_FINANCIALS, next)
                                 }}
-                                className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground border-border/80"
+                                className="h-7 px-1.5 sm:px-2 text-xs gap-1 text-muted-foreground hover:text-foreground border-border/80 shrink-0"
                                 title={showFinancialSummary ? t("vehicles.hideFinancialSummaryTooltip", "Hide financial summary") : t("vehicles.showFinancialSummaryTooltip", "Show financial summary")}
                             >
-                                <BarChart3 className="size-3 text-primary" />
-                                <span>{showFinancialSummary ? t("vehicles.hideFinancialSummary", "Hide Financial Summary") : t("vehicles.financialSummary", "Financial Summary")}</span>
-                                {showFinancialSummary ? <ChevronUp className="size-3 opacity-60" /> : <ChevronDown className="size-3 opacity-60" />}
+                                <BarChart3 className="size-3 text-primary shrink-0" />
+                                <span className="hidden @[1100px]/header:inline lg:inline">{t("vehicles.summary", "Summary")}</span>
+                                {showFinancialSummary ? <ChevronUp className="size-3 opacity-60 shrink-0" /> : <ChevronDown className="size-3 opacity-60 shrink-0" />}
                             </Button>
 
                             <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                className={`h-7 text-xs gap-1 ${canGenerateAnyContract ? "" : "opacity-75"}`}
+                                className={cn("h-7 px-1.5 sm:px-2 text-xs gap-1 shrink-0", canGenerateAnyContract ? "" : "opacity-75")}
                                 onClick={() => setContractModalOpen(true)}
                                 title={t("vehicles.generateDocuments", "Generate documents")}
                             >
-                                <FileText className="size-3" />
-                                {t("vehicles.documents", "Docs")}
+                                <FileText className="size-3 shrink-0" />
+                                <span className="hidden @[1000px]/header:inline md:inline">{t("vehicles.documents", "Docs")}</span>
+                            </Button>
+
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className={cn(
+                                    "h-7 px-1.5 sm:px-2 text-xs gap-1 shadow-2xs font-medium transition-colors shrink-0",
+                                    isLiveOnMobileDe
+                                        ? "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600"
+                                        : isEligibleForMobileDe
+                                        ? "bg-white hover:bg-gray-50 text-foreground border-border/80"
+                                        : "bg-gray-100 hover:bg-gray-100 text-muted-foreground/60 border-gray-200 opacity-60"
+                                )}
+                                onClick={() => {
+                                    if (isEligibleForMobileDe || isLiveOnMobileDe) {
+                                        setMobileDeModalOpen(true)
+                                    } else {
+                                        alert(mobileDeTooltip)
+                                    }
+                                }}
+                                title={mobileDeTooltip}
+                            >
+                                <Globe className="size-3 shrink-0" />
+                                <span className="hidden @[1150px]/header:inline xl:inline">mobile.de</span>
                             </Button>
 
                             <RecordNavigation
@@ -858,7 +1171,7 @@ export function VehicleForm({
                                 type="button"
                                 variant="outline"
                                 size="icon"
-                                className="size-6.5"
+                                className="size-7 shrink-0"
                                 onClick={handleBack}
                             >
                                 <ArrowLeft className="size-3.5" />
@@ -874,6 +1187,28 @@ export function VehicleForm({
                                     {t("vehicleForm.nextId", "Next ID")}: #{nextId ?? "..."}
                                 </span>
                             </div>
+                        </div>
+
+                        {/* Right: Save/Create Action placed directly on the header line */}
+                        <div className="flex items-center gap-2">
+                            <Button
+                                type="submit"
+                                size="sm"
+                                className="h-7 text-xs bg-primary text-primary-foreground hover:opacity-90 px-3 shadow-2xs"
+                                disabled={mutation.isPending}
+                            >
+                                {mutation.isPending ? (
+                                    <>
+                                        <Loader2 className="mr-1.5 size-3 animate-spin" />
+                                        {t("common.creating", "Creating...")}
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="mr-1.5 size-3" />
+                                        {t("vehicleForm.createVehicle", "Create Vehicle")}
+                                    </>
+                                )}
+                            </Button>
                         </div>
                     </div>
                 )}
@@ -924,53 +1259,61 @@ export function VehicleForm({
                             />
                         </FieldWrapper>
 
-                        {/* Make */}
-                        <FieldWrapper label={t("vehicleForm.make", "Make")} required error={errors.make_id?.message}>
-                            <DynamicSelect
-                                choiceType="make"
-                                options={toOptions(choices?.makes)}
-                                value={watch("make_id") ?? null}
-                                onChange={(val) => {
-                                    setValue("make_id", val ?? 0)
-                                    setValue("model_id", undefined as any)
-                                    if (isEditing && onAutoSave) {
-                                        onAutoSave({ make_id: val ?? 0, model_id: undefined })
-                                    }
-                                }}
-                                placeholder={t("vehicleForm.selectMake", "Select make")}
-                                createLabel={t("vehicleForm.make", "Make")}
-                            />
-                        </FieldWrapper>
-
-                        {/* Model */}
-                        <ModelSelect
-                            makeId={watch("make_id")}
-                            value={watch("model_id") ?? null}
-                            onChange={(val) => handleDropdownChange("model_id", val ?? undefined)}
-                            error={errors.model_id?.message}
-                        />
-
-                        {/* Vehicle Type */}
+                        {/* Vehicle Type (determines available Makes, Body Types, and Doors) */}
                         <FieldWrapper label={t("vehicleForm.vehicleType", "Vehicle Type")} required error={errors.vehicle_type_id?.message}>
                             <DynamicSelect
                                 choiceType="vehicle_type"
                                 options={toOptions(choices?.vehicle_types)}
                                 value={watch("vehicle_type_id") ?? null}
-                                onChange={(val) => handleDropdownChange("vehicle_type_id", val ?? 0)}
+                                onChange={handleVehicleTypeChange}
                                 placeholder={t("vehicleForm.selectType", "Select type")}
                                 createLabel={t("vehicleForm.vehicleType", "Vehicle Type")}
                             />
                         </FieldWrapper>
 
-                        {/* Body Type */}
-                        <FieldWrapper label={t("vehicleForm.bodyType", "Body Type")} required error={errors.body_type_id?.message}>
+                        {/* Make (Filtered by Vehicle Class) */}
+                        <FieldWrapper label={t("vehicleForm.make", "Make")} required={requiresMakeAndBody} error={errors.make_id?.message}>
+                            <DynamicSelect
+                                choiceType="make"
+                                options={toOptions(filteredMakes)}
+                                value={watch("make_id") ?? null}
+                                onChange={(val) => {
+                                    setValue("make_id", val ? val : (undefined as any))
+                                    setValue("model_id", undefined as any)
+                                    if (isEditing && onAutoSave) {
+                                        onAutoSave({ make_id: val ? val : undefined, model_id: undefined })
+                                    }
+                                }}
+                                placeholder={Boolean(watchedVehicleTypeId) ? t("vehicleForm.selectMake", "Select make") : t("vehicleForm.selectTypeFirst", "Select vehicle type first...")}
+                                createLabel={t("vehicleForm.make", "Make")}
+                                disabled={!watchedVehicleTypeId}
+                                activeVehicleClass={targetClass}
+                                allowDeselect={!requiresMakeAndBody}
+                            />
+                        </FieldWrapper>
+
+                        {/* Model */}
+                        <ModelSelect
+                            makeId={watch("make_id") ?? undefined}
+                            value={watch("model_id") ?? null}
+                            onChange={(val) => handleDropdownChange("model_id", val ?? undefined)}
+                            error={errors.model_id?.message}
+                            isTypeSelected={Boolean(watchedVehicleTypeId)}
+                            activeVehicleClass={targetClass}
+                        />
+
+                        {/* Body Type (Filtered by Vehicle Class) */}
+                        <FieldWrapper label={t("vehicleForm.bodyType", "Body Type")} required={requiresMakeAndBody} error={errors.body_type_id?.message}>
                             <DynamicSelect
                                 choiceType="body_type"
-                                options={toOptions(choices?.body_types)}
+                                options={toOptions(filteredBodyTypes)}
                                 value={watch("body_type_id") ?? null}
-                                onChange={(val) => handleDropdownChange("body_type_id", val ?? 0)}
-                                placeholder={t("vehicleForm.selectBodyType", "Select body type")}
+                                onChange={(val) => handleDropdownChange("body_type_id", val ? val : (undefined as any))}
+                                placeholder={Boolean(watchedVehicleTypeId) ? t("vehicleForm.selectBodyType", "Select body type") : t("vehicleForm.selectTypeFirst", "Select vehicle type first...")}
                                 createLabel={t("vehicleForm.bodyType", "Body Type")}
+                                disabled={!watchedVehicleTypeId}
+                                activeVehicleClass={targetClass}
+                                allowDeselect={!requiresMakeAndBody}
                             />
                         </FieldWrapper>
 
@@ -986,15 +1329,20 @@ export function VehicleForm({
                             />
                         </FieldWrapper>
 
-                        {/* Doors */}
+                        {/* Doors (Always in DOM; disabled and set to Keine for non-door classes) */}
                         <FieldWrapper label={t("vehicleForm.doors", "Doors")} required error={errors.doors_id?.message}>
                             <DynamicSelect
                                 choiceType="doors"
                                 options={toOptions(choices?.doors)}
                                 value={watch("doors_id") ?? null}
                                 onChange={(val) => handleDropdownChange("doors_id", val ?? 0)}
-                                placeholder={t("vehicleForm.selectDoors", "Select doors")}
+                                placeholder={
+                                    !watchedVehicleTypeId
+                                        ? t("vehicleForm.selectTypeFirst", "Select vehicle type first...")
+                                        : t("vehicleForm.selectDoors", "Select doors")
+                                }
                                 createLabel={t("vehicleForm.doors", "Doors")}
+                                disabled={!watchedVehicleTypeId || !hasDoors}
                             />
                         </FieldWrapper>
 
@@ -1369,11 +1717,11 @@ export function VehicleForm({
 
                 {/* Bottom Actions Row for Add Mode */}
                 {!isEditing && (
-                    <div className="flex items-center justify-end border-t border-border pt-4 mt-6">
+                    <div className="flex items-center justify-end border-t border-border pt-3 mt-4">
                         <Button
                             type="submit"
                             size="sm"
-                            className="h-8 text-xs bg-primary text-primary-foreground hover:opacity-90 px-4"
+                            className="h-7.5 text-xs bg-primary text-primary-foreground hover:opacity-90 px-4"
                             disabled={mutation.isPending}
                         >
                             {mutation.isPending ? (
@@ -1455,6 +1803,24 @@ export function VehicleForm({
                     entityName={vehicleTitle}
                     onConfirm={handleConfirmDelete}
                     isPending={isDeleting}
+                />
+            )}
+
+            {/* mobile.de Listing & Sync Modal */}
+            {isEditing && vehicle?.internal_id && (
+                <MobileDeListingModal
+                    vehicleInternalId={vehicle.internal_id}
+                    vehicleTitle={vehicleTitle}
+                    open={mobileDeModalOpen}
+                    onOpenChange={setMobileDeModalOpen}
+                />
+            )}
+
+            {/* Floating Auto-Save Toast Notification (zero layout shift) */}
+            {isEditing && (
+                <AutoSaveToast
+                    status={autoSaveStatus}
+                    errorMessage={autoSaveErrorMessage}
                 />
             )}
         </>

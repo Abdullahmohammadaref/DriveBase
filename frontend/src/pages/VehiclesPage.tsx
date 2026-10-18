@@ -1,7 +1,9 @@
 import { useState, useCallback, useEffect } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
+import { useQuery } from "@tanstack/react-query"
 import { Plus, Search, X, BarChart3, ChevronDown, ChevronUp } from "lucide-react"
+import api from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SortMenuButton } from "@/components/ui/SortMenuButton"
@@ -11,6 +13,7 @@ import { VehicleFiltersSidebar } from "@/components/vehicles/VehicleFilters"
 import { FinancialSummaryCard } from "@/components/vehicles/FinancialSummary"
 import { ContractModal } from "@/components/vehicles/ContractModal"
 import { SmartDeleteModal } from "@/components/common/SmartDeleteModal"
+import { MobileDeListingModal } from "@/components/vehicles/MobileDeListingModal"
 import { StickyFooter } from "@/components/StickyFooter"
 import { PerPageInput } from "@/components/PerPageInput"
 import { PageInput } from "@/components/PageInput"
@@ -71,6 +74,19 @@ export function VehiclesPage() {
     const [contractModalOpen, setContractModalOpen] = useState(false)
     const [vehicleForContract, setVehicleForContract] =
         useState<VehicleListItem | null>(null)
+
+    // mobile.de Listing Modal state & credentials check
+    const [mobileDeModalOpen, setMobileDeModalOpen] = useState(false)
+    const [vehicleForMobileDe, setVehicleForMobileDe] =
+        useState<VehicleListItem | null>(null)
+
+    const { data: mobileDeSettings } = useQuery<{ is_configured: boolean }>({
+        queryKey: ["mobile-de-settings"],
+        queryFn: async () => {
+            const res = await api.get("/settings/mobile-de")
+            return res.data
+        },
+    })
 
     // Fetch vehicles
     const { data, isLoading, isFetching } = useVehicles(filters)
@@ -326,6 +342,7 @@ export function VehiclesPage() {
                         <VehicleCard
                             key={vehicle.id}
                             vehicle={vehicle}
+                            isMobileDeConfigured={!!mobileDeSettings?.is_configured}
                             onDelete={handleDeleteClick}
                             onStatusChange={(v, status) => {
                                 if (v.internal_id) {
@@ -335,6 +352,10 @@ export function VehiclesPage() {
                             onGenerateContract={(v) => {
                                 setVehicleForContract(v)
                                 setContractModalOpen(true)
+                            }}
+                            onOpenMobileDe={(v) => {
+                                setVehicleForMobileDe(v)
+                                setMobileDeModalOpen(true)
                             }}
                         />
                     ))
@@ -417,6 +438,16 @@ export function VehiclesPage() {
                 onOpenChange={setContractModalOpen}
                 vehicle={vehicleForContract}
             />
+
+            {/* mobile.de Listing & Sync Modal */}
+            {vehicleForMobileDe?.internal_id && (
+                <MobileDeListingModal
+                    vehicleInternalId={vehicleForMobileDe.internal_id}
+                    vehicleTitle={`${vehicleForMobileDe.make_name || ""} ${vehicleForMobileDe.model_name || ""}`.trim() || `#${vehicleForMobileDe.internal_id}`}
+                    open={mobileDeModalOpen}
+                    onOpenChange={setMobileDeModalOpen}
+                />
+            )}
         </div>
     )
 }

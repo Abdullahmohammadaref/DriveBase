@@ -24,8 +24,10 @@ from .models import (
     User, Business, Branch, AuthActionRequest, LegalEntity, Vehicle, Transaction,
     Make, VehicleModel, VehicleType, BodyType, Color, FuelType, DamageType,
     DoorsChoice, TaxPercentage, PaymentMethod, Currency, Category, Subcategory, KeyNumber,
-    VehicleExpenseEarning
+    VehicleExpenseEarning, MobileDeSettings
 )
+from .schemas import MobileDeSettingsOut, MobileDeSettingsIn, MobileDeTestConnectionOut
+from .services.mobile_de_service import get_mobile_de_service
 
 # Create router with session authentication
 settings_router = Router(auth=django_auth, tags=["Settings"])
@@ -360,6 +362,77 @@ def upload_business_logo(request: HttpRequest, logo: UploadedFile = File(...)):
     business.save()
     
     return {"success": True, "message": "Logo updated successfully."}
+
+
+# =============================================================================
+# mobile.de Integration Endpoints
+# =============================================================================
+
+@settings_router.get("/mobile-de", response={200: MobileDeSettingsOut, 403: ErrorResponse})
+def get_mobile_de_settings(request: HttpRequest):
+    """Retrieve mobile.de settings for the business (managers only)."""
+    if not require_manager(request):
+        return 403, {"detail": "Only managers can access marketplace settings."}
+    
+    business = get_user_business(request)
+    settings_obj, _ = MobileDeSettings.objects.get_or_create(business=business)
+    
+    return {
+        "is_configured": settings_obj.is_configured,
+        "seller_id": settings_obj.seller_id,
+        "api_username": settings_obj.api_username,
+        "last_connection_test": settings_obj.last_connection_test,
+        "last_connection_status": settings_obj.last_connection_status,
+        "last_connection_error": settings_obj.last_connection_error,
+    }
+
+
+@settings_router.put("/mobile-de", response={200: MobileDeSettingsOut, 400: ErrorResponse, 403: ErrorResponse})
+def update_mobile_de_settings(request: HttpRequest, payload: MobileDeSettingsIn):
+    """Update mobile.de credentials and settings (managers only)."""
+    if not require_manager(request):
+        return 403, {"detail": "Only managers can update marketplace settings."}
+    
+    business = get_user_business(request)
+    settings_obj, _ = MobileDeSettings.objects.get_or_create(business=business)
+    
+    if payload.seller_id is not None:
+        settings_obj.seller_id = payload.seller_id.strip() if payload.seller_id else None
+    if payload.api_username is not None:
+        settings_obj.api_username = payload.api_username.strip() if payload.api_username else None
+    if payload.api_password is not None and payload.api_password.strip():
+        settings_obj.api_password = payload.api_password.strip()
+    
+    settings_obj.save()
+    
+    return {
+        "is_configured": settings_obj.is_configured,
+        "seller_id": settings_obj.seller_id,
+        "api_username": settings_obj.api_username,
+        "last_connection_test": settings_obj.last_connection_test,
+        "last_connection_status": settings_obj.last_connection_status,
+        "last_connection_error": settings_obj.last_connection_error,
+    }
+
+
+@settings_router.post("/mobile-de/test-connection", response={200: MobileDeTestConnectionOut, 400: ErrorResponse, 403: ErrorResponse})
+def test_mobile_de_connection(request: HttpRequest):
+    """Test connection to mobile.de or developer simulator (managers only)."""
+    if not require_manager(request):
+        return 403, {"detail": "Only managers can test marketplace connection."}
+    
+    business = get_user_business(request)
+    settings_obj, _ = MobileDeSettings.objects.get_or_create(business=business)
+    
+    service = get_mobile_de_service(business)
+    if not service:
+        return 400, {"detail": "mobile.de service could not be initialized."}
+    
+    success, message = service.test_connection()
+    return 200, {
+        "success": success,
+        "message": message
+    }
 
 
 # =============================================================================
@@ -845,11 +918,11 @@ def export_business_data(request: HttpRequest):
                 for m in VehicleModel.objects.filter(business=business).select_related('make')
             ],
             "vehicle_types": list(VehicleType.objects.filter(business=business).values('name', 'is_active')),
-            "body_types": list(BodyType.objects.filter(business=business).values('name', 'is_active')),
-            "colors": list(Color.objects.filter(business=business).values('name', 'is_active')),
-            "fuel_types": list(FuelType.objects.filter(business=business).values('name', 'is_active')),
+            "body_types": list(BodyType.objects.filter(business=business).values('name', 'is_active', 'mobile_de_mapping', 'is_protected')),
+            "colors": list(Color.objects.filter(business=business).values('name', 'is_active', 'mobile_de_mapping', 'is_protected')),
+            "fuel_types": list(FuelType.objects.filter(business=business).values('name', 'is_active', 'mobile_de_mapping', 'is_protected')),
             "damage_types": list(DamageType.objects.filter(business=business).values('name', 'is_active')),
-            "doors": list(DoorsChoice.objects.filter(business=business).values('name', 'is_active')),
+            "doors": list(DoorsChoice.objects.filter(business=business).values('name', 'is_active', 'mobile_de_mapping', 'is_protected')),
             "tax_percentages": list(TaxPercentage.objects.filter(business=business).values('name', 'percentage', 'is_active')),
             "payment_methods": list(PaymentMethod.objects.filter(business=business).values('name', 'is_active', 'applies_to_buy', 'applies_to_sale', 'applies_to_transactions')),
             "currencies": list(Currency.objects.filter(business=business).values('name', 'code', 'is_active')),

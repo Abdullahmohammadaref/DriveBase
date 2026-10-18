@@ -61,6 +61,16 @@ export interface VehicleListItem {
 
     // Pipeline
     can_move_to: string[]
+
+    // mobile.de Marketplace
+    mobile_de_status?: string | null
+    mobile_de_ad_id?: string | null
+    mobile_de_url?: string | null
+    mobile_de_detail_views?: number
+    mobile_de_search_hits?: number
+    mobile_de_parkings?: number
+    mobile_de_leads_count?: number
+    mobile_de_price_rating?: string | null
 }
 
 export interface VehicleDetail extends VehicleListItem {
@@ -203,6 +213,9 @@ export interface VehicleFilters {
     // Pagination
     page?: number
     per_page?: number
+
+    // Marketplace
+    listed_on_mobile_de?: string
 }
 
 // =============================================================================
@@ -212,6 +225,9 @@ export interface VehicleFilters {
 export interface Choice {
     id: number
     name: string
+    mobile_de_mapping?: string | null
+    is_protected?: boolean
+    vehicle_classes?: string[]
 }
 
 export interface KeyNumber extends Choice {}
@@ -275,3 +291,85 @@ export interface AllChoices {
     status_choices: StatusChoice[]
     year_choices: number[]
 }
+
+// =============================================================================
+// mobile.de Marketplace Types
+// =============================================================================
+
+export interface VehicleGalleryImage {
+    id: number
+    image_url: string
+    order: number
+    uploaded_at: string
+}
+
+export interface MobileDeListingDetail {
+    internal_id: number
+    status: string | null
+    mobile_de_status: string
+    mobile_de_ad_id: string | null
+    mobile_de_url: string | null
+    mobile_de_last_synced_at: string | null
+    mobile_de_last_error: string | null
+
+    make_name: string | null
+    model_name: string | null
+    body_type_name: string | null
+    vehicle_type_name?: string | null
+    vehicle_class?: string | null
+    kilometer: number | null
+    first_registration_date: string | null
+    year_of_construction: number | null
+    color_name: string | null
+    doors_name: string | null
+    fuel_type_name: string | null
+    power_kw: number | null
+    sale_price: number | null
+    sale_tax_percentage: number | null
+
+    transmission: string | null
+    condition: string | null
+    hu_date: string | null
+    features: string[]
+
+    emission_class: string | null
+    emission_badge: string | null
+    fuel_consumption_combined: number | null
+    co2_emission_combined: number | null
+    efficiency_class: string | null
+
+    mobile_de_description: string | null
+
+    primary_image_url: string | null
+    gallery_images: VehicleGalleryImage[]
+
+    detail_views: number
+    search_hits: number
+    parkings: number
+    leads_count: number
+    price_rating: string | null
+    stats_updated_at: string | null
+    mapping_issues?: MappingIssue[]
+}
+
+export interface MappingIssue {
+    field: string
+    name: string | null
+    message: string
+}
+
+export interface MobileDePublishPayload {
+    sale_price?: number
+    kilometer?: number
+    transmission: string
+    condition: string
+    hu_date?: string | null
+    features: string[]
+    emission_class?: string | null
+    emission_badge?: string | null
+    fuel_consumption_combined?: number | null
+    co2_emission_combined?: number | null
+    efficiency_class?: string | null
+    mobile_de_description?: string | null
+}
+

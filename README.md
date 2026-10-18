@@ -412,12 +412,14 @@ This project includes AI agent tooling for assisted development:
 
 | File | Purpose |
 |---|---|
+| `GEMINI.md` | Master root agent beacon, stack overview, and AI resource map |
+| `AGENTS.md` | Root agent guidelines pointing to `GEMINI.md` + GitNexus Code Intelligence |
 | `.agentrules` | Mandatory rules for all AI agents (pre-work context loading, coding conventions, security constraints) |
 | `.agents/skills/` | 65+ skill packs covering Django, React, TypeScript, API design, testing, security, i18n, and more |
 | `schema.prisma` | Prisma-format data model reference for agents to understand the data layer |
 | `PROJECT_MAP.md` | File-level codebase map for agents to navigate the project |
 
-**Rule 0:** Before any code change, agents MUST read `README.md`, `schema.prisma`, `PROJECT_MAP.md`, and relevant skills.
+**Rule 0:** Before any code change, agents MUST read `GEMINI.md`, `schema.prisma`, `PROJECT_MAP.md`, and relevant skills.
 
 ---
 

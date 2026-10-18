@@ -544,6 +544,114 @@ class ChoiceManagementApiTests(BaseTestCase):
         self.assertEqual(updated_data["payment_method_id"], pm_bar.id)
         self.assertEqual(updated_data["method"], "Barzahlung")
 
+    def test_create_vehicle_model_with_supported_classes_succeeds(self):
+        """Model creation succeeds when vehicle_classes is a subset of parent make classes."""
+        self.login_manager_a()
+        self.make_a.vehicle_classes = ["Car", "Motorbike"]
+        self.make_a.save()
+
+        response = self.client.post(
+            "/api/choices/vehicle_model",
+            {
+                "name": "R 1250 GS",
+                "make_id": self.make_a.id,
+                "vehicle_classes": json.dumps(["Motorbike"]),
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(
+            VehicleModel.objects.filter(
+                business=self.business_a,
+                make=self.make_a,
+                name="R 1250 GS",
+            ).exists()
+        )
+
+    def test_create_vehicle_model_with_unsupported_classes_fails(self):
+        """Model creation fails with 400 when assigning a class not supported by parent make."""
+        self.login_manager_a()
+        self.make_a.vehicle_classes = ["Car"]
+        self.make_a.save()
+
+        response = self.client.post(
+            "/api/choices/vehicle_model",
+            {
+                "name": "R 1250 GS",
+                "make_id": self.make_a.id,
+                "vehicle_classes": json.dumps(["Motorbike"]),
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Cannot assign class(es)", response.json().get("detail", ""))
+
+    def test_update_vehicle_model_with_unsupported_classes_fails(self):
+        """Model update fails with 400 when payload vehicle_classes has classes make doesn't support."""
+        self.login_manager_a()
+        self.make_a.vehicle_classes = ["Car"]
+        self.make_a.save()
+
+        response = self.client.patch(
+            f"/api/choices/vehicle_model/{self.model_a.id}",
+            data={
+                "name": "X5",
+                "vehicle_classes": ["TruckOver7500"],
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Cannot assign class(es)", response.json().get("detail", ""))
+
+    def test_update_make_removing_in_use_class_fails(self):
+        """Make update fails with 400 when attempting to remove a class in use by child models."""
+        self.login_manager_a()
+        self.make_a.vehicle_classes = ["Car", "Motorbike"]
+        self.make_a.save()
+        self.model_a.vehicle_classes = ["Motorbike"]
+        self.model_a.save()
+        # Create a second model to test multiple bullet items formatting
+        VehicleModel.objects.create(
+            business=self.business_a,
+            make=self.make_a,
+            name="M3",
+            vehicle_classes=["Motorbike"],
+            is_active=True,
+        )
+
+        response = self.client.patch(
+            f"/api/choices/make/{self.make_a.id}",
+            data={
+                "name": "BMW",
+                "vehicle_classes": ["Car"],
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        detail = response.json().get("detail", "")
+        self.assertIn("Cannot remove vehicle class(es) 'Motorbike' from make 'BMW' because 2 model(s) depend on them:\n", detail)
+        self.assertIn("- X5 (Motorbike)", detail)
+        self.assertIn("- M3 (Motorbike)", detail)
+        self.assertIn("Please update these models first.", detail)
+
+    def test_update_make_removing_unused_class_succeeds(self):
+        """Make update succeeds when removing a class that no child model uses."""
+        self.login_manager_a()
+        self.make_a.vehicle_classes = ["Car", "Motorbike"]
+        self.make_a.save()
+        self.model_a.vehicle_classes = ["Car"]
+        self.model_a.save()
+
+        response = self.client.patch(
+            f"/api/choices/make/{self.make_a.id}",
+            data={
+                "name": "BMW",
+                "vehicle_classes": ["Car"],
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.make_a.refresh_from_db()
+        self.assertEqual(self.make_a.vehicle_classes, ["Car"])
+
 
 
 # =============================================================================

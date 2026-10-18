@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { Loader2, CalendarDays, FileText, CheckCircle, AlertCircle, Download, RotateCcw, Trash2, ArrowLeft } from "lucide-react"
+import { Loader2, CalendarDays, FileText, CheckCircle, AlertCircle, Download, RotateCcw, Trash2, ArrowLeft, Save } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 
-import { AutoSaveIndicator } from "@/components/AutoSaveIndicator"
+import { AutoSaveToast } from "@/components/AutoSaveIndicator"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -516,7 +516,7 @@ export function TransactionForm({
     }
 
     return (
-        <form onSubmit={handleSubmit} noValidate className="space-y-6">
+        <form id="transaction-form" onSubmit={handleSubmit} noValidate className="space-y-6">
             <div className={cn(
                 "gap-4 2xl:gap-0",
                 showSplitView ? "flex flex-col 2xl:flex-row 2xl:items-start relative" : "space-y-6"
@@ -524,9 +524,9 @@ export function TransactionForm({
                 {/* LEFT COLUMN */}
                 <div className={cn("space-y-5", showSplitView ? "min-w-0 flex-1" : "w-full", isDragging && "pointer-events-none")}>
                     {header ? header : (mode === "edit" && initialData && (
-                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 dark:border-border pb-1.5 mb-2.5">
-                            {/* Left: Back + Title + AutoSave */}
-                            <div className="flex min-w-0 items-center gap-2">
+                        <div className="@container/header flex flex-nowrap items-center justify-between gap-1 sm:gap-2 border-b border-gray-200 dark:border-border pb-1.5 mb-2.5 min-w-0 overflow-x-auto no-scrollbar">
+                            {/* Left: Back + Title */}
+                            <div className="flex min-w-0 shrink items-center gap-1.5">
                                 <Button
                                     variant="outline"
                                     size="icon"
@@ -537,13 +537,10 @@ export function TransactionForm({
                                 >
                                     <ArrowLeft className="size-3.5" />
                                 </Button>
-                                <div className="flex items-center gap-2 min-w-0">
-                                    <h1 className="text-sm font-semibold tracking-tight text-heading truncate">
-                                        {t("transactions.form.transactionLabel", "Transaction")}{" "}
-                                        <span className="text-muted-foreground font-normal">#{initialData.internal_id}</span>
-                                    </h1>
-                                    <AutoSaveIndicator status={autoSaveStatus} errorMessage={autoSaveErrorMessage} />
-                                </div>
+                                <h1 className="text-xs sm:text-sm font-semibold tracking-tight text-heading truncate min-w-0 max-w-[100px] sm:max-w-[160px] md:max-w-[220px]">
+                                    {t("transactions.form.transactionLabel", "Transaction")}{" "}
+                                    <span className="text-muted-foreground font-normal shrink-0">#{initialData.internal_id}</span>
+                                </h1>
                             </div>
 
                             {/* Middle: Status Buttons */}
@@ -563,7 +560,7 @@ export function TransactionForm({
                                 const isReviewRequiredDisabled = !hasMandatoryFields || initialData.status === "review_required" || statusToggleLoading
 
                                 return (
-                                    <div className="mx-1.5 flex min-w-0 items-center gap-1.5 overflow-x-auto">
+                                    <div className="mx-1.5 flex shrink-0 items-center gap-1.5">
                                         {/* Confirmed Button */}
                                         <Button
                                             type="button"
@@ -713,6 +710,22 @@ export function TransactionForm({
 
                             {/* Right: Actions */}
                             <div className="flex shrink-0 items-center gap-1.5">
+                                {/* Manual Save Button */}
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 text-xs gap-1 font-medium border-border/80 hover:bg-accent text-foreground shadow-2xs"
+                                    onClick={() => {
+                                        if (onAutoSave && autoSaveStatus !== "saving") {
+                                            onAutoSave(formData)
+                                        }
+                                    }}
+                                    title={t("common.save", "Save")}
+                                >
+                                    <Save className="size-3" />
+                                    <span>{t("common.save", "Save")}</span>
+                                </Button>
                                 {/* Export as PDF button - placed on the left of navigation arrows */}
                                 {(() => {
                                     const canGenerate = (
@@ -728,18 +741,19 @@ export function TransactionForm({
                                             href={`/api/transactions/${initialData.internal_id}/pdf`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background h-7 px-2.5 text-xs font-medium shadow-none hover:bg-accent hover:text-accent-foreground transition-colors"
+                                            className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background h-7 px-2 text-xs font-medium shadow-none hover:bg-accent hover:text-accent-foreground transition-colors shrink-0"
+                                            title={t("transactions.form.exportAsPdf", "Export as PDF")}
                                         >
-                                            <Download className="h-3.5 w-3.5" />
-                                            {t("transactions.form.exportAsPdf", "Export as PDF")}
+                                            <Download className="h-3.5 w-3.5 shrink-0" />
+                                            <span className="hidden @[1050px]/header:inline sm:inline">{t("transactions.form.exportAsPdf", "Export as PDF")}</span>
                                         </a>
                                     ) : (
                                         <span
-                                            className="inline-flex items-center gap-1.5 rounded-md border border-input bg-muted h-7 px-2.5 text-xs font-medium text-muted-foreground cursor-not-allowed opacity-50"
+                                            className="inline-flex items-center gap-1.5 rounded-md border border-input bg-muted h-7 px-2 text-xs font-medium text-muted-foreground cursor-not-allowed opacity-50 shrink-0"
                                             title={t("transactions.form.pdfRequiredFieldsTooltip", "Complete all required fields (amount, date, category, subcategory, tax) to generate PDF")}
                                         >
-                                            <Download className="h-3.5 w-3.5" />
-                                            {t("transactions.form.exportAsPdf", "Export as PDF")}
+                                            <Download className="h-3.5 w-3.5 shrink-0" />
+                                            <span className="hidden @[1050px]/header:inline sm:inline">{t("transactions.form.exportAsPdf", "Export as PDF")}</span>
                                         </span>
                                     );
                                 })()}
@@ -1178,12 +1192,12 @@ export function TransactionForm({
 
             {/* Form Actions - Bottom Bar for Add Mode */}
             {mode === "create" && (
-                <div className="flex items-center justify-end border-t border-border pt-4 mt-6">
+                <div className="flex items-center justify-end border-t border-border pt-3 mt-4">
                     <Button
                         type="submit"
                         disabled={isLoading}
                         size="sm"
-                        className="h-8 text-xs bg-primary text-primary-foreground hover:opacity-90 px-4"
+                        className="h-7.5 text-xs bg-primary text-primary-foreground hover:opacity-90 px-4"
                     >
                         {isLoading ? (
                             <>
@@ -1198,6 +1212,14 @@ export function TransactionForm({
                         )}
                     </Button>
                 </div>
+            )}
+
+            {/* Floating Auto-Save Toast Notification (zero layout shift) */}
+            {mode === "edit" && (
+                <AutoSaveToast
+                    status={autoSaveStatus}
+                    errorMessage={autoSaveErrorMessage}
+                />
             )}
         </form>
     )

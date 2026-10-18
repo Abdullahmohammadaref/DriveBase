@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { Car, FileText } from "lucide-react"
+import { Car, FileText, Globe } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { withMediaCacheKey } from "@/lib/utils"
@@ -12,6 +12,8 @@ interface VehicleCardProps {
     onStatusChange?: (vehicle: VehicleListItem, newStatus: string) => void
     onDelete?: (vehicle: VehicleListItem) => void
     onGenerateContract?: (vehicle: VehicleListItem) => void
+    onOpenMobileDe?: (vehicle: VehicleListItem) => void
+    isMobileDeConfigured?: boolean
 }
 
 /**
@@ -25,6 +27,8 @@ export function VehicleCard({
     onStatusChange,
     onDelete,
     onGenerateContract,
+    onOpenMobileDe,
+    isMobileDeConfigured = false,
 }: VehicleCardProps) {
     const { t } = useTranslation()
     const status = vehicle.status || "unknown"
@@ -39,6 +43,19 @@ export function VehicleCard({
 
     // Can generate any contract?
     const canGenerateAnyContract = vehicle.can_generate_buy_contract || vehicle.can_generate_sale_contract
+
+    // mobile.de Listing States
+    const isLiveOnMobileDe = vehicle.mobile_de_status === "active"
+    const isStatusEligible = vehicle.status === "ready_for_sale" || vehicle.status === "reserved"
+    const isEligibleForMobileDe = isMobileDeConfigured && isStatusEligible
+
+    const mobileDeTooltip = isLiveOnMobileDe
+        ? t("mobileDe.liveListingTooltip", "Live on mobile.de - Click to manage or view insights")
+        : !isMobileDeConfigured
+        ? t("mobileDe.configureCredentialsTooltip", "Configure mobile.de credentials in Settings first.")
+        : !isStatusEligible
+        ? t("mobileDe.statusNotEligibleTooltip", "Vehicle must be 'Ready for Sale' or 'Reserved' to list on mobile.de.")
+        : t("mobileDe.availableToListTooltip", "Available to list on mobile.de")
 
     return (
         <article
@@ -101,6 +118,30 @@ export function VehicleCard({
                     >
                         <FileText className="h-3 w-3" />
                         {t("vehicles.documents", "Docs")}
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className={`h-6 text-xs px-2 gap-1 pointer-events-auto shadow-2xs font-medium transition-colors ${
+                            isLiveOnMobileDe
+                                ? "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600"
+                                : isEligibleForMobileDe
+                                ? "bg-white hover:bg-gray-50 text-foreground border-border/80"
+                                : "bg-gray-100 hover:bg-gray-100 text-muted-foreground/60 border-gray-200 opacity-60"
+                        }`}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            if (isEligibleForMobileDe || isLiveOnMobileDe) {
+                                onOpenMobileDe?.(vehicle)
+                            } else {
+                                alert(mobileDeTooltip)
+                            }
+                        }}
+                        title={mobileDeTooltip}
+                    >
+                        <Globe className="h-3 w-3" />
+                        mobile.de
                     </Button>
                 </div>
             </div>

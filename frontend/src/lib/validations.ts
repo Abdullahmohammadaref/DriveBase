@@ -13,49 +13,93 @@ import { z } from "zod"
  * Schema for creating a new vehicle
  * Matches the VehicleCreate pydantic schema from the backend
  */
-export const vehicleCreateSchema = z.object({
-    // Branch & Type
-    branch_id: z.number({ message: "Branch is required" }),
-    vehicle_type_id: z.number({ message: "Vehicle type is required" }),
-    body_type_id: z.number({ message: "Body type is required" }),
+export const getVehicleCreateSchema = (
+    requiresDoors: boolean = true,
+    keineDoorId?: number,
+    requiresMakeAndBody: boolean = true
+) => {
+    const base = z.object({
+        // Branch & Type
+        branch_id: z.number({ message: "Branch is required" }),
+        vehicle_type_id: z.number({ message: "Vehicle type is required" }),
+        body_type_id: requiresMakeAndBody
+            ? z.preprocess(
+                (val) => (val === "" || val === null || val === 0 || Number.isNaN(val) ? undefined : val),
+                z.number({ message: "Body type is required" })
+            )
+            : z.preprocess(
+                (val) => (val === "" || val === null || val === 0 || Number.isNaN(val) ? undefined : val),
+                z.number().optional().nullable()
+            ),
 
-    // Vehicle Details
-    make_id: z.number({ message: "Make is required" }),
-    model_id: z.number().optional().nullable(), // Optional during transition
-    color_id: z.number({ message: "Color is required" }),
-    doors_id: z.number({ message: "Doors selection is required" }),
-    fuel_type_id: z.number({ message: "Fuel type is required" }),
-    damage_type_id: z.number({ message: "Damage type is required" }),
+        // Vehicle Details
+        make_id: requiresMakeAndBody
+            ? z.preprocess(
+                (val) => (val === "" || val === null || val === 0 || Number.isNaN(val) ? undefined : val),
+                z.number({ message: "Make is required" })
+            )
+            : z.preprocess(
+                (val) => (val === "" || val === null || val === 0 || Number.isNaN(val) ? undefined : val),
+                z.number().optional().nullable()
+            ),
+        model_id: z.preprocess(
+            (val) => (val === "" || val === null || val === 0 || Number.isNaN(val) ? undefined : val),
+            z.number().optional().nullable()
+        ),
+        color_id: z.number({ message: "Color is required" }),
+        doors_id: z.preprocess(
+            (val) => (val === "" || val === null || val === 0 || Number.isNaN(val) ? undefined : val),
+            z.number().optional().nullable()
+        ),
+        fuel_type_id: z.number({ message: "Fuel type is required" }),
+        damage_type_id: z.number({ message: "Damage type is required" }),
 
-    // Technical Specs
-    power_kw: z.number().min(1, "Power (KW) must be at least 1"),
-    first_registration_date: z.string().optional().nullable(),
-    year_of_construction: z.number()
-        .min(1900, "Year must be at least 1900")
-        .max(new Date().getFullYear() + 2, "Year cannot be in the future"),
-    kilometer: z.number().min(0, "Kilometer must be positive"),
+        // Technical Specs
+        power_kw: z.number().min(1, "Power (KW) must be at least 1"),
+        first_registration_date: z.string().optional().nullable(),
+        year_of_construction: z.number()
+            .min(1900, "Year must be at least 1900")
+            .max(new Date().getFullYear() + 2, "Year cannot be in the future"),
+        kilometer: z.number().min(0, "Kilometer must be positive"),
 
-    // Identification
-    chassis_number: z.string()
-        .min(1, "Chassis number is required")
-        .max(17, "Chassis number must be at most 17 characters")
-        .regex(/^[A-Z0-9]+$/i, "Chassis number can only contain letters and numbers"),
-    motor_vehicle_registration_number: z.string().optional().nullable(),
-    official_license_plate: z.string().optional().nullable(),
+        // Identification
+        chassis_number: z.string()
+            .min(1, "Chassis number is required")
+            .max(17, "Chassis number must be at most 17 characters")
+            .regex(/^[A-Z0-9]+$/i, "Chassis number can only contain letters and numbers"),
+        motor_vehicle_registration_number: z.string().optional().nullable(),
+        official_license_plate: z.string().optional().nullable(),
 
-    // Buy Details
-    buy_price: z.number().min(0, "Buy price must be positive"),
-    buy_tax_id: z.number().optional().nullable(),
-    buy_date: z.string().min(1, "Buy date is required"),
-    buy_delivery_collection_date: z.string().optional().nullable(),
-    buy_payment_method_id: z.number({ message: "Payment method is required" }),
-    seller_id: z.number({ message: "Seller is required" }),
+        // Buy Details
+        buy_price: z.number().min(0, "Buy price must be positive"),
+        buy_tax_id: z.number().optional().nullable(),
+        buy_date: z.string().min(1, "Buy date is required"),
+        buy_delivery_collection_date: z.string().optional().nullable(),
+        buy_payment_method_id: z.number({ message: "Payment method is required" }),
+        seller_id: z.number({ message: "Seller is required" }),
 
-    // Optional fields
-    description: z.string().optional().nullable(),
-    internal_comments: z.string().optional().nullable(),
-    key_number_id: z.number({ message: "Key number is required" }),
-})
+        // Optional fields
+        description: z.string().optional().nullable(),
+        internal_comments: z.string().optional().nullable(),
+        key_number_id: z.number({ message: "Key number is required" }),
+    })
+
+    if (!requiresDoors) {
+        return base
+    }
+
+    return base.superRefine((data, ctx) => {
+        if (!data.doors_id || (keineDoorId && data.doors_id === keineDoorId)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Doors selection is required for this vehicle class",
+                path: ["doors_id"],
+            })
+        }
+    })
+}
+
+export const vehicleCreateSchema = getVehicleCreateSchema(true)
 
 // Helper to transform empty/NaN values to undefined for optional number fields
 const optionalNumber = z.preprocess(
@@ -125,6 +169,21 @@ export const vehicleUpdateSchema = z.object({
     internal_comments: z.string().optional().nullable(),
     key_number_id: optionalNumber.nullable(),
 })
+
+export function getVehicleUpdateSchema(requiresDoors: boolean = true, keineDoorId?: number) {
+    if (!requiresDoors) {
+        return vehicleUpdateSchema
+    }
+    return vehicleUpdateSchema.superRefine((data, ctx) => {
+        if (keineDoorId && data.doors_id === keineDoorId) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Doors selection is required for this vehicle class",
+                path: ["doors_id"],
+            })
+        }
+    })
+}
 
 // =============================================================================
 // Choice Creation Schemas

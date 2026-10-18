@@ -7,6 +7,7 @@ import api from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { StickyFooter } from "@/components/StickyFooter"
 import { VehicleImageUpload } from "@/components/vehicles/VehicleImageUpload"
+import MobileDeSettingsCard from "@/components/settings/MobileDeSettingsCard"
 
 interface Branch {
     id: number
@@ -528,6 +529,9 @@ export default function BusinessSettingsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* mobile.de Marketplace Integration Card */}
+            <MobileDeSettingsCard />
 
             {/* Branches and Users Side-by-Side Layout */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">

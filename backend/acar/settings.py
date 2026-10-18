@@ -288,3 +288,11 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     "x-csrftoken",
 ]
 
+# mobile.de Marketplace API Integration Settings
+# When MOBILE_DE_SIMULATOR is True, API calls are handled by the local schema-validating simulator.
+# When MOBILE_DE_USE_SANDBOX is True, live requests are routed to https://services-sandbox.mobile.de.
+# Default for production is https://services.mobile.de.
+MOBILE_DE_SIMULATOR = os.getenv('MOBILE_DE_SIMULATOR', 'True').lower() in ('true', '1', 'yes')
+MOBILE_DE_USE_SANDBOX = os.getenv('MOBILE_DE_USE_SANDBOX', 'False').lower() in ('true', '1', 'yes')
+
+

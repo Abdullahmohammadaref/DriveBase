@@ -30,6 +30,7 @@ from manager.models import (
     PaymentMethod, Currency, Category, Subcategory, KeyNumber,
     Vehicle, Transaction as DealershipTransaction, VehicleExpenseEarning
 )
+from manager.services.mobile_de_service import seed_official_mobile_de_choices
 
 def create_db_snapshot():
     db_path = settings.DATABASES['default']['NAME']
@@ -167,7 +168,11 @@ def restore_backup(zip_path: str, target_business_id: int = 1, dry_run: bool = F
             for bt in choices_data.get("body_types", []):
                 obj, _ = BodyType.objects.update_or_create(
                     business=business, name=bt["name"],
-                    defaults={"is_active": bt.get("is_active", True)}
+                    defaults={
+                        "is_active": bt.get("is_active", True),
+                        "mobile_de_mapping": bt.get("mobile_de_mapping"),
+                        "is_protected": bt.get("is_protected", False),
+                    }
                 )
                 body_map[obj.name] = obj
 
@@ -176,7 +181,11 @@ def restore_backup(zip_path: str, target_business_id: int = 1, dry_run: bool = F
             for col in choices_data.get("colors", []):
                 obj, _ = Color.objects.update_or_create(
                     business=business, name=col["name"],
-                    defaults={"is_active": col.get("is_active", True)}
+                    defaults={
+                        "is_active": col.get("is_active", True),
+                        "mobile_de_mapping": col.get("mobile_de_mapping"),
+                        "is_protected": col.get("is_protected", False),
+                    }
                 )
                 color_map[obj.name] = obj
 
@@ -185,7 +194,11 @@ def restore_backup(zip_path: str, target_business_id: int = 1, dry_run: bool = F
             for ft in choices_data.get("fuel_types", []):
                 obj, _ = FuelType.objects.update_or_create(
                     business=business, name=ft["name"],
-                    defaults={"is_active": ft.get("is_active", True)}
+                    defaults={
+                        "is_active": ft.get("is_active", True),
+                        "mobile_de_mapping": ft.get("mobile_de_mapping"),
+                        "is_protected": ft.get("is_protected", False),
+                    }
                 )
                 fuel_map[obj.name] = obj
 
@@ -203,7 +216,11 @@ def restore_backup(zip_path: str, target_business_id: int = 1, dry_run: bool = F
             for dr in choices_data.get("doors", []):
                 obj, _ = DoorsChoice.objects.update_or_create(
                     business=business, name=dr["name"],
-                    defaults={"is_active": dr.get("is_active", True)}
+                    defaults={
+                        "is_active": dr.get("is_active", True),
+                        "mobile_de_mapping": dr.get("mobile_de_mapping"),
+                        "is_protected": dr.get("is_protected", False),
+                    }
                 )
                 doors_map[obj.name] = obj
 
@@ -275,6 +292,9 @@ def restore_backup(zip_path: str, target_business_id: int = 1, dry_run: bool = F
                 )
                 key_map[obj.number] = obj
 
+            # Ensure all official mobile.de options exist as protected baseline choices
+            seed_official_mobile_de_choices(business)
+
             # 4. Legal Entities
             entity_map = {}
             for ent in entities_data:
@@ -302,8 +322,9 @@ def restore_backup(zip_path: str, target_business_id: int = 1, dry_run: bool = F
             vehicle_map = {}
             for v in vehicles_data:
                 v_make = make_map.get(v.get("make"))
-                v_model = model_map.get((v.get("make"), v.get("model")))
                 v_type = vtype_map.get(v.get("vehicle_type"))
+                if not v_type and v.get("vehicle_type") == "Wohnmobil":
+                    v_type = vtype_map.get("Wohnmobil / Wohnwagen")
                 v_body = body_map.get(v.get("body_type"))
                 v_color = color_map.get(v.get("color"))
                 v_fuel = fuel_map.get(v.get("fuel_type"))

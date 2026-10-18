@@ -565,8 +565,8 @@ export function LegalEntitiesPage() {
                         total={data?.total}
                         label=""
                     />
-                    {t("common.of", "of")}
-                    <span className="text-foreground">{data?.total || 0}</span>
+                    {t("common.of", "of")}{" "}
+                    <span className="text-foreground">{data?.total || 0}</span>{" "}
                     {t("legalEntities.entities", "entities")}
                 </div>
 

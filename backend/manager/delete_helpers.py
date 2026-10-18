@@ -348,7 +348,11 @@ def check_entity_dependencies(business, entity_type: str, entity_id: int, choice
                         "url_path": "legal-entities",
                     })
 
-        if total_deps == 0:
+        if getattr(choice, 'is_protected', False):
+            can_hard_delete = False
+            action = "protected"
+            message = "This is a system-protected baseline choice required for marketplace synchronization. It cannot be deleted."
+        elif total_deps == 0:
             can_hard_delete = True
             action = "delete"
             message = "This option is not used by any records. It will be permanently removed."
@@ -359,6 +363,7 @@ def check_entity_dependencies(business, entity_type: str, entity_id: int, choice
 
     return {
         "can_hard_delete": can_hard_delete,
+        "is_protected": getattr(choice, 'is_protected', False) if entity_type == "choice" else False,
         "action": action,
         "entity_name": entity_name,
         "dependencies_count": total_deps,
@@ -505,6 +510,8 @@ def execute_cascade_delete(business, entity_type: str, entity_id: int, choice_ty
                 
             model_class = CHOICE_MODEL_MAP[choice_type]
             choice = get_object_or_404(model_class, business=business, id=entity_id)
+            if getattr(choice, 'is_protected', False):
+                raise ValueError("System-protected choices cannot be deleted.")
             entity_name = getattr(choice, 'name', str(getattr(choice, 'number', 'Choice')))
             
             # Nullify references in Vehicle or related models

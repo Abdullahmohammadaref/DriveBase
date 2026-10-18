@@ -5,6 +5,9 @@ import type {
     VehicleDetail,
     VehicleFilters,
     AllChoices,
+    MobileDeListingDetail,
+    MobileDePublishPayload,
+    VehicleGalleryImage,
 } from "@/types/vehicle"
 
 /**
@@ -19,6 +22,7 @@ export const vehicleKeys = {
     choices: (vehicleId?: number) => ["choices", vehicleId] as const,
     models: (makeId: number) => ["models", makeId] as const,
     nextId: () => [...vehicleKeys.all, "next-id"] as const,
+    mobileDe: (id: number) => [...vehicleKeys.detail(id), "mobile-de"] as const,
 }
 
 /**
@@ -126,6 +130,8 @@ export interface VehicleModelChoice {
     name: string
     make_id: number
     make_name: string
+    vehicle_classes?: string[]
+    mobile_de_mapping?: string | null
 }
 
 /**
@@ -337,6 +343,127 @@ export function useDeleteExpenseEarning() {
             queryClient.invalidateQueries({
                 queryKey: ["vehicles"],
             })
+        },
+    })
+}
+
+// =============================================================================
+// mobile.de Marketplace Hooks
+// =============================================================================
+
+/**
+ * Fetch mobile.de listing details, pre-filled specs, and analytics
+ */
+export function useVehicleMobileDe(internalId: number, enabled: boolean = true) {
+    return useQuery({
+        queryKey: vehicleKeys.mobileDe(internalId),
+        queryFn: async (): Promise<MobileDeListingDetail> => {
+            const res = await api.get<MobileDeListingDetail>(`/vehicles/${internalId}/mobile-de`)
+            return res.data
+        },
+        enabled: enabled && !!internalId,
+    })
+}
+
+/**
+ * Publish or update vehicle on mobile.de (two-way sync)
+ */
+export function usePublishMobileDe() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({
+            internalId,
+            payload,
+        }: {
+            internalId: number
+            payload: MobileDePublishPayload
+        }) => {
+            const res = await api.post(`/vehicles/${internalId}/mobile-de/publish`, payload)
+            return res.data
+        },
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({ queryKey: vehicleKeys.mobileDe(variables.internalId) })
+            queryClient.invalidateQueries({ queryKey: vehicleKeys.detail(variables.internalId) })
+            queryClient.invalidateQueries({ queryKey: ["vehicles"] })
+        },
+    })
+}
+
+/**
+ * Delist / unpublish vehicle from mobile.de
+ */
+export function useDelistMobileDe() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (internalId: number) => {
+            const res = await api.post(`/vehicles/${internalId}/mobile-de/delist`)
+            return res.data
+        },
+        onSuccess: (_data, internalId) => {
+            queryClient.invalidateQueries({ queryKey: vehicleKeys.mobileDe(internalId) })
+            queryClient.invalidateQueries({ queryKey: vehicleKeys.detail(internalId) })
+            queryClient.invalidateQueries({ queryKey: ["vehicles"] })
+        },
+    })
+}
+
+/**
+ * Upload an additional gallery photo for mobile.de listing
+ */
+export function useUploadGalleryImage() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ internalId, file }: { internalId: number; file: File }) => {
+            const formData = new FormData()
+            formData.append("image", file)
+            const res = await api.post<VehicleGalleryImage>(
+                `/vehicles/${internalId}/mobile-de/gallery-images`,
+                formData,
+                { headers: { "Content-Type": "multipart/form-data" } }
+            )
+            return res.data
+        },
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({ queryKey: vehicleKeys.mobileDe(variables.internalId) })
+        },
+    })
+}
+
+/**
+ * Delete a gallery photo from mobile.de listing
+ */
+export function useDeleteGalleryImage() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ internalId, imageId }: { internalId: number; imageId: number }) => {
+            const res = await api.delete(`/vehicles/${internalId}/mobile-de/gallery-images/${imageId}`)
+            return res.data
+        },
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({ queryKey: vehicleKeys.mobileDe(variables.internalId) })
+        },
+    })
+}
+
+/**
+ * Refresh live insights (views, parkings, leads, price rating)
+ */
+export function useRefreshMobileDeInsights() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (internalId: number) => {
+            const res = await api.get(`/vehicles/${internalId}/mobile-de/insights`)
+            return res.data
+        },
+        onSuccess: (_data, internalId) => {
+            queryClient.invalidateQueries({ queryKey: vehicleKeys.mobileDe(internalId) })
+            queryClient.invalidateQueries({ queryKey: vehicleKeys.detail(internalId) })
+            queryClient.invalidateQueries({ queryKey: ["vehicles"] })
         },
     })
 }

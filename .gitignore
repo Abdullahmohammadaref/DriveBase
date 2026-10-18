@@ -92,3 +92,6 @@ test_artifacts/
 test-results/
 playwright-report/
 .auth/
+
+# ----- Agent Scratch temporary files -----
+.agents/scratch/

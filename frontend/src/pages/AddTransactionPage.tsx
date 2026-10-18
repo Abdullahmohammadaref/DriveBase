@@ -1,6 +1,6 @@
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { ArrowLeft, Loader2 } from "lucide-react"
+import { ArrowLeft, Loader2, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TransactionForm } from "@/components/transactions/TransactionForm"
 import { useCreateTransaction, useNextTransactionId } from "@/hooks/useTransactions"
@@ -64,6 +64,29 @@ export function AddTransactionPage() {
                             {t("transactions.form.nextId", "Next ID")}: #{nextId ?? "..."}
                         </span>
                     </div>
+                </div>
+
+                {/* Right: Save/Create Button right on the header line */}
+                <div className="flex items-center gap-2">
+                    <Button
+                        type="submit"
+                        form="transaction-form"
+                        disabled={createMutation.isPending}
+                        size="sm"
+                        className="h-7 text-xs bg-primary text-primary-foreground hover:opacity-90 px-3 shadow-2xs"
+                    >
+                        {createMutation.isPending ? (
+                            <>
+                                <Loader2 className="mr-1.5 size-3 animate-spin" />
+                                {t("transactions.form.creating", "Creating...")}
+                            </>
+                        ) : (
+                            <>
+                                <FileText className="mr-1.5 size-3" />
+                                {t("transactions.form.addTransaction", "Add Transaction")}
+                            </>
+                        )}
+                    </Button>
                 </div>
             </div>
 

@@ -9,35 +9,41 @@ interface PerPageInputProps {
 }
 
 export function PerPageInput({ value, onChange, label = "per page", total }: PerPageInputProps) {
-    const [inputValue, setInputValue] = useState(String(value))
+    const [isFocused, setIsFocused] = useState(false)
 
-    // Keep input in sync when value changes from external sources
+    // When total is less than the user's preference, display total (or 0 if total is 0)
+    const effectiveDisplay = typeof total === "number" && total < value ? Math.max(0, total) : value
+    const [inputValue, setInputValue] = useState(String(effectiveDisplay))
+
+    // Keep input in sync when effectiveDisplay changes (e.g. filter applied/removed or preference changed)
     useEffect(() => {
-        setInputValue(String(value))
-    }, [value])
+        if (!isFocused) {
+            setInputValue(String(effectiveDisplay))
+        }
+    }, [effectiveDisplay, isFocused])
 
     const commit = () => {
+        setIsFocused(false)
         const num = parseInt(inputValue, 10)
         
         // If empty, NaN, or non-positive
         if (isNaN(num) || num < 1) {
-            const defaultValue = 20
-            setInputValue(String(defaultValue))
-            onChange(defaultValue)
+            setInputValue(String(effectiveDisplay))
             return
         }
 
-        // If the user enters a number greater than the total count, default to the total count!
-        let finalValue = num
-        if (typeof total === "number" && total > 0 && num > total) {
-            finalValue = total
-            setInputValue(String(total))
-        } else if (num > 10000) {
-            finalValue = 10000
-            setInputValue(String(10000))
+        // If the value matches the automatic clamped display, the user did not change their preference
+        if (num === effectiveDisplay && effectiveDisplay !== value) {
+            setInputValue(String(effectiveDisplay))
+            return
         }
 
-        onChange(finalValue)
+        const clamped = Math.min(10000, Math.max(1, num))
+        if (clamped !== value) {
+            onChange(clamped)
+        } else {
+            setInputValue(String(effectiveDisplay))
+        }
     }
 
     return (
@@ -45,6 +51,10 @@ export function PerPageInput({ value, onChange, label = "per page", total }: Per
             <Input
                 type="number"
                 value={inputValue}
+                onFocus={(e) => {
+                    setIsFocused(true)
+                    e.target.select()
+                }}
                 onChange={(e) => setInputValue(e.target.value)}
                 onBlur={commit}
                 onKeyDown={(e) => {

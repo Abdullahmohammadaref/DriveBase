@@ -11,8 +11,11 @@
 
 ```
 acar/
+├── GEMINI.md                # Master root agent beacon, stack overview, and AI resource map
+├── AGENTS.md                # Root agent guidelines pointing to GEMINI.md + GitNexus
 ├── .agentrules              # AI agent behavioral rules (MANDATORY reading)
 ├── .agents/skills/          # 65+ AI skill packs for guided development
+├── .agents/scratch/         # Isolated workspace for temporary agent scripts
 ├── README.md                # Project overview, setup, API docs
 ├── schema.prisma            # Prisma data model (mirrors Django models 1:1)
 ├── PROJECT_MAP.md           # ← You are here

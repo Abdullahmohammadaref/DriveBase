@@ -54,6 +54,29 @@ class Business(models.Model):
     def __str__(self):
         return f"{self.name}"
 
+class MobileDeSettings(models.Model):
+    business = models.OneToOneField(
+        Business,
+        on_delete=models.CASCADE,
+        related_name='mobile_de_settings',
+        verbose_name=_('business')
+    )
+    seller_id = models.CharField(_('mobile.de Seller ID'), max_length=50, blank=True, null=True)
+    api_username = models.CharField(_('API Username'), max_length=100, blank=True, null=True)
+    api_password = models.CharField(_('API Password'), max_length=255, blank=True, null=True)
+
+    last_connection_test = models.DateTimeField(blank=True, null=True)
+    last_connection_status = models.CharField(max_length=20, blank=True, null=True)  # 'success' | 'failed'
+    last_connection_error = models.TextField(blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def is_configured(self):
+        return bool(self.seller_id and self.api_username and self.api_password)
+
+    def __str__(self):
+        return f"mobile.de settings for {self.business.name}"
+
 class Branch(models.Model):
     business = models.ForeignKey(   
         Business,
@@ -244,7 +267,7 @@ class PaymentMethod(models.Model):
 
 
 class VehicleType(models.Model):
-    """User-defined vehicle types (Sedan, SUV, etc.)"""
+    """User-defined vehicle types (PKW, Motorrad, etc.)"""
     name = models.CharField(_('name'), max_length=100)
     business = models.ForeignKey(
         Business,
@@ -253,6 +276,8 @@ class VehicleType(models.Model):
         verbose_name=_('business')
     )
     is_active = models.BooleanField(_('is active'), default=True)
+    mobile_de_mapping = models.CharField(_('mobile.de mapping'), max_length=50, blank=True, null=True)
+    is_protected = models.BooleanField(_('is protected'), default=False)
 
     class Meta:
         ordering = ['name']
@@ -274,6 +299,9 @@ class BodyType(models.Model):
         verbose_name=_('business')
     )
     is_active = models.BooleanField(_('is active'), default=True)
+    mobile_de_mapping = models.CharField(_('mobile.de mapping'), max_length=50, blank=True, null=True)
+    is_protected = models.BooleanField(_('is protected'), default=False)
+    vehicle_classes = models.JSONField(_('vehicle classes'), default=list, blank=True)
 
     class Meta:
         ordering = ['name']
@@ -295,6 +323,9 @@ class Make(models.Model):
         verbose_name=_('business')
     )
     is_active = models.BooleanField(_('is active'), default=True)
+    mobile_de_mapping = models.CharField(_('mobile.de mapping'), max_length=50, blank=True, null=True)
+    is_protected = models.BooleanField(_('is protected'), default=False)
+    vehicle_classes = models.JSONField(_('vehicle classes'), default=list, blank=True)
 
     class Meta:
         ordering = ['name']
@@ -324,6 +355,9 @@ class VehicleModel(models.Model):
         verbose_name=_('business')
     )
     is_active = models.BooleanField(_('is active'), default=True)
+    mobile_de_mapping = models.CharField(_('mobile.de mapping'), max_length=100, blank=True, null=True)
+    is_protected = models.BooleanField(_('is protected'), default=False)
+    vehicle_classes = models.JSONField(_('vehicle classes'), default=list, blank=True)
 
     class Meta:
         ordering = ['name']
@@ -346,6 +380,8 @@ class Color(models.Model):
         verbose_name=_('business')
     )
     is_active = models.BooleanField(_('is active'), default=True)
+    mobile_de_mapping = models.CharField(_('mobile.de mapping'), max_length=50, blank=True, null=True)
+    is_protected = models.BooleanField(_('is protected'), default=False)
 
     class Meta:
         ordering = ['name']
@@ -367,6 +403,9 @@ class FuelType(models.Model):
         verbose_name=_('business')
     )
     is_active = models.BooleanField(_('is active'), default=True)
+    mobile_de_mapping = models.CharField(_('mobile.de mapping'), max_length=50, blank=True, null=True)
+    is_protected = models.BooleanField(_('is protected'), default=False)
+    vehicle_classes = models.JSONField(_('supported vehicle classes'), default=list, blank=True)
 
     class Meta:
         ordering = ['name']
@@ -409,6 +448,9 @@ class DoorsChoice(models.Model):
         verbose_name=_('business')
     )
     is_active = models.BooleanField(_('is active'), default=True)
+    mobile_de_mapping = models.CharField(_('mobile.de mapping'), max_length=50, blank=True, null=True)
+    is_protected = models.BooleanField(_('is protected'), default=False)
+    vehicle_classes = models.JSONField(_('supported vehicle classes'), default=list, blank=True)
 
     class Meta:
         ordering = ['name']
@@ -940,6 +982,62 @@ class Vehicle(models.Model):
         blank=True, null=True
     )
 
+    # =========================================================================
+    # mobile.de Marketplace Attributes & Status
+    # =========================================================================
+    transmission = models.CharField(
+        _('transmission'),
+        max_length=30,
+        choices=[('MANUAL_GEAR', _('Manual')), ('AUTOMATIC_GEAR', _('Automatic'))],
+        blank=True, null=True
+    )
+    condition = models.CharField(
+        _('condition'),
+        max_length=20,
+        choices=[('USED', _('Used')), ('NEW', _('New'))],
+        default='USED'
+    )
+    hu_date = models.CharField(_('HU / TÜV (YYYY-MM)'), max_length=7, blank=True, null=True)
+    features = models.JSONField(_('equipment features'), default=list, blank=True)
+
+    # EnVKV / Emissions
+    emission_class = models.CharField(_('emission class'), max_length=20, default='EURO6', blank=True, null=True)
+    emission_badge = models.CharField(_('emission badge'), max_length=20, default='GREEN', blank=True, null=True)
+    fuel_consumption_combined = models.DecimalField(
+        _('fuel consumption combined (l/100km)'),
+        max_digits=5, decimal_places=2, blank=True, null=True
+    )
+    co2_emission_combined = models.PositiveIntegerField(_('CO2 emissions combined (g/km)'), blank=True, null=True)
+    efficiency_class = models.CharField(_('efficiency class'), max_length=5, blank=True, null=True)
+
+    # Listing Metadata & Remote State
+    mobile_de_ad_id = models.CharField(_('mobile.de Ad ID'), max_length=50, blank=True, null=True, db_index=True)
+    mobile_de_status = models.CharField(
+        _('mobile.de status'),
+        max_length=20,
+        choices=[
+            ('not_listed', _('Not Listed')),
+            ('syncing', _('Syncing')),
+            ('active', _('Active (Live)')),
+            ('paused', _('Paused')),
+            ('error', _('Sync Error')),
+        ],
+        default='not_listed',
+        db_index=True
+    )
+    mobile_de_url = models.URLField(_('mobile.de public URL'), max_length=500, blank=True, null=True)
+    mobile_de_last_synced_at = models.DateTimeField(_('last synced at'), blank=True, null=True)
+    mobile_de_last_error = models.TextField(_('last error message'), blank=True, null=True)
+    mobile_de_description = models.TextField(_('mobile.de public description'), blank=True, null=True)
+
+    # Live Analytics Cache
+    mobile_de_detail_views = models.PositiveIntegerField(_('detail views'), default=0)
+    mobile_de_search_hits = models.PositiveIntegerField(_('search hits'), default=0)
+    mobile_de_parkings = models.PositiveIntegerField(_('parkings / bookmarks'), default=0)
+    mobile_de_leads_count = models.PositiveIntegerField(_('leads / inquiries'), default=0)
+    mobile_de_price_rating = models.CharField(_('price rating'), max_length=50, blank=True, null=True)
+    mobile_de_stats_updated_at = models.DateTimeField(blank=True, null=True)
+
     @property
     def total_revenue(self):
         result = self.vehicle_transactions.filter(
@@ -1128,6 +1226,17 @@ class Vehicle(models.Model):
             from manager.models import KeyNumber
             KeyNumber.objects.filter(vehicle=self).update(vehicle=None)
 
+        # Auto-delist from mobile.de if vehicle is sold or inactive
+        if self.pk and self.status in ['sold', 'inactive'] and self.mobile_de_ad_id:
+            try:
+                from manager.services.mobile_de_service import get_mobile_de_service
+                service = get_mobile_de_service(self.business)
+                if service:
+                    service.delist_vehicle(self)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(f"Failed to auto-delist vehicle {self.id} on mobile.de: {e}")
+
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -1137,11 +1246,24 @@ class Vehicle(models.Model):
         parts = [p for p in (make_name, model_name, body_name) if p]
         return " ".join(parts) or f"Vehicle #{self.internal_id}"
 
-    # def __str__(self):
-    #     manufacturer_label = self.get_manufacturer_display() if self.manufacturer else ''
-    #     body_label = self.get_body_type_display() if self.body_type else ''
-    #     parts = [p for p in (manufacturer_label, self.manufacturer_model, body_label) if p]
-    #     return " ".join(parts) or _("Vehicle #{}").format(self.internal_id)
+class VehicleListingImage(models.Model):
+    vehicle = models.ForeignKey(
+        Vehicle,
+        on_delete=models.CASCADE,
+        related_name='listing_images',
+        verbose_name=_('vehicle')
+    )
+    image = models.ImageField(_('image'), upload_to='images/vehicles/listing_gallery/')
+    order = models.PositiveIntegerField(_('order'), default=0)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'id']
+        verbose_name = _('vehicle listing image')
+        verbose_name_plural = _('vehicle listing images')
+
+    def __str__(self):
+        return f"Image #{self.order} for vehicle #{self.vehicle.internal_id or self.vehicle.id}"
 
 class Transaction(models.Model):
 

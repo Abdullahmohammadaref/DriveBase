@@ -1,6 +1,7 @@
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Check, ChevronsUpDown, Plus, Loader2 } from "lucide-react"
+import { useTranslation } from "react-i18next"
+import { Check, ChevronsUpDown, Plus, Loader2, Lock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,6 +22,7 @@ import { Label } from "@/components/ui/label"
 import api from "@/lib/api"
 import { vehicleKeys } from "@/hooks/useVehicles"
 import { transactionKeys } from "@/hooks/useTransactions"
+import { findMatchingStandardOption } from "@/lib/choiceMatching"
 
 interface Choice {
     id: number
@@ -59,6 +61,8 @@ interface DynamicSelectProps {
     hasError?: boolean
     /** Context for scoped choices like payment methods ("buy" | "sale" | "transaction") */
     context?: "buy" | "sale" | "transaction"
+    /** Active vehicle class for class-aware choices like Make and BodyType */
+    activeVehicleClass?: string
 }
 
 export function DynamicSelect({
@@ -77,6 +81,7 @@ export function DynamicSelect({
     onAddClick,
     hasError = false,
     context,
+    activeVehicleClass,
 }: DynamicSelectProps) {
     const [open, setOpen] = useState(false)
     const [dialogOpen, setDialogOpen] = useState(false)
@@ -86,6 +91,23 @@ export function DynamicSelect({
     const [searchQuery, setSearchQuery] = useState("")
     const [error, setError] = useState<string | null>(null) // For duplicate/validation errors
     const [createdOptions, setCreatedOptions] = useState<Choice[]>([])
+    const [newMobileDeMapping, setNewMobileDeMapping] = useState<string>("")
+    const [userOverrodeMapping, setUserOverrodeMapping] = useState<boolean>(false)
+    const [newVehicleClasses, setNewVehicleClasses] = useState<string[]>(activeVehicleClass ? [activeVehicleClass] : ["Car"])
+
+    const { t } = useTranslation()
+    const isMarketplaceChoice = ["make", "fuel_type", "body_type", "color", "doors", "vehicle_type", "vehicle_model"].includes(choiceType)
+
+    const protectedChoices = useMemo(() => {
+        const protectedOnly = options.filter((opt) => Boolean(opt.is_protected))
+        if (protectedOnly.length > 0) return protectedOnly
+        return options.filter((opt) => Boolean(opt.mobile_de_mapping))
+    }, [options])
+
+    const selectedProtectedChoice = useMemo(() => {
+        if (!newMobileDeMapping) return null
+        return protectedChoices.find((c) => c.name.toLowerCase() === newMobileDeMapping.toLowerCase()) || null
+    }, [newMobileDeMapping, protectedChoices])
 
     const queryClient = useQueryClient()
 
@@ -99,7 +121,7 @@ export function DynamicSelect({
 
     // Create mutation
     const createMutation = useMutation({
-        mutationFn: async (data: { name: string; percentage?: number; make_id?: number; category_id?: number; country_id?: number; code?: string }) => {
+        mutationFn: async (data: { name: string; percentage?: number; make_id?: number; category_id?: number; country_id?: number; code?: string; mobile_de_mapping?: string; vehicle_classes?: string }) => {
             const formData = new FormData()
             formData.append("name", data.name)
             if (data.percentage !== undefined) {
@@ -116,6 +138,12 @@ export function DynamicSelect({
             }
             if (data.code !== undefined) {
                 formData.append("code", data.code)
+            }
+            if (data.mobile_de_mapping !== undefined) {
+                formData.append("mobile_de_mapping", data.mobile_de_mapping)
+            }
+            if (data.vehicle_classes !== undefined) {
+                formData.append("vehicle_classes", data.vehicle_classes)
             }
             if (context) {
                 formData.append("context", context)
@@ -185,6 +213,8 @@ export function DynamicSelect({
             setNewName("")
             setNewPercentage("")
             setNewCode("")
+            setNewMobileDeMapping("")
+            setUserOverrodeMapping(false)
             setError(null)
         },
         onError: (err: unknown) => {
@@ -213,12 +243,26 @@ export function DynamicSelect({
         // Currency requires code
         if (choiceType === "currency" && !newCode.trim()) return
 
-        const data: { name: string; percentage?: number; make_id?: number; category_id?: number; country_id?: number; code?: string } = {
+        const data: { name: string; percentage?: number; make_id?: number; category_id?: number; country_id?: number; code?: string; mobile_de_mapping?: string; vehicle_classes?: string } = {
             name: newName.trim(),
         }
 
         if (showPercentage && newPercentage) {
             data.percentage = Number(newPercentage)
+        }
+        if (newMobileDeMapping) {
+            data.mobile_de_mapping = newMobileDeMapping
+        }
+
+        if (["make", "body_type"].includes(choiceType)) {
+            const classesToUse = (selectedProtectedChoice?.vehicle_classes && Array.isArray(selectedProtectedChoice.vehicle_classes) && selectedProtectedChoice.vehicle_classes.length > 0)
+                ? selectedProtectedChoice.vehicle_classes
+                : newVehicleClasses
+            if (classesToUse.length === 0) {
+                setError("At least one vehicle class must be selected.")
+                return
+            }
+            data.vehicle_classes = JSON.stringify(classesToUse)
         }
 
         // Handle parent ID based on choice type
@@ -336,6 +380,8 @@ export function DynamicSelect({
                                     } else {
                                         setNewName("")
                                         setNewCode("")
+                                        setNewMobileDeMapping("")
+                                        setUserOverrodeMapping(false)
                                         setError(null)
                                         setDialogOpen(true)
                                     }
@@ -364,13 +410,27 @@ export function DynamicSelect({
 
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label htmlFor="name" className="text-foreground">Name</Label>
+                            <Label htmlFor="name" className="text-foreground">
+                                {t("choices.name", "Name")} <span className="text-destructive">*</span>
+                            </Label>
                             <Input
                                 id="name"
                                 value={newName}
                                 onChange={(e) => {
-                                    setNewName(e.target.value)
-                                    setError(null) // Clear error when user types
+                                    const val = e.target.value
+                                    setNewName(val)
+                                    setError(null)
+                                    if (!userOverrodeMapping && isMarketplaceChoice) {
+                                        const matched = findMatchingStandardOption(protectedChoices, val, choiceType)
+                                        if (matched) {
+                                            setNewMobileDeMapping(matched.name)
+                                            if (matched.vehicle_classes && Array.isArray(matched.vehicle_classes) && matched.vehicle_classes.length > 0) {
+                                                setNewVehicleClasses(matched.vehicle_classes)
+                                            }
+                                        } else {
+                                            setNewMobileDeMapping("")
+                                        }
+                                    }
                                 }}
                                 placeholder={`Enter ${createLabel || choiceType} name`}
                                 className={`text-foreground ${error ? 'border-destructive' : ''}`}
@@ -381,10 +441,57 @@ export function DynamicSelect({
                             )}
                         </div>
 
+                        {/* Standard Option Mapping select - only for mappable choice types */}
+                        {isMarketplaceChoice && protectedChoices.length > 0 && (
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="mobile_de_mapping" className="text-foreground">
+                                        {t("choices.standardOptionMapping", "Standard Option Mapping")}{" "}
+                                        <span className="text-xs text-muted-foreground font-normal">
+                                            ({t("common.optional", "optional")})
+                                        </span>
+                                    </Label>
+                                    {newMobileDeMapping && (
+                                        <span className="text-[11px] font-normal text-emerald-600 dark:text-emerald-400">
+                                            ✓ {newMobileDeMapping}
+                                        </span>
+                                    )}
+                                </div>
+                                <select
+                                    id="mobile_de_mapping"
+                                    value={newMobileDeMapping}
+                                    onChange={(e) => {
+                                        const val = e.target.value
+                                        setNewMobileDeMapping(val)
+                                        setUserOverrodeMapping(true)
+                                        if (val) {
+                                            const matched = protectedChoices.find((c) => c.name === val)
+                                            if (matched?.vehicle_classes && Array.isArray(matched.vehicle_classes) && matched.vehicle_classes.length > 0) {
+                                                setNewVehicleClasses(matched.vehicle_classes)
+                                            }
+                                        }
+                                    }}
+                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-hidden focus:ring-2 focus:ring-primary"
+                                >
+                                    <option value="">{t("choices.noMappingOptional", "-- Keine Zuordnung (optional) --")}</option>
+                                    {protectedChoices.map((opt) => (
+                                        <option key={opt.id} value={opt.name}>
+                                            {opt.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="text-xs text-muted-foreground">
+                                    {t("choices.standardOptionHelp", "Optionally map this option to a standard system choice.")}
+                                </p>
+                            </div>
+                        )}
+
                         {/* Currency code input - only for currency type */}
                         {choiceType === "currency" && (
                             <div className="space-y-2">
-                                <Label htmlFor="code" className="text-foreground">Code (e.g., EUR, USD)</Label>
+                                <Label htmlFor="code" className="text-foreground">
+                                    Code (e.g., EUR, USD) <span className="text-destructive">*</span>
+                                </Label>
                                 <Input
                                     id="code"
                                     value={newCode}
@@ -398,7 +505,9 @@ export function DynamicSelect({
 
                         {showPercentage && (
                             <div className="space-y-2">
-                                <Label htmlFor="percentage" className="text-foreground">Percentage (%)</Label>
+                                <Label htmlFor="percentage" className="text-foreground">
+                                    {t("choices.taxPercentage", "Percentage (%)")} <span className="text-destructive">*</span>
+                                </Label>
                                 <Input
                                     id="percentage"
                                     type="number"
@@ -410,6 +519,83 @@ export function DynamicSelect({
                                     placeholder="e.g., 19"
                                     className="text-foreground"
                                 />
+                            </div>
+                        )}
+
+                        {["make", "body_type"].includes(choiceType) && (
+                            <div className="space-y-2 rounded-lg border border-border bg-muted/30 p-3">
+                                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                    {t("choices.vehicleClasses", "Supported Vehicle Classes")}{" "}
+                                    {!selectedProtectedChoice && <span className="text-destructive">*</span>}
+                                </Label>
+                                {selectedProtectedChoice ? (
+                                    <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+                                        <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
+                                            <Lock className="size-3.5 shrink-0" />
+                                            <span>
+                                                {t("choices.classesInheritedHint", "Fahrzeugklassen werden automatisch von '{{name}}' übernommen", { name: selectedProtectedChoice.name })}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-1.5 pt-1">
+                                            {(selectedProtectedChoice.vehicle_classes || newVehicleClasses || ["Car"]).map((clsId: string) => {
+                                                const classLabels: Record<string, string> = {
+                                                    Car: "PKW (Car)",
+                                                    Motorbike: "Motorrad",
+                                                    Motorhome: "Wohnmobil / Wohnwagen",
+                                                    VanUpTo7500: "Transporter",
+                                                    TruckOver7500: "LKW",
+                                                    Trailer: "Anhänger",
+                                                }
+                                                return (
+                                                    <span
+                                                        key={clsId}
+                                                        className="inline-flex items-center rounded-md bg-background px-2.5 py-1 text-xs font-semibold text-foreground border border-border shadow-2xs"
+                                                    >
+                                                        {classLabels[clsId] || clsId}
+                                                    </span>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                                            {[
+                                                { id: "Car", label: "PKW (Car)" },
+                                                { id: "Motorbike", label: "Motorrad" },
+                                                { id: "Motorhome", label: "Wohnmobil / Wohnwagen" },
+                                                { id: "VanUpTo7500", label: "Transporter" },
+                                                { id: "TruckOver7500", label: "LKW" },
+                                                { id: "Trailer", label: "Anhänger" },
+                                            ].map((cls) => {
+                                                const isActiveClass = activeVehicleClass === cls.id
+                                                return (
+                                                    <label key={cls.id} className="flex items-center gap-2 text-xs font-medium text-foreground cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={newVehicleClasses.includes(cls.id)}
+                                                            disabled={isActiveClass}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    setNewVehicleClasses((prev) => [...prev, cls.id])
+                                                                } else if (!isActiveClass) {
+                                                                    setNewVehicleClasses((prev) => prev.filter((c) => c !== cls.id))
+                                                                }
+                                                            }}
+                                                            className="rounded border-input text-primary focus:ring-primary/20"
+                                                        />
+                                                        <span>{cls.label} {isActiveClass && "(Required)"}</span>
+                                                    </label>
+                                                )
+                                            })}
+                                        </div>
+                                        {newVehicleClasses.length === 0 && (
+                                            <p className="text-xs text-rose-500 font-medium">
+                                                At least one vehicle class must be selected.
+                                            </p>
+                                        )}
+                                    </>
+                                )}
                             </div>
                         )}
                     </div>
@@ -424,7 +610,7 @@ export function DynamicSelect({
                         </Button>
                         <Button
                             onClick={handleCreate}
-                            disabled={!newName.trim() || createMutation.isPending}
+                            disabled={!newName.trim() || createMutation.isPending || (["make", "body_type"].includes(choiceType) && !selectedProtectedChoice && newVehicleClasses.length === 0)}
                         >
                             {createMutation.isPending ? (
                                 <>
