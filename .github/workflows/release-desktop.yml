@@ -1,0 +1,64 @@
+name: Release Desktop App (Windows)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 1.0.0)'
+        required: true
+        default: '1.0.0'
+
+jobs:
+  build-windows:
+    permissions:
+      contents: write
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install Rust Stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: 'frontend/src-tauri -> target'
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build Tauri Desktop App
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: './frontend'
+          tagName: v__VERSION__
+          releaseName: 'DriveBase Desktop v__VERSION__'
+          releaseBody: 'Automated release of DriveBase Windows Desktop Application.'
+          releaseDraft: false
+          prerelease: false
+
+      - name: Attach Direct Installer (DriveBase_Setup.exe)
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $bundlePath = Get-ChildItem -Path "frontend/src-tauri/target/release/bundle/nsis/*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($bundlePath) {
+            Copy-Item -Path $bundlePath.FullName -Destination "frontend/src-tauri/target/release/bundle/nsis/DriveBase_Setup.exe"
+            gh release upload "v${{ github.ref_name || inputs.version }}" "frontend/src-tauri/target/release/bundle/nsis/DriveBase_Setup.exe" --clobber
+          }

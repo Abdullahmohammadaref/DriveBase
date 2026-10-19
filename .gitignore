@@ -1,5 +1,5 @@
 # ===========================================================
-# ACAR Root .gitignore
+# DriveBase Root .gitignore
 # ===========================================================
 # ----- Secrets & Environment -----
 .env
@@ -23,6 +23,7 @@ __pycache__/
 *.so
 .Python
 acar_venv/
+drivebase_venv/
 env/
 venv/
 ENV/
@@ -68,7 +69,6 @@ test_output.txt
 .gitnexus
 
 /start_gitnexus.bat
-/backend/acar/__init__.py
 
 # Production env template is committed, actual .env.production is not
 backend/.env.production

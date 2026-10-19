@@ -1,4 +1,4 @@
-# plan-deployment.md — Make ACAR Production-Ready
+# plan-deployment.md — Make DriveBase Production-Ready
 
 > **Date:** 2026-05-17
 > **Agent target:** Antigravity / Claude Code
@@ -50,11 +50,11 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn whitenoise
 COPY backend/ /app/
 
 # Collect static files (React build will be in /app/static/dist from CI)
-RUN python manage.py collectstatic --noinput --settings=acar.settings_prod || true
+RUN python manage.py collectstatic --noinput --settings=drivebase.settings_prod || true
 
 EXPOSE 8000
 
-CMD ["gunicorn", "acar.wsgi:application", \
+CMD ["gunicorn", "drivebase.wsgi:application", \
      "--bind", "0.0.0.0:8000", \
      "--workers", "2", \
      "--timeout", "120", \
@@ -167,17 +167,17 @@ server {
 
 ---
 
-## File 4: `backend/acar/settings_prod.py`
+## File 4: `backend/drivebase/settings_prod.py`
 
-**Path:** `backend/acar/settings_prod.py`
+**Path:** `backend/drivebase/settings_prod.py`
 
 This is the production settings file. It imports everything from `settings.py` and overrides what needs to change for production.
 
 ```python
 """
-Production settings for ACAR.
-Loaded by Gunicorn via: --settings=acar.settings_prod
-Or set DJANGO_SETTINGS_MODULE=acar.settings_prod in .env.production
+Production settings for DriveBase.
+Loaded by Gunicorn via: --settings=drivebase.settings_prod
+Or set DJANGO_SETTINGS_MODULE=drivebase.settings_prod in .env.production
 """
 from .settings import *  # noqa: F401, F403
 import os
@@ -278,17 +278,17 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             set -e
-            cd /home/ubuntu/acar
+            cd /home/ubuntu/drivebase
 
             echo "=== Pulling latest code ==="
             git pull origin main
 
             echo "=== Pulling private files ==="
-            cd /home/ubuntu/acar-private
+            cd /home/ubuntu/drivebase-private
             git pull origin main
-            cp -r backend/manager/pdf_generators/*.py /home/ubuntu/acar/backend/manager/pdf_generators/ 2>/dev/null || true
-            cp -r backend/manager/templates/ /home/ubuntu/acar/backend/manager/ 2>/dev/null || true
-            cd /home/ubuntu/acar
+            cp -r backend/manager/pdf_generators/*.py /home/ubuntu/drivebase/backend/manager/pdf_generators/ 2>/dev/null || true
+            cp -r backend/manager/templates/ /home/ubuntu/drivebase/backend/manager/ 2>/dev/null || true
+            cd /home/ubuntu/drivebase
 
             echo "=== Building React frontend ==="
             cd frontend
@@ -304,10 +304,10 @@ jobs:
             sleep 5
 
             echo "=== Running migrations ==="
-            docker compose exec -T django python manage.py migrate --noinput --settings=acar.settings_prod
+            docker compose exec -T django python manage.py migrate --noinput --settings=drivebase.settings_prod
 
             echo "=== Collecting static ==="
-            docker compose exec -T django python manage.py collectstatic --noinput --settings=acar.settings_prod
+            docker compose exec -T django python manage.py collectstatic --noinput --settings=drivebase.settings_prod
 
             echo "=== Deploy complete ==="
 ```
@@ -320,15 +320,15 @@ jobs:
 
 ```bash
 #!/bin/bash
-# ACAR Daily Backup
-# Cron: 0 3 * * * /home/ubuntu/acar/scripts/backup.sh >> /home/ubuntu/backups/backup.log 2>&1
+# DriveBase Daily Backup
+# Cron: 0 3 * * * /home/ubuntu/drivebase/scripts/backup.sh >> /home/ubuntu/backups/backup.log 2>&1
 
 set -e
 
 BACKUP_DIR="/home/ubuntu/backups"
 DATE=$(date +%Y-%m-%d_%H-%M)
-DB_PATH="/home/ubuntu/acar/backend/db.sqlite3"
-MEDIA_PATH="/home/ubuntu/acar/backend/media"
+DB_PATH="/home/ubuntu/drivebase/backend/db.sqlite3"
+MEDIA_PATH="/home/ubuntu/drivebase/backend/media"
 
 mkdir -p "$BACKUP_DIR"
 
@@ -380,7 +380,7 @@ EMAIL_HOST_USER=your-email@gmail.com
 EMAIL_HOST_PASSWORD=your-16-char-app-password
 
 # Tell Django to use production settings
-DJANGO_SETTINGS_MODULE=acar.settings_prod
+DJANGO_SETTINGS_MODULE=drivebase.settings_prod
 ```
 
 ---
@@ -412,7 +412,7 @@ scripts/*.log
 - Do NOT run any commands
 - Do NOT try to connect to any server
 - Do NOT modify `settings.py` (the original) — only `settings_prod.py` is new
-- Do NOT touch `backend/acar/urls.py`
+- Do NOT touch `backend/drivebase/urls.py`
 - Do NOT touch `vite.config.ts` — build output path is already correct (`../backend/static/dist`)
 
 ---
@@ -424,7 +424,7 @@ After creating all files, confirm:
 - [ ] `Dockerfile` exists at project root
 - [ ] `docker-compose.yml` exists at project root
 - [ ] `nginx/nginx.conf` exists
-- [ ] `backend/acar/settings_prod.py` exists
+- [ ] `backend/drivebase/settings_prod.py` exists
 - [ ] `backend/requirements.txt` has `whitenoise` and `gunicorn` added
 - [ ] `.github/workflows/deploy.yml` exists
 - [ ] `scripts/backup.sh` exists

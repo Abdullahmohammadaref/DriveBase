@@ -1,7 +1,7 @@
 /**
  * Vehicle Financial Calculations — Pure Utility Functions
  *
- * Every financial variable in the ACAR system is computed here.
+ * Every financial variable in the DriveBase system is computed here.
  * All pages import from this single source. No calculation logic
  * is duplicated across components.
  *

@@ -1,9 +1,9 @@
 """
-ACAR Dealership OS - Master Choices Seeding CLI
+DriveBase Dealership OS - Master Choices Seeding CLI
 ===============================================
 CLI runner to seed/synchronize all standard choices for a dealership business:
   Tier 1: mobile.de Marketplace Choices (Makes, Models, Body Types, Colors, Fuel Types, Doors)
-  Tier 2: ACAR-Internal Choices (Countries, Cities, Payment Methods, Tax Percentages,
+  Tier 2: DriveBase-Internal Choices (Countries, Cities, Payment Methods, Tax Percentages,
           Vehicle Types, Damage Types, Categories, Subcategories, Key Numbers)
 
 Usage:
@@ -19,7 +19,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "acar.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "drivebase.settings")
 import django
 django.setup()
 
@@ -29,14 +29,14 @@ from manager.services.choices_seeder import seed_choices_for_business
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Seed standard choice options for ACAR Dealership OS.")
+    parser = argparse.ArgumentParser(description="Seed standard choice options for DriveBase Dealership OS.")
     parser.add_argument("--business-id", type=int, default=1, help="Business ID to seed choices for (default: 1)")
     parser.add_argument("--all-businesses", action="store_true", help="Seed choices for ALL businesses in the database")
 
     args = parser.parse_args()
 
     print("=================================================================")
-    print("  ACAR Dealership OS - Choices Seeding & Disaster Recovery")
+    print("  DriveBase Dealership OS - Choices Seeding & Disaster Recovery")
     print("=================================================================")
 
     if args.all_businesses:

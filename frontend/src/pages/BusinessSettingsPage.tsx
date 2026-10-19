@@ -281,7 +281,7 @@ export default function BusinessSettingsPage() {
             
             // Get content-disposition header if available to extract filename
             const contentDisposition = response.headers["content-disposition"]
-            let filename = `acar_backup_${business?.name?.toLowerCase().replace(/\s+/g, "_") || "business"}.zip`
+            let filename = `drivebase_backup_${business?.name?.toLowerCase().replace(/\s+/g, "_") || "business"}.zip`
             if (contentDisposition) {
                 const match = contentDisposition.match(/filename="?([^";]+)"?/)
                 if (match && match[1]) {

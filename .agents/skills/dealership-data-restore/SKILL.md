@@ -1,15 +1,15 @@
 ---
 name: dealership-data-restore
-description: Disaster recovery and database restoration runbook for ACAR Dealership Operating System. Restores exported backup ZIP archives containing vehicles, transactions, legal entities, choices, and media assets safely with automated safety snapshots and foreign-key integrity.
+description: Disaster recovery and database restoration runbook for DriveBase Dealership Operating System. Restores exported backup ZIP archives containing vehicles, transactions, legal entities, choices, and media assets safely with automated safety snapshots and foreign-key integrity.
 ---
 
 # Dealership Data Restore & Disaster Recovery Runbook
 
-This skill provides comprehensive instructions for executing full business data restoration from exported ACAR backup ZIP archives (`acar_backup_[business_name]_[date].zip`).
+This skill provides comprehensive instructions for executing full business data restoration from exported DriveBase backup ZIP archives (`drivebase_backup_[business_name]_[date].zip`).
 
 ## 1. Overview & Safety Architecture
 
-The ACAR restore system is designed with enterprise-grade safety protections:
+The DriveBase restore system is designed with enterprise-grade safety protections:
 - **Automatic Pre-Restore Safety Snapshot**: Before modifying or truncating any business data, the script automatically takes a timestamped copy of `db.sqlite3` (`db.sqlite3.pre_restore_YYYYMMDD_HHMMSS.bak`).
 - **Atomic Database Transactions**: The entire restoration executes inside Django's `transaction.atomic()`. Any schema, foreign key, or file extraction failure triggers a 100% clean rollback.
 - **Dry-Run Validation Mode**: Use `--dry-run` to validate backup ZIP archive integrity, inspect record counts, and simulate re-ingestion without committing changes to disk.
@@ -55,7 +55,7 @@ cd backend
 **Expected Dry-Run Output:**
 ```
 ========================================================
-  ACAR DEALERSHIP DISASTER RECOVERY RESTORE
+  DriveBase DEALERSHIP DISASTER RECOVERY RESTORE
   Target Business ID: 1
   Archive: C:\path\to\backup.zip
   Dry Run: True
@@ -89,7 +89,7 @@ The script will:
 Run Django shell to verify vehicle and transaction counts:
 
 ```bash
-..\acar_venv\Scripts\python.exe -c "import django, os; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'acar.settings'); django.setup(); from manager.models import Vehicle, Transaction; print('Vehicles:', Vehicle.objects.filter(business_id=1).count()); print('Transactions:', Transaction.objects.filter(business_id=1).count())"
+..\acar_venv\Scripts\python.exe -c "import django, os; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'drivebase.settings'); django.setup(); from manager.models import Vehicle, Transaction; print('Vehicles:', Vehicle.objects.filter(business_id=1).count()); print('Transactions:', Transaction.objects.filter(business_id=1).count())"
 ```
 
 ---

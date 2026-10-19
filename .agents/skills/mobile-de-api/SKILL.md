@@ -5,7 +5,7 @@ description: Comprehensive guide and technical manual for interacting with the m
 
 # mobile.de REST API Engineering Skill
 
-This skill documents how the ACAR Dealership Operating System interacts with Germany's largest automotive marketplace, **mobile.de**, via its official REST API.
+This skill documents how the DriveBase Dealership Operating System interacts with Germany's largest automotive marketplace, **mobile.de**, via its official REST API.
 
 ---
 
@@ -33,7 +33,7 @@ Accept-Language: de
 ```
 
 ### Self-Uploading Dealers:
-- In ACAR, each dealership business has its own `mobileSellerId`, `api_username`, and `api_password`.
+- In DriveBase, each dealership business has its own `mobileSellerId`, `api_username`, and `api_password`.
 - All seller endpoints follow: `/seller-api/sellers/{mobileSellerId}/...`
 - The `mobileSellerId` is an internal integer distinct from the public customer number (`Kundennummer`).
 
@@ -147,7 +147,7 @@ Images cannot be sent inline in the ad JSON. Instead, follow this 2-step process
       { "ref": "https://services.mobile.de/seller-api/sellers/12345/images/987654321" }
     ],
     "customProperties": {
-      "internalId": "ACAR-1042"
+      "internalId": "DriveBase-1042"
     }
   }
 }
@@ -168,15 +168,15 @@ Call `GET /seller-api/sellers/{sellerId}/ads/{adId}/pricerating`:
 
 ---
 
-## 7. Business Rules in ACAR
+## 7. Business Rules in DriveBase
 
 1. **Eligibility Gate**:
    - Vehicle must be in status `ready_for_sale` or `reserved`.
    - Dealership must have valid mobile.de credentials in Business Settings.
    - If not met, the "List on mobile.de" button remains gray/disabled with an informative tooltip/toast.
 2. **Automatic Delisting**:
-   - When a vehicle transitions to `sold` or is deleted in ACAR, send `DELETE /seller-api/sellers/{sellerId}/ads/{adId}` automatically so sold inventory is never left active online.
+   - When a vehicle transitions to `sold` or is deleted in DriveBase, send `DELETE /seller-api/sellers/{sellerId}/ads/{adId}` automatically so sold inventory is never left active online.
 3. **Field Synchronization**:
-   - Any modifications made in the listing modal (price, mileage, specs) synchronize immediately to the ACAR database upon publishing.
+   - Any modifications made in the listing modal (price, mileage, specs) synchronize immediately to the DriveBase database upon publishing.
 4. **Clean UI Isolation**:
    - Marketplace-specific attributes (Transmission, HU date, features list, EnVKV stats) do NOT clutter the general `VehicleForm.tsx`. They only appear inside `MobileDeListingModal.tsx`.

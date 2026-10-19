@@ -201,7 +201,7 @@ class MobileDeVehicleEndpointsTests(BaseTestCase):
 
     def test_automatic_delist_on_sold_status(self):
         """
-        When a vehicle is marked sold in ACAR, it must automatically
+        When a vehicle is marked sold in DriveBase, it must automatically
         delist from mobile.de via model save hook.
         """
         self.vehicle_a.status = "ready_for_sale"

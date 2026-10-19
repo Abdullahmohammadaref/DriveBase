@@ -969,7 +969,7 @@ def export_business_data(request: HttpRequest):
     # Prepare response
     zip_buffer.seek(0)
     date_str = __import__('datetime').date.today().isoformat()
-    filename = f"acar_export_{business.name.lower().replace(' ', '_')}_{date_str}.zip"
+    filename = f"drivebase_export_{business.name.lower().replace(' ', '_')}_{date_str}.zip"
     
     response = HttpResponse(zip_buffer.read(), content_type='application/zip')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'

@@ -1,5 +1,5 @@
 """
-URL configuration for acar project.
+URL configuration for DriveBase project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.2/topics/http/urls/
@@ -21,6 +21,7 @@ from django.conf.urls.static import static
 from django.conf.urls.i18n import i18n_patterns
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.middleware.csrf import get_token
 
 # Django Ninja API
 from ninja import NinjaAPI
@@ -37,10 +38,13 @@ from manager.dashboard_api import dashboard_router
 @ensure_csrf_cookie
 def get_csrf_token(request):
     """
-    Returns a simple JSON response and ensures the CSRF cookie is set.
-    The @ensure_csrf_cookie decorator forces Django to set the cookie.
+    Returns a simple JSON response, ensures the CSRF cookie is set,
+    and returns csrfToken in the response body for desktop/webview clients.
     """
-    return JsonResponse({"detail": "CSRF cookie set"})
+    return JsonResponse({
+        "detail": "CSRF cookie set",
+        "csrfToken": get_token(request),
+    })
 
 
 # Create API instance with session authentication

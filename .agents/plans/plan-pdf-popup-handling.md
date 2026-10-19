@@ -10,7 +10,7 @@
 
 ## Context Summary
 
-ACAR generates PDFs for vehicle documents. The `ContractModal` is a multi-step wizard:
+DriveBase generates PDFs for vehicle documents. The `ContractModal` is a multi-step wizard:
 - Step 1: Buy Documents vs Sale Documents
 - Step 2 (sale only): EU Country vs Outside EU
 - Step 3 (sale only): Sales Agreement (2 PDFs) / Receipt (2 PDFs) / Binding Order (1 PDF)

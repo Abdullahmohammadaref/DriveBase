@@ -12,7 +12,7 @@
 The server is running **Oracle Linux 9**, not Ubuntu. This changes nothing about:
 - The `Dockerfile` (runs Ubuntu internally — Docker doesn't care about host OS)
 - `nginx/nginx.conf` (Nginx config is OS-agnostic)
-- `backend/acar/settings_prod.py` (pure Python — OS-agnostic)
+- `backend/drivebase/settings_prod.py` (pure Python — OS-agnostic)
 - `backend/requirements.txt` (Python packages — OS-agnostic)
 - `docker-compose.yml` (Docker — OS-agnostic)
 
@@ -52,17 +52,17 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             set -e
-            cd /home/opc/acar
+            cd /home/opc/drivebase
 
             echo "=== Pulling latest code ==="
             git pull origin main
 
             echo "=== Pulling private files ==="
-            cd /home/opc/acar-private
+            cd /home/opc/drivebase-private
             git pull origin main
-            cp -r backend/manager/pdf_generators/*.py /home/opc/acar/backend/manager/pdf_generators/ 2>/dev/null || true
-            cp -r backend/manager/templates/ /home/opc/acar/backend/manager/ 2>/dev/null || true
-            cd /home/opc/acar
+            cp -r backend/manager/pdf_generators/*.py /home/opc/drivebase/backend/manager/pdf_generators/ 2>/dev/null || true
+            cp -r backend/manager/templates/ /home/opc/drivebase/backend/manager/ 2>/dev/null || true
+            cd /home/opc/drivebase
 
             echo "=== Building React frontend ==="
             cd frontend
@@ -78,10 +78,10 @@ jobs:
             sleep 5
 
             echo "=== Running migrations ==="
-            docker compose exec -T django python manage.py migrate --noinput --settings=acar.settings_prod
+            docker compose exec -T django python manage.py migrate --noinput --settings=drivebase.settings_prod
 
             echo "=== Collecting static ==="
-            docker compose exec -T django python manage.py collectstatic --noinput --settings=acar.settings_prod
+            docker compose exec -T django python manage.py collectstatic --noinput --settings=drivebase.settings_prod
 
             echo "=== Deploy complete ==="
 ```
@@ -96,15 +96,15 @@ Replace the entire file content with this. The only changes are `/home/ubuntu/` 
 
 ```bash
 #!/bin/bash
-# ACAR Daily Backup
-# Cron: 0 3 * * * /home/opc/acar/scripts/backup.sh >> /home/opc/backups/backup.log 2>&1
+# DriveBase Daily Backup
+# Cron: 0 3 * * * /home/opc/drivebase/scripts/backup.sh >> /home/opc/backups/backup.log 2>&1
 
 set -e
 
 BACKUP_DIR="/home/opc/backups"
 DATE=$(date +%Y-%m-%d_%H-%M)
-DB_PATH="/home/opc/acar/backend/db.sqlite3"
-MEDIA_PATH="/home/opc/acar/backend/media"
+DB_PATH="/home/opc/drivebase/backend/db.sqlite3"
+MEDIA_PATH="/home/opc/drivebase/backend/media"
 
 mkdir -p "$BACKUP_DIR"
 

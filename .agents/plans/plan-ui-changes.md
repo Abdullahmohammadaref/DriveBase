@@ -9,7 +9,7 @@
 
 ## Context Summary
 
-ACAR is a single-business vehicle management system. The stack is Django + React 19 + TypeScript + Tailwind CSS v4 + shadcn/ui. The manager uses light mode on a large monitor. All changes in this plan are **light-mode-only** unless explicitly noted. Dark mode must not be touched.
+DriveBase is a single-business vehicle management system. The stack is Django + React 19 + TypeScript + Tailwind CSS v4 + shadcn/ui. The manager uses light mode on a large monitor. All changes in this plan are **light-mode-only** unless explicitly noted. Dark mode must not be touched.
 
 This plan covers 4 independent features. Implement them in order — each is self-contained but later ones build on established patterns from earlier ones.
 

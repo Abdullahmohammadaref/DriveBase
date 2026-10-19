@@ -9,7 +9,7 @@
 
 ## Context Summary
 
-ACAR is a single-business vehicle management system. Stack: Django + React 19 + TypeScript + Tailwind CSS v4 + shadcn/ui. This plan covers two bug fixes on the Choices Management page and one new model + field feature (Key Number). Do the fixes first — they are isolated. The Key Number feature touches the most files and should be done last.
+DriveBase is a single-business vehicle management system. Stack: Django + React 19 + TypeScript + Tailwind CSS v4 + shadcn/ui. This plan covers two bug fixes on the Choices Management page and one new model + field feature (Key Number). Do the fixes first — they are isolated. The Key Number feature touches the most files and should be done last.
 
 ---
 

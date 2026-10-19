@@ -181,7 +181,7 @@ Below is the standard JSON structure expected by `POST /seller-api/sellers/{sell
       }
     ],
     "customProperties": {
-      "internalId": "ACAR-1042"
+      "internalId": "DB-1042"
     }
   }
 }

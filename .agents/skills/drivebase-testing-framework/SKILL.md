@@ -1,11 +1,11 @@
 ---
-name: acar-testing-framework
-description: Master architectural and execution guide for the ACAR Dealership Operating System End-to-End (E2E) and Integration Testing Suite. Covers Playwright setup, Page Object Models (POM), zero-latency email interception, PDF byte inspection, session persistence, and maintenance workflows.
+name: drivebase-testing-framework
+description: Master architectural and execution guide for the DriveBase Dealership Operating System End-to-End (E2E) and Integration Testing Suite. Covers Playwright setup, Page Object Models (POM), zero-latency email interception, PDF byte inspection, session persistence, and maintenance workflows.
 ---
 
-# ACAR Dealership Testing Framework & Maintenance Runbook
+# DriveBase Dealership Testing Framework & Maintenance Runbook
 
-This skill documents the complete test engineering architecture, Page Object Model (POM) pattern, execution workflows, and maintenance guides for the **ACAR Dealership Operating System**.
+This skill documents the complete test engineering architecture, Page Object Model (POM) pattern, execution workflows, and maintenance guides for the **DriveBase Dealership Operating System**.
 
 ---
 
@@ -36,7 +36,7 @@ frontend/
 ## 2. Key Testing Innovations
 
 ### 2.1 Zero-Latency Mailbox Interceptor
-Rather than polling third-party SMTP servers or waiting for external email round-trips, ACAR uses an in-memory interceptor backed by `django.core.mail.outbox`:
+Rather than polling third-party SMTP servers or waiting for external email round-trips, DriveBase uses an in-memory interceptor backed by `django.core.mail.outbox`:
 - **API Endpoint**: `GET /api/auth/test-outbox`
 - **Clearing**: `POST /api/auth/test-outbox/clear`
 - **Capabilities**: Captures verification tokens, 2FA login approval URLs, password reset links, and employee login approval requests in under 5 milliseconds.
@@ -104,7 +104,7 @@ npx playwright show-trace test-results/.../trace.zip
 ## 4. UI Maintenance Guidelines
 
 ### Updating Selectors for Radix UI Dropdowns
-ACAR uses Radix UI popovers for choices (`DynamicSelect.tsx`):
+DriveBase uses Radix UI popovers for choices (`DynamicSelect.tsx`):
 - **Combobox Triggers**: Located inside `FieldWrapper` (`div.min-w-0:has(> label)`).
 - **Targeting specific fields**:
   ```typescript

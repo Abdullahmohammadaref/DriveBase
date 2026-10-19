@@ -1,6 +1,20 @@
 import { Navigate, Outlet, useParams } from "react-router-dom"
 import { Loader2 } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { useAuth } from "@/lib/auth"
+import { SUPPORTED_LOCALES, DEFAULT_LOCALE, type SupportedLocale } from "@/lib/i18n"
+
+/**
+ * Helper to construct the dashboard route respecting current locale
+ */
+export function getDashboardPath(businessSlug: string, locale?: string): string {
+    const currentLocale = (locale && (SUPPORTED_LOCALES as readonly string[]).includes(locale))
+        ? (locale as SupportedLocale)
+        : DEFAULT_LOCALE
+    return currentLocale === DEFAULT_LOCALE
+        ? `/${businessSlug}/dashboard`
+        : `/${businessSlug}/${currentLocale}/dashboard`
+}
 
 /**
  * Protected route wrapper that:
@@ -57,6 +71,7 @@ export function ProtectedRoute() {
  */
 export function RootRedirect() {
     const { isAuthenticated, isLoading, user } = useAuth()
+    const { i18n } = useTranslation()
 
     if (isLoading) {
         return (
@@ -68,9 +83,35 @@ export function RootRedirect() {
 
     // If authenticated AND has a valid business, redirect to dashboard
     if (isAuthenticated && user && user.business_slug) {
-        return <Navigate to={`/${user.business_slug}/dashboard`} replace />
+        return <Navigate to={getDashboardPath(user.business_slug, i18n.language)} replace />
     }
 
     // Not authenticated or no business - redirect to login
     return <Navigate to="/login" replace />
+}
+
+/**
+ * Route wrapper for public auth pages (login, register, recovery, etc.)
+ * Redirects authenticated users back to their dashboard.
+ */
+export function PublicOnlyRoute() {
+    const { isAuthenticated, isLoading, user } = useAuth()
+    const { i18n } = useTranslation()
+
+    // Show spinner inside auth container while checking authentication
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        )
+    }
+
+    // If already authenticated with business, redirect to dashboard
+    if (isAuthenticated && user && user.business_slug) {
+        return <Navigate to={getDashboardPath(user.business_slug, i18n.language)} replace />
+    }
+
+    // Unauthenticated guest - render auth page
+    return <Outlet />
 }

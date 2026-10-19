@@ -25,35 +25,35 @@ jobs:
             set -e
             
             echo "=== Pulling latest code ==="
-            cd /home/ubuntu/acar
+            cd /home/ubuntu/drivebase
             git fetch --all
             git reset --hard origin/master
             
             echo "=== Pulling private files ==="
-            cd /home/ubuntu/acar-private
+            cd /home/ubuntu/drivebase-private
             git pull  # Automatically pulls whatever the default branch is for your private repo
-            cp -r pdf_generators/ /home/ubuntu/acar/backend/manager/
+            cp -r pdf_generators/ /home/ubuntu/drivebase/backend/manager/
             
             echo "=== Building React frontend ==="
-            cd /home/ubuntu/acar/frontend
+            cd /home/ubuntu/drivebase/frontend
             npm ci --prefer-offline
             NODE_OPTIONS=--max-old-space-size=4096 npm run build
 
             echo "=== Moving Frontend Dist to Staticfiles ==="
             # Remove the old dist folder to prevent junk buildup, then copy the new one over
-            rm -rf /home/ubuntu/acar/backend/staticfiles/dist
+            rm -rf /home/ubuntu/drivebase/backend/staticfiles/dist
             # Copy the newly built folder from where Vite actually put it
-            cp -r /home/ubuntu/acar/backend/static/dist /home/ubuntu/acar/backend/staticfiles/
+            cp -r /home/ubuntu/drivebase/backend/static/dist /home/ubuntu/drivebase/backend/staticfiles/
             
             echo "=== Rebuilding and Restarting Docker Containers ==="
-            cd /home/ubuntu/acar
+            cd /home/ubuntu/drivebase
             docker compose down
             docker compose up -d --build
             
             echo "=== Running migrations ==="
-            docker compose exec -T django python manage.py migrate --noinput --settings=acar.settings_prod
+            docker compose exec -T django python manage.py migrate --noinput --settings=drivebase.settings_prod
             
             echo "=== Collecting static ==="
-            docker compose exec -T django python manage.py collectstatic --noinput --settings=acar.settings_prod
+            docker compose exec -T django python manage.py collectstatic --noinput --settings=drivebase.settings_prod
             
             echo "=== Deploy complete ==="

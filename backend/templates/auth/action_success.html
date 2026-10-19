@@ -3,74 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
+    <title>{{ title }} — DriveBase</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        slate: {
-                            950: '#0f172a',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
 </head>
-<body class="bg-slate-950 min-h-screen flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-        <!-- Icon -->
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4 antialiased text-slate-800">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-8 max-w-md w-full text-center">
+        <!-- Brand Header -->
+        <div class="mb-6 pb-4 border-b border-slate-100 flex items-center justify-center">
+            <span class="text-xl font-extrabold text-slate-900 tracking-tight">Drive<span class="text-blue-600">Base</span></span>
+        </div>
+
+        <!-- Status Icon -->
         {% if status == 'success' %}
-        <div class="mx-auto w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mb-6">
-            <svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        <div class="mx-auto w-16 h-16 bg-emerald-50 border border-emerald-200 rounded-full flex items-center justify-center mb-5 text-emerald-600">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
             </svg>
         </div>
         {% elif status == 'expired' %}
-        <div class="mx-auto w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mb-6">
-            <svg class="w-10 h-10 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="mx-auto w-16 h-16 bg-amber-50 border border-amber-200 rounded-full flex items-center justify-center mb-5 text-amber-600">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
         </div>
         {% else %}
-        <div class="mx-auto w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mb-6">
-            <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="mx-auto w-16 h-16 bg-rose-50 border border-rose-200 rounded-full flex items-center justify-center mb-5 text-rose-600">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
         </div>
         {% endif %}
 
         <!-- Title -->
-        <h1 class="text-2xl font-bold text-slate-100 mb-3">{{ title }}</h1>
+        <h1 class="text-2xl font-bold text-slate-900 mb-2">{{ title }}</h1>
 
         <!-- Message -->
-        <p class="text-slate-400 mb-6">{{ message }}</p>
+        <p class="text-sm text-slate-600 leading-relaxed mb-6">{{ message }}</p>
 
         {% if action_type %}
         <!-- Action-specific info -->
-        <div class="bg-slate-800/50 rounded-lg p-4 mb-6">
-            {% if action_type == 'manager_login' or action_type == 'employee_login' %}
-            <p class="text-sm text-slate-300">
-                <span class="text-green-400">✓</span> The session has been activated on the original device.
-            </p>
-            {% elif action_type == 'password_reset' %}
-            <p class="text-sm text-slate-300">
-                <span class="text-green-400">✓</span> You can now set a new password on your original device.
-            </p>
-            {% elif action_type == 'verify_email' %}
-            <p class="text-sm text-slate-300">
-                <span class="text-green-400">✓</span> Your email has been verified.
-            </p>
-            {% endif %}
+        <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-4 mb-6 text-left flex items-start gap-3">
+            <div class="mt-0.5 text-emerald-600 font-bold shrink-0">✓</div>
+            <div class="text-sm text-slate-700 leading-snug">
+                {% if action_type == 'manager_login' or action_type == 'employee_login' %}
+                    The session has been activated on the original device.
+                {% elif action_type == 'password_reset' %}
+                    You can now set a new password on your original device.
+                {% elif action_type == 'verify_email' %}
+                    Your email has been verified.
+                {% endif %}
+            </div>
         </div>
         {% endif %}
 
         <!-- Close instruction -->
-        <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
-            <p class="text-sm text-slate-400">
+        <div class="bg-slate-100/70 rounded-xl py-3 px-4 border border-slate-200/60">
+            <p class="text-xs font-medium text-slate-500">
                 You can close this tab now.
             </p>
         </div>

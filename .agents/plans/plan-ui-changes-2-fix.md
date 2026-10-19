@@ -9,7 +9,7 @@
 
 ## Context Summary
 
-ACAR is a single-business vehicle management system. Stack: Django + React 19 + TypeScript + Tailwind CSS v4 + shadcn/ui. This plan addresses 8 issues reported after the previous `plan-ui-changes-2` work was applied. Two are compile-breaking syntax errors (items 7 and 8) — fix these first or the dev server won't start.
+DriveBase is a single-business vehicle management system. Stack: Django + React 19 + TypeScript + Tailwind CSS v4 + shadcn/ui. This plan addresses 8 issues reported after the previous `plan-ui-changes-2` work was applied. Two are compile-breaking syntax errors (items 7 and 8) — fix these first or the dev server won't start.
 
 ---
 

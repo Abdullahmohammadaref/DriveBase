@@ -4,19 +4,16 @@ import { FileText, Globe, ArrowLeft, Receipt, ClipboardList, FileSignature, Aler
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import type { VehicleListItem } from "@/types/vehicle"
-
+import { resolvePdfUrl, type PdfEntry } from "@/lib/desktop/pdfHandler"
+import { PdfPreviewModal } from "@/components/common/PdfPreviewModal"
+ 
 interface ContractModalProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     vehicle: VehicleListItem | null
 }
 
-interface PdfEntry {
-    label: string        // e.g. "Sales Agreement", "Identity Check"
-    url: string          // full API URL, e.g. /api/vehicles/5/pdf/sale-agreement
-}
-
-type ModalStep = "choose-type" | "sale-region" | "sale-documents" | "download-ready"
+type ModalStep = "choose-type" | "sale-region" | "sale-documents"
 type SaleRegion = "eu" | "non-eu"
 
 /**
@@ -25,11 +22,7 @@ type SaleRegion = "eu" | "non-eu"
  * - Sale: EU/Non-EU wizard with 3 document options
  *
  * PDFs are generated via backend API endpoints at /api/vehicles/{id}/pdf/{type}
- * and opened directly in a new browser tab.
- *
- * After the user picks a document option, a "download-ready" step renders individual
- * download buttons for each PDF as a guaranteed fallback against popup blockers.
- * The modal also attempts to open tabs programmatically (best-effort).
+ * and opened in the in-app document previewer modal.
  */
 export function ContractModal({
     open,
@@ -39,8 +32,9 @@ export function ContractModal({
     const { t } = useTranslation()
     const [step, setStep] = useState<ModalStep>("choose-type")
     const [saleRegion, setSaleRegion] = useState<SaleRegion | null>(null)
-    const [pendingPdfs, setPendingPdfs] = useState<PdfEntry[]>([])
     const [originStep, setOriginStep] = useState<ModalStep>("choose-type")
+    const [previewOpen, setPreviewOpen] = useState(false)
+    const [previewDocs, setPreviewDocs] = useState<PdfEntry[]>([])
 
     // Helper to get missing fields for Buy Contract
     const getMissingBuyFields = () => {
@@ -76,15 +70,15 @@ export function ContractModal({
         if (!isOpen) {
             setStep("choose-type")
             setSaleRegion(null)
-            setPendingPdfs([])
             setOriginStep("choose-type")
+            setPreviewOpen(false)
         }
         onOpenChange(isOpen)
     }
 
     // Helper: build API PDF URL
     const pdfUrl = (type: string, params?: Record<string, string>) => {
-        let url = `/api/vehicles/${vehicle?.internal_id}/pdf/${type}`
+        let url = `/vehicles/${vehicle?.internal_id}/pdf/${type}`
         if (params) {
             const query = new URLSearchParams(params).toString()
             if (query) url += `?${query}`
@@ -94,29 +88,21 @@ export function ContractModal({
 
     /**
      * Core PDF generation handler.
-     * 1. Attempts to open each PDF in a new tab (best-effort — may be blocked).
-     * 2. Always transitions to the "download-ready" step with individual download buttons.
+     * Directly opens the in-app document previewer modal with Access-style multi-doc tabs.
      */
     const triggerPdfGeneration = (pdfs: PdfEntry[], fromStep: ModalStep) => {
         if (!vehicle?.internal_id) return
 
-        // Best-effort: try to open all tabs at once
-        // Browsers will block all but the first — that's expected, the buttons are the real fallback
-        pdfs.forEach((pdf, index) => {
-            const link = document.createElement("a")
-            link.href = pdf.url
-            link.target = `pdf-tab-${Date.now()}-${index}`
-            link.rel = "noopener noreferrer"
-            link.style.display = "none"
-            document.body.appendChild(link)
-            link.click()
-            document.body.removeChild(link)
-        })
-
-        // Always show the download-ready step regardless of whether tabs opened
+        const resolved = pdfs.map((pdf) => ({ ...pdf, url: resolvePdfUrl(pdf.url) }))
+        setPreviewDocs(resolved)
         setOriginStep(fromStep)
-        setPendingPdfs(pdfs)
-        setStep("download-ready")
+        // Directly open the in-app document previewer
+        setPreviewOpen(true)
+    }
+
+    const handlePreviewBack = () => {
+        setPreviewOpen(false)
+        setStep(originStep)
     }
 
     const handleBuyContract = (e: React.MouseEvent) => {
@@ -171,10 +157,7 @@ export function ContractModal({
 
     // Go back one step
     const handleBack = () => {
-        if (step === "download-ready") {
-            setStep(originStep)
-            setPendingPdfs([])
-        } else if (step === "sale-documents") {
+        if (step === "sale-documents") {
             setStep("sale-region")
             setSaleRegion(null)
         } else if (step === "sale-region") {
@@ -185,7 +168,8 @@ export function ContractModal({
     if (!vehicle) return null
 
     return (
-        <Dialog open={open} onOpenChange={handleOpenChange}>
+        <>
+        <Dialog open={open && !previewOpen} onOpenChange={handleOpenChange}>
             <DialogContent className="sm:max-w-[450px]">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
@@ -354,42 +338,26 @@ export function ContractModal({
                         </div>
                     )}
 
-                    {/* Step 4: Download Ready — PDF buttons + popup hint */}
-                    {step === "download-ready" && (
-                        <div className="space-y-3">
-                            <p className="text-sm text-muted-foreground">
-                                {pendingPdfs.length === 1
-                                    ? t("contracts.docReadySingle", "Your document is ready. Click below to open it.")
-                                    : t("contracts.docReadyMultiple", "Your {{count}} documents are ready. Open each one below.", { count: pendingPdfs.length })}
-                            </p>
-
-                            {/* One download button per PDF */}
-                            <div className="space-y-2">
-                                {pendingPdfs.map((pdf, index) => (
-                                    <a
-                                        key={index}
-                                        href={pdf.url}
-                                        target={`pdf-download-${index}`}
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-3 w-full rounded-lg border border-border bg-card px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/50 hover:border-primary/40 transition-colors"
-                                    >
-                                        <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                        <span>{pdf.label}</span>
-                                        <span className="ml-auto text-xs text-muted-foreground">{t("contracts.openPdfLink", "Open PDF →")}</span>
-                                    </a>
-                                ))}
-                            </div>
-
-                            {/* Quiet popup hint — only shown if there are multiple PDFs */}
-                            {pendingPdfs.length > 1 && (
-                                <p className="text-xs text-muted-foreground pt-1 border-t border-border">
-                                    {t("contracts.popupHint", "If a PDF didn't open automatically, use the buttons above. You may need to allow pop-ups for this site in your browser settings.")}
-                                </p>
-                            )}
-                        </div>
-                    )}
                 </div>
             </DialogContent>
         </Dialog>
+
+        {/* Access-style In-App Document Previewer */}
+        <PdfPreviewModal
+            open={previewOpen}
+            onOpenChange={(isOpen) => {
+                setPreviewOpen(isOpen)
+                if (!isOpen) {
+                    setStep("choose-type")
+                    setSaleRegion(null)
+                    setOriginStep("choose-type")
+                    onOpenChange(false)
+                }
+            }}
+            onBack={handlePreviewBack}
+            title={`${vehicle.make_name || ""} ${vehicle.model_name || ""} (ID: ${vehicle.internal_id})`}
+            documents={previewDocs}
+        />
+        </>
     )
 }

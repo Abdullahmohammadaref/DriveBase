@@ -26,9 +26,9 @@
 ## Project Structure
 
 ```
-acar/
+drivebase/
 ├── backend/
-│   ├── acar/                  # Django project config (settings, main urls.py)
+│   ├── drivebase/             # Django project config (settings, main urls.py)
 │   ├── manager/               # The single Django app — all logic lives here
 │   │   ├── models.py          # All database models
 │   │   ├── api.py             # Choices + misc vehicle endpoints (Ninja router)
@@ -88,7 +88,7 @@ def my_view(request: HttpRequest, param: str = Query(...)):
     ...
 ```
 
-All routers are mounted in `backend/acar/urls.py` under `/api/`. Routers requiring auth use `auth=django_auth`. The auth router (`auth_api.py`) has no auth requirement on public endpoints.
+All routers are mounted in `backend/drivebase/urls.py` under `/api/`. Routers requiring auth use `auth=django_auth`. The auth router (`auth_api.py`) has no auth requirement on public endpoints.
 
 ### Frontend: Always use `api` from `lib/api.ts`
 

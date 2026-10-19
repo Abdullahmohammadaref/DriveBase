@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { SUPPORTED_LOCALES, DEFAULT_LOCALE, type SupportedLocale } from "@/lib/i18n"
 import { useAuth } from "@/lib/auth"
+import drivebaseIcon from "@/assets/logo/drivebase-icon.svg"
 
 interface NavItem {
     titleKey: string
@@ -190,10 +191,16 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                                     alt={user.business_name || "Logo"}
                                     className="h-14 max-h-14 w-auto max-w-full object-contain"
                                 />
-                            ) : (
+                            ) : user?.business_name ? (
                                 <span className="text-sm font-bold text-gray-900 dark:text-foreground truncate text-center w-full">
-                                    {user?.business_name || "ACAR"}
+                                    {user.business_name}
                                 </span>
+                            ) : (
+                                <img
+                                    src={drivebaseIcon}
+                                    alt="DriveBase"
+                                    className="h-8 w-auto object-contain"
+                                />
                             )}
                         </Link>
                     )}
@@ -206,8 +213,12 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                                     className="max-h-9 max-w-[44px] w-auto h-auto object-contain rounded"
                                 />
                             ) : (
-                                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-600">
-                                    <Car className="h-4 w-4 text-white" />
+                                <div className="flex h-9 w-9 items-center justify-center">
+                                    <img
+                                        src={drivebaseIcon}
+                                        alt="DriveBase"
+                                        className="h-7 w-auto object-contain"
+                                    />
                                 </div>
                             )}
                         </Link>

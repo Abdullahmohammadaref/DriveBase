@@ -159,7 +159,13 @@ def create_auth_request(user, action_type: str, payload: dict = None, ip_address
     )
 
 
-def send_auth_email(recipient_email: str, subject: str, action_url: str, message_html: str):
+def send_auth_email(
+    recipient_email: str,
+    subject: str,
+    action_url: str,
+    message_html: str,
+    ref_code: Optional[str] = None
+):
     """Send an authentication email with an action link."""
     sender_email = (
         getattr(settings, "EMAIL_FROM", "")
@@ -173,11 +179,34 @@ def send_auth_email(recipient_email: str, subject: str, action_url: str, message
     if not recipient_email:
         raise ValueError("Recipient email is not configured.")
 
+    if not ref_code:
+        ref_code = secrets.token_hex(3).upper()
+
+    # Always ensure subject has a unique security reference code to prevent Gmail thread grouping
+    if f"(Ref: #{ref_code})" not in subject and f"Ref: #{ref_code}" not in subject:
+        email_subject = f"[DriveBase] {subject} (Ref: #{ref_code})"
+    else:
+        email_subject = f"[DriveBase] {subject}"
+
+    # Build clean plain-text fallback that includes the actual URL and reference code
+    plain_text = (
+        f"DriveBase — {subject}\n\n"
+        f"Please complete your action using the secure link below:\n"
+        f"{action_url}\n\n"
+        f"Security Reference: #{ref_code}\n\n"
+        f"If you did not request this, please ignore this email.\n"
+        f"© DriveBase Dealership Management. All rights reserved."
+    )
+
     email_message = EmailMultiAlternatives(
-        subject=f"[ACAR] {subject}",
-        body=strip_tags(message_html),
+        subject=email_subject,
+        body=plain_text,
         from_email=sender_email,
         to=[recipient_email],
+        headers={
+            "Auto-Submitted": "auto-generated",
+            "X-Auto-Response-Suppress": "All",
+        }
     )
     email_message.attach_alternative(message_html, "text/html")
     email_message.send()
@@ -215,31 +244,58 @@ def find_user_by_login_identifier(email: Optional[str] = None, username: Optiona
     return None, "Email or username is required"
 
 
-def build_email_html(title: str, body: str, button_text: str, button_url: str, expiry_mins: int = 5) -> str:
-    """Build a consistent email HTML template."""
-    return f"""
-    <html>
-    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #1a1a2e;">{title}</h2>
-        <p>{body}</p>
-        <p style="text-align: center; margin: 30px 0;">
+def build_email_html(
+    title: str,
+    body: str,
+    button_text: str,
+    button_url: str,
+    expiry_mins: int = 5,
+    ref_code: Optional[str] = None
+) -> str:
+    """Build a consistent email HTML template with DriveBase branding."""
+    ref_code = ref_code or secrets.token_hex(3).upper()
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title}</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1e293b; background-color: #f8fafc;">
+    <!-- Preheader preview text for email clients to prevent preview clipping and three-dot trimming -->
+    <div style="display: none; max-height: 0px; overflow: hidden; mso-hide: all; font-size: 1px; line-height: 1px; opacity: 0; color: #f8fafc;">
+        DriveBase: {title} (Valid for {expiry_mins} mins) &bull; Ref: #{ref_code}
+        &zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
+    </div>
+    <div style="background-color: #ffffff; border-radius: 12px; padding: 32px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div style="margin-bottom: 24px; border-bottom: 1px solid #f1f5f9; padding-bottom: 16px;">
+            <span style="font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">Drive<span style="color: #2563eb;">Base</span></span>
+        </div>
+        <h2 style="color: #0f172a; margin-top: 0; font-size: 20px; font-weight: 700;">{title}</h2>
+        <p style="font-size: 15px; line-height: 1.6; color: #334155;">{body}</p>
+        <p style="text-align: center; margin: 32px 0;">
             <a href="{button_url}" 
-               style="background-color: #4F46E5; color: white; padding: 14px 28px; 
-                      text-decoration: none; border-radius: 8px; font-weight: bold;
-                      display: inline-block;">
+               style="background-color: #2563eb; color: #ffffff; padding: 14px 28px; 
+                      text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;
+                      display: inline-block; box-shadow: 0 2px 4px rgba(37,99,235,0.2);">
                 {button_text}
             </a>
         </p>
-        <p style="color: #666; font-size: 14px;">
-            This link will expire in {expiry_mins} minutes.
+        <div style="margin-top: 24px; color: #64748b; font-size: 13px; line-height: 1.5;">
+            <p style="margin: 0 0 6px 0;">This link will expire in {expiry_mins} minutes.</p>
+            <p style="margin: 0; font-size: 12px; color: #94a3b8;">
+                Security Reference: <span style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-weight: 600; color: #475569; background-color: #f1f5f9; padding: 2px 6px; border-radius: 4px;">#{ref_code}</span>
+            </p>
+        </div>
+        <div style="height: 1px; background-color: #f1f5f9; margin: 24px 0 16px 0; line-height: 1px;"></div>
+        <p style="color: #94a3b8; font-size: 12px; line-height: 1.5; margin: 0;">
+            If you did not request this, please ignore this email.<br>
+            &copy; DriveBase Dealership Management. All rights reserved. &bull; Ref: #{ref_code}
         </p>
-        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-        <p style="color: #999; font-size: 12px;">
-            If you did not request this, please ignore this email.
-        </p>
-    </body>
-    </html>
-    """
+    </div>
+</body>
+</html>
+"""
 
 
 # =============================================================================
@@ -290,6 +346,7 @@ def request_login(request: HttpRequest, payload: LoginRequestPayload):
     # This bypasses React entirely - exactly like a curl request
     backend_url = get_backend_url()
     approval_url = f"{backend_url}/api/auth/approve/{auth_request.approval_token}"
+    ref_code = auth_request.request_id[:6].upper()
     
     # Determine email recipient and message
     if login_type == "employee":
@@ -300,10 +357,11 @@ def request_login(request: HttpRequest, payload: LoginRequestPayload):
         recipient_email = manager.email
         email_html = build_email_html(
             title="Employee Login Request",
-            body=f"<strong>{authenticated_user.username}</strong> is requesting to log in to ACAR.",
+            body=f"<strong>{authenticated_user.username}</strong> is requesting to log in to DriveBase.",
             button_text="Approve Login",
             button_url=approval_url,
-            expiry_mins=AUTH_REQUEST_EXPIRY_MINUTES
+            expiry_mins=AUTH_REQUEST_EXPIRY_MINUTES,
+            ref_code=ref_code,
         )
         email_subject = f"Login Request from {authenticated_user.username}"
     else:
@@ -314,12 +372,13 @@ def request_login(request: HttpRequest, payload: LoginRequestPayload):
             body="Click the button below to complete your login.",
             button_text="Complete Login",
             button_url=approval_url,
-            expiry_mins=AUTH_REQUEST_EXPIRY_MINUTES
+            expiry_mins=AUTH_REQUEST_EXPIRY_MINUTES,
+            ref_code=ref_code,
         )
         email_subject = "Login Verification"
 
     try:
-        send_auth_email(recipient_email, email_subject, approval_url, email_html)
+        send_auth_email(recipient_email, email_subject, approval_url, email_html, ref_code=ref_code)
     except Exception:
         logger.exception(
             "Failed to send %s email for user %s during login request.",
@@ -367,17 +426,19 @@ def request_password_reset(request: HttpRequest, payload: PasswordResetPayload):
     # CRITICAL: Email links must point directly to the backend API
     backend_url = get_backend_url()
     approval_url = f"{backend_url}/api/auth/approve/{auth_request.approval_token}"
+    ref_code = auth_request.request_id[:6].upper()
     
     email_html = build_email_html(
         title="Password Reset",
         body="Click the button below to reset your password.",
         button_text="Reset Password",
         button_url=approval_url,
-        expiry_mins=AUTH_REQUEST_EXPIRY_MINUTES
+        expiry_mins=AUTH_REQUEST_EXPIRY_MINUTES,
+        ref_code=ref_code,
     )
     
     try:
-        send_auth_email(user.email, "Password Reset", approval_url, email_html)
+        send_auth_email(user.email, "Password Reset", approval_url, email_html, ref_code=ref_code)
     except Exception:
         logger.exception("Failed to send password reset email for user %s.", user.pk)
         return 400, {"detail": "Failed to send email. Please try again."}
@@ -434,17 +495,19 @@ def request_email_change(request: HttpRequest, payload: EmailChangePayload):
     # CRITICAL: Email links must point directly to the backend API
     backend_url = get_backend_url()
     approval_url = f"{backend_url}/api/auth/approve/{auth_request.approval_token}"
+    ref_code = auth_request.request_id[:6].upper()
     
     email_html = build_email_html(
         title="Email Change Verification",
         body=f"Click the button below to verify changing your email to <strong>{new_email}</strong>.",
         button_text="Verify Email Change",
         button_url=approval_url,
-        expiry_mins=AUTH_REQUEST_EXPIRY_MINUTES
+        expiry_mins=AUTH_REQUEST_EXPIRY_MINUTES,
+        ref_code=ref_code,
     )
     
     try:
-        send_auth_email(backup_email, "Email Change Verification", approval_url, email_html)
+        send_auth_email(backup_email, "Email Change Verification", approval_url, email_html, ref_code=ref_code)
     except Exception:
         return 400, {"detail": "Failed to send verification email. Please try again."}
     
@@ -651,15 +714,17 @@ def approve_request(request: HttpRequest, token: str):
             # Send email to the NEW email address
             backend_url = get_backend_url()
             confirm_url = f"{backend_url}/api/auth/approve/{confirm_request.approval_token}"
+            ref_code = confirm_request.request_id[:6].upper()
             
             email_html = build_email_html(
                 title="Confirm Your New Email",
                 body=f"Click the button below to confirm that you own this email address for <strong>{username}</strong>'s account.",
                 button_text="Confirm Email",
                 button_url=confirm_url,
-                expiry_mins=AUTH_REQUEST_EXPIRY_MINUTES
+                expiry_mins=AUTH_REQUEST_EXPIRY_MINUTES,
+                ref_code=ref_code,
             )
-            send_auth_email(new_email, "Confirm Your New Email", confirm_url, email_html)
+            send_auth_email(new_email, "Confirm Your New Email", confirm_url, email_html, ref_code=ref_code)
             
             # Update original request to intermediate state
             # Store the new request_id in payload for frontend polling
@@ -719,14 +784,16 @@ def approve_request(request: HttpRequest, token: str):
             )
             backend_url = get_backend_url()
             confirm_url = f"{backend_url}/api/auth/approve/{confirm_request.approval_token}"
+            ref_code = confirm_request.request_id[:6].upper()
             email_html = build_email_html(
                 title="Confirm Your New Email",
                 body=f"Click the button below to confirm that <strong>{new_email}</strong> is your new email address.",
                 button_text="Confirm New Email",
                 button_url=confirm_url,
-                expiry_mins=AUTH_REQUEST_EXPIRY_MINUTES
+                expiry_mins=AUTH_REQUEST_EXPIRY_MINUTES,
+                ref_code=ref_code,
             )
-            send_auth_email(new_email, "Confirm Your New Email", confirm_url, email_html)
+            send_auth_email(new_email, "Confirm Your New Email", confirm_url, email_html, ref_code=ref_code)
             
             auth_request.payload = auth_request.payload or {}
             auth_request.payload['confirm_request_id'] = str(confirm_request.request_id)
@@ -775,14 +842,16 @@ def approve_request(request: HttpRequest, token: str):
             )
             backend_url = get_backend_url()
             confirm_url = f"{backend_url}/api/auth/approve/{confirm_request.approval_token}"
+            ref_code = confirm_request.request_id[:6].upper()
             email_html = build_email_html(
                 title="Confirm Your Backup Email",
                 body=f"Click the button below to confirm that <strong>{new_backup}</strong> is your new backup email.",
                 button_text="Confirm Backup Email",
                 button_url=confirm_url,
-                expiry_mins=AUTH_REQUEST_EXPIRY_MINUTES
+                expiry_mins=AUTH_REQUEST_EXPIRY_MINUTES,
+                ref_code=ref_code,
             )
-            send_auth_email(new_backup, "Confirm Your Backup Email", confirm_url, email_html)
+            send_auth_email(new_backup, "Confirm Your Backup Email", confirm_url, email_html, ref_code=ref_code)
             
             auth_request.payload = auth_request.payload or {}
             auth_request.payload['confirm_request_id'] = str(confirm_request.request_id)
@@ -832,14 +901,16 @@ def approve_request(request: HttpRequest, token: str):
                 )
                 backend_url = get_backend_url()
                 activate_url = f"{backend_url}/api/auth/approve/{admin_request.approval_token}"
+                ref_code = admin_request.request_id[:6].upper()
                 email_html = build_email_html(
                     title="New Manager Registration",
                     body=f"A new manager <strong>{user.username}</strong> ({user.email}) has registered and needs activation.",
                     button_text="Activate Account",
                     button_url=activate_url,
-                    expiry_mins=60 * 24  # 24 hours for admin
+                    expiry_mins=60 * 24,  # 24 hours for admin
+                    ref_code=ref_code,
                 )
-                send_auth_email(admin_email, f"New Registration: {user.username}", activate_url, email_html)
+                send_auth_email(admin_email, f"New Registration: {user.username}", activate_url, email_html, ref_code=ref_code)
             
             auth_request.status = 'waiting_for_admin'
             auth_request.save()
@@ -855,14 +926,16 @@ def approve_request(request: HttpRequest, token: str):
             )
             backend_url = get_backend_url()
             confirm_url = f"{backend_url}/api/auth/approve/{backup_request.approval_token}"
+            ref_code = backup_request.request_id[:6].upper()
             email_html = build_email_html(
                 title="Verify Your Backup Email",
                 body=f"Click the button below to verify your backup email for <strong>{user.username}</strong>'s account.",
                 button_text="Verify Backup Email",
                 button_url=confirm_url,
-                expiry_mins=AUTH_REQUEST_EXPIRY_MINUTES
+                expiry_mins=AUTH_REQUEST_EXPIRY_MINUTES,
+                ref_code=ref_code,
             )
-            send_auth_email(backup_email, "Verify Your Backup Email", confirm_url, email_html)
+            send_auth_email(backup_email, "Verify Your Backup Email", confirm_url, email_html, ref_code=ref_code)
             
             auth_request.payload = auth_request.payload or {}
             auth_request.payload['backup_request_id'] = str(backup_request.request_id)
@@ -889,14 +962,16 @@ def approve_request(request: HttpRequest, token: str):
             )
             backend_url = get_backend_url()
             activate_url = f"{backend_url}/api/auth/approve/{admin_request.approval_token}"
+            ref_code = admin_request.request_id[:6].upper()
             email_html = build_email_html(
                 title="New Manager Registration",
                 body=f"A new manager <strong>{user.username}</strong> ({user.email}) has registered and needs activation.",
                 button_text="Activate Account",
                 button_url=activate_url,
-                expiry_mins=60 * 24  # 24 hours for admin
+                expiry_mins=60 * 24,  # 24 hours for admin
+                ref_code=ref_code,
             )
-            send_auth_email(admin_email, f"New Registration: {user.username}", activate_url, email_html)
+            send_auth_email(admin_email, f"New Registration: {user.username}", activate_url, email_html, ref_code=ref_code)
         
         # Update original registration request to waiting_for_admin
         if original_request_id:
@@ -1133,17 +1208,19 @@ def register_manager(request: HttpRequest, payload: RegisterPayload):
     
     backend_url = get_backend_url()
     approval_url = f"{backend_url}/api/auth/approve/{auth_request.approval_token}"
+    ref_code = auth_request.request_id[:6].upper()
     
     email_html = build_email_html(
         title="Verify Your Email",
         body=f"Welcome <strong>{username}</strong>! Click the button below to verify your email address.",
         button_text="Verify Email",
         button_url=approval_url,
-        expiry_mins=AUTH_REQUEST_EXPIRY_MINUTES
+        expiry_mins=AUTH_REQUEST_EXPIRY_MINUTES,
+        ref_code=ref_code,
     )
     
     try:
-        send_auth_email(email, "Verify Your Email", approval_url, email_html)
+        send_auth_email(email, "Verify Your Email", approval_url, email_html, ref_code=ref_code)
     except Exception:
         logger.exception("Failed to send registration verification email for user %s.", user.pk)
         # Clean up

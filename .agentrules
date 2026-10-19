@@ -1,5 +1,5 @@
 # ============================================================================
-# ACAR — Agent Rules
+# DriveBase — Agent Rules
 # Vehicle Management System for German Auto Dealerships
 # ============================================================================
 # This file governs ALL AI agent behavior in this repository.
@@ -84,7 +84,7 @@
 # ============================================================================
 
 ## 1.1 What this project is
-# ACAR is a multi-tenant vehicle management platform for used-car dealerships
+# DriveBase is a multi-tenant vehicle management platform for used-car dealerships
 # in Germany. It manages vehicles, financial transactions, legal entities
 # (buyers/sellers), and generates legally-compliant German PDF documents.
 
@@ -166,7 +166,7 @@
 # - All new API endpoints use Django Ninja (not DRF, not raw views)
 # - Schemas live in schemas.py or domain-specific schema files (e.g., transaction_schemas.py)
 # - Use Pydantic models for request/response validation
-# - API routes are registered in acar/urls.py via api.add_router()
+# - API routes are registered in drivebase/urls.py via api.add_router()
 # - Legacy views.py is maintained for PDF generation only — do NOT add new view logic there
 
 ## 3.2 Models

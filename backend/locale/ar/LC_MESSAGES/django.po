@@ -19,19 +19,19 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
 "&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
 
-#: .\acar\settings.py:133
+#: .\drivebase\settings.py:133
 msgid "German"
 msgstr "الألمانية"
 
-#: .\acar\settings.py:134
+#: .\drivebase\settings.py:134
 msgid "English"
 msgstr "الإنجليزية"
 
-#: .\acar\settings.py:135
+#: .\drivebase\settings.py:135
 msgid "Turkish"
 msgstr "التركية"
 
-#: .\acar\settings.py:136
+#: .\drivebase\settings.py:136
 msgid "Arabic"
 msgstr "العربية"
 

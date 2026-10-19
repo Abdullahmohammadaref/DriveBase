@@ -18,7 +18,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "acar.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "drivebase.settings")
 import django
 django.setup()
 
@@ -47,7 +47,7 @@ def restore_backup(zip_path: str, target_business_id: int = 1, dry_run: bool = F
         raise FileNotFoundError(f"Backup ZIP file not found at: {zip_path}")
 
     print(f"\n========================================================")
-    print(f"  ACAR DEALERSHIP DISASTER RECOVERY RESTORE")
+    print(f"  DriveBase DEALERSHIP DISASTER RECOVERY RESTORE")
     print(f"  Target Business ID: {target_business_id}")
     print(f"  Archive: {zip_path}")
     print(f"  Dry Run: {dry_run}")
@@ -454,8 +454,8 @@ def restore_backup(zip_path: str, target_business_id: int = 1, dry_run: bool = F
     print("========================================================\n")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Restore ACAR Dealership Business Data from ZIP Archive")
-    parser.add_argument("zip_path", help="Path to acar_export_*.zip file")
+    parser = argparse.ArgumentParser(description="Restore DriveBase Dealership Business Data from ZIP Archive")
+    parser.add_argument("zip_path", help="Path to drivebase_export_*.zip file")
     parser.add_argument("--business-id", type=int, default=1, help="Target business ID (default: 1)")
     parser.add_argument("--dry-run", action="store_true", help="Simulate restore and rollback transaction")
 

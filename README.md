@@ -1,4 +1,4 @@
-# 🚗 ACAR — Vehicle Management System
+# 🚗 DriveBase — Vehicle Management System
 
 A full-stack, multi-tenant vehicle management platform built for auto dealerships operating in the German market. Manage vehicle inventory, financial transactions, legal entities (buyers/sellers), and generate legally-compliant German PDF documents — all from a modern, multilingual web interface.
 
@@ -25,7 +25,7 @@ A full-stack, multi-tenant vehicle management platform built for auto dealership
 
 ## Overview
 
-**ACAR** is a business management application designed for used-car dealerships in Germany. It provides a complete workflow — from purchasing a vehicle and tracking its lifecycle, through managing buyers/sellers (legal entities), to generating sale contracts, binding orders, receipts, and identity-check PDFs in compliance with German business standards.
+**DriveBase** is a business management application designed for used-car dealerships in Germany. It provides a complete workflow — from purchasing a vehicle and tracking its lifecycle, through managing buyers/sellers (legal entities), to generating sale contracts, binding orders, receipts, and identity-check PDFs in compliance with German business standards.
 
 The system is **multi-tenant**: each business operates in its own isolated data space, with role-based access control (managers vs. employees) and per-user permission flags.
 
@@ -148,7 +148,7 @@ All PDFs generated server-side using ReportLab with business logo, address, bank
 > For a detailed file-by-file map, see [`PROJECT_MAP.md`](./PROJECT_MAP.md).
 
 ```
-acar/
+drivebase/
 ├── .agentrules              # AI agent rules
 ├── .agents/skills/          # 65+ AI skill packs
 ├── README.md                # ← You are here
@@ -156,7 +156,7 @@ acar/
 ├── PROJECT_MAP.md           # Full file-level project map
 │
 ├── backend/                 # Django backend
-│   ├── acar/                # Django project config (settings, urls)
+│   ├── drivebase/           # Django project config (settings, urls)
 │   ├── manager/             # Main Django app
 │   │   ├── models.py        # All data models (1,835 lines)
 │   │   ├── api.py           # Core API (legal entities, choices, PDFs)
@@ -206,11 +206,11 @@ acar/
 cd backend
 
 # 2. Create and activate a virtual environment
-python -m venv ../acar_venv
+python -m venv ../drivebase_venv
 # Windows:
-..\acar_venv\Scripts\activate
+..\drivebase_venv\Scripts\activate
 # macOS/Linux:
-source ../acar_venv/bin/activate
+source ../drivebase_venv/bin/activate
 
 # 3. Install Python dependencies
 pip install -r requirements.txt
@@ -282,7 +282,7 @@ Interactive docs available at **http://localhost:8000/api/docs**
 
 ## Authentication
 
-ACAR implements a **dual authentication flow** using the `AuthActionRequest` model:
+DriveBase implements a **dual authentication flow** using the `AuthActionRequest` model:
 
 ### Manager Login
 ```

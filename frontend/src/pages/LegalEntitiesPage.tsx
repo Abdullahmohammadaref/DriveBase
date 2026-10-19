@@ -57,7 +57,7 @@ export function LegalEntitiesPage() {
     // Filter state
     const [filters, setFilters] = useState<LegalEntityFilters>({
         page: 1,
-        per_page: getPagePref("acar_entities_per_page", 20),
+        per_page: getPagePref("drivebase_entities_per_page", 20),
         type: typeFromUrl || undefined,
         status: statusFromUrl || undefined,
     })
@@ -100,7 +100,7 @@ export function LegalEntitiesPage() {
      */
     /*
     const [panelWidth, setPanelWidth] = useState(() => 
-        getSplitWidth("acar_legalentities_filter_width", 260, 200, 500)
+        getSplitWidth("drivebase_legalentities_filter_width", 260, 200, 500)
     )
     const [isDragging, setIsDragging] = useState(false)
 
@@ -113,7 +113,7 @@ export function LegalEntitiesPage() {
 
     const handleDragEnd = () => {
         setIsDragging(false)
-        saveSplitWidth("acar_legalentities_filter_width", panelWidth, 200, 500)
+        saveSplitWidth("drivebase_legalentities_filter_width", panelWidth, 200, 500)
     }
     */
 
@@ -142,7 +142,7 @@ export function LegalEntitiesPage() {
     }, [])
 
     const handlePerPageChange = useCallback((newPerPage: number) => {
-        savePagePref("acar_entities_per_page", newPerPage)
+        savePagePref("drivebase_entities_per_page", newPerPage)
         setFilters(prev => ({ ...prev, per_page: newPerPage, page: 1 }))
     }, [])
 

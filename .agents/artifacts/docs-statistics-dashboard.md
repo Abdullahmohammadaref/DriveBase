@@ -13,7 +13,7 @@
 | File | Action | Purpose |
 |------|--------|---------|
 | `backend/manager/dashboard_api.py` | **Created** | Dedicated `GET /api/dashboard/` endpoint. All KPIs pre-computed server-side. Scoped to `request.user.business`. |
-| `backend/acar/urls.py` | Modified | Registered `dashboard_router` at `/` prefix |
+| `backend/drivebase/urls.py` | Modified | Registered `dashboard_router` at `/` prefix |
 
 ### Frontend
 
@@ -67,7 +67,7 @@ Added to `VehicleFormPage.tsx`:
 
 - **Stack View** (default): Transactions table below vehicle form
 - **Split View**: Transactions panel pinned side-by-side at `2xl` breakpoint (1536px+)
-- **Persistence**: `localStorage` key `acar_vehicle_split_view`
+- **Persistence**: `localStorage` key `drivebase_vehicle_split_view`
 - **Toggle button**: Rendered in StickyFooter via `splitViewToggle` prop on `VehicleForm`
 
 ---

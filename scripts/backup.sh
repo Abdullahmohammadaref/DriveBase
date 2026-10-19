@@ -1,13 +1,13 @@
 #!/bin/bash
-# ACAR Daily Backup
-# Cron: 0 3 * * * /home/ubuntu/acar/scripts/backup.sh >> /home/ubuntu/backups/backup.log 2>&1
+# DriveBase Daily Backup
+# Cron: 0 3 * * * /home/ubuntu/drivebase/scripts/backup.sh >> /home/ubuntu/backups/backup.log 2>&1
 
 set -e
 
 BACKUP_DIR="/home/ubuntu/backups"
 DATE=$(date +%Y-%m-%d_%H-%M)
-DB_PATH="/home/ubuntu/acar/backend/db.sqlite3"
-MEDIA_PATH="/home/ubuntu/acar/backend/media"
+DB_PATH="/home/ubuntu/drivebase/backend/db.sqlite3"
+MEDIA_PATH="/home/ubuntu/drivebase/backend/media"
 
 mkdir -p "$BACKUP_DIR"
 

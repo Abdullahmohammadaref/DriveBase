@@ -18,19 +18,19 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: .\acar\settings.py:133
+#: .\drivebase\settings.py:133
 msgid "German"
 msgstr "Deutsch"
 
-#: .\acar\settings.py:134
+#: .\drivebase\settings.py:134
 msgid "English"
 msgstr "Englisch"
 
-#: .\acar\settings.py:135
+#: .\drivebase\settings.py:135
 msgid "Turkish"
 msgstr ""
 
-#: .\acar\settings.py:136
+#: .\drivebase\settings.py:136
 msgid "Arabic"
 msgstr ""
 

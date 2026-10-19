@@ -13,7 +13,9 @@ const __dirname = path.dirname(__filename);
 
 const FIXTURES_DIR = path.resolve(__dirname, 'fixtures/images');
 const PDF_DIR = path.resolve(__dirname, '../test_artifacts/generated_pdfs');
-const PYTHON_PATH = path.resolve(__dirname, '../../acar_venv/Scripts/python.exe');
+const PYTHON_PATH = process.env.PYTHON_PATH ||
+    (process.env.VIRTUAL_ENV ? path.join(process.env.VIRTUAL_ENV, 'Scripts/python.exe') : '') ||
+    path.resolve(__dirname, '../../drivebase_venv/Scripts/python.exe');
 const BACKEND_URL = 'http://localhost:8000';
 
 function inspectPdfWithPyPdf(pdfPath: string): { pageCount: number; text: string } {
@@ -24,7 +26,7 @@ function inspectPdfWithPyPdf(pdfPath: string): { pageCount: number; text: string
     return { pageCount, text: res };
 }
 
-test.describe('ACAR Dealership 14-Day Operational Lifecycle Suite', () => {
+test.describe('DriveBase Dealership 14-Day Operational Lifecycle Suite', () => {
     test.use({ storageState: path.resolve(__dirname, '../.auth/manager_session.json') });
     test.describe.configure({ mode: 'serial' });
 
@@ -212,7 +214,7 @@ test.describe('ACAR Dealership 14-Day Operational Lifecycle Suite', () => {
 
         // 4. Test AutoSave on description
         const descArea = page.locator('label').filter({ hasText: /Fahrzeugbeschreibung|Description/i }).locator('..').locator('textarea').first();
-        await descArea.fill('ACAR Master Test Ford Focus in mint condition.');
+        await descArea.fill('DriveBase Master Test Ford Focus in mint condition.');
         await descArea.blur();
         await vehiclesPage.verifyAutoSaveState('saved');
 
@@ -569,7 +571,7 @@ test.describe('ACAR Dealership 14-Day Operational Lifecycle Suite', () => {
         const v93Check = await page.request.get(`${BACKEND_URL}/api/vehicles/93`);
         const v93Data = await v93Check.json();
         if (!v93Data.sale_price || !v93Data.buyer_id) {
-            execSync(`"${PYTHON_PATH}" -c "import os, django; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'acar.settings'); django.setup(); from manager.models import Vehicle, LegalEntity; le = LegalEntity.objects.filter(business_id=1).last(); Vehicle.objects.filter(internal_id=93).update(sale_price=23500.0, sale_date='2026-09-24', buyer=le, status='sold')"`);
+            execSync(`"${PYTHON_PATH}" -c "import os, django; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'drivebase.settings'); django.setup(); from manager.models import Vehicle, LegalEntity; le = LegalEntity.objects.filter(business_id=1).last(); Vehicle.objects.filter(internal_id=93).update(sale_price=23500.0, sale_date='2026-09-24', buyer=le, status='sold')"`);
         }
 
         const pdfEndpoints = [
@@ -769,7 +771,7 @@ test.describe('ACAR Dealership 14-Day Operational Lifecycle Suite', () => {
         const cmd = `"${PYTHON_PATH}" "${restoreScript}" "${latestZip}" --business-id 1 --dry-run`;
         const output = execSync(cmd, { encoding: 'utf-8' });
 
-        expect(output).toContain('ACAR DEALERSHIP DISASTER RECOVERY RESTORE');
+        expect(output).toContain('DriveBase DEALERSHIP DISASTER RECOVERY RESTORE');
         expect(output).toContain('RESTORE COMPLETED SUCCESSFULLY');
     });
 

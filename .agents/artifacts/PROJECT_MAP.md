@@ -1,4 +1,4 @@
-# 🗺️ ACAR — Project Map
+# 🗺️ DriveBase — Project Map
 
 > **Last updated:** 2026-08-19
 > This file maps every module and file in the codebase. Read this before making changes.
@@ -10,7 +10,7 @@
 ## Repository Root
 
 ```
-acar/
+drivebase/
 ├── GEMINI.md                # Master root agent beacon, stack overview, and AI resource map
 ├── AGENTS.md                # Root agent guidelines pointing to GEMINI.md + GitNexus
 ├── .agentrules              # AI agent behavioral rules (MANDATORY reading)
@@ -40,7 +40,7 @@ acar/
 
 ## Backend — Django 5.2 + Django Ninja
 
-### Django Project Config (`backend/acar/`)
+### Django Project Config (`backend/drivebase/`)
 
 | File | Purpose |
 |---|---|
@@ -329,7 +329,7 @@ This is the **only Django app**. All models, APIs, and views live here.
 
 | File | Purpose |
 |---|---|
-| `backend/acar/settings_prod.py` | Imports from `settings.py`, overrides: `DEBUG=False`, enforces `SECRET_KEY` from env, adds WhiteNoise middleware, secure cookies, env-based CORS/CSRF |
+| `backend/drivebase/settings_prod.py` | Imports from `settings.py`, overrides: `DEBUG=False`, enforces `SECRET_KEY` from env, adds WhiteNoise middleware, secure cookies, env-based CORS/CSRF |
 | `backend/.env.production.template` | Template showing required env vars — committed to git, real `.env.production` is gitignored |
 
 ### CI/CD

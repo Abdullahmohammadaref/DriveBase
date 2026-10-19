@@ -8,7 +8,7 @@ import { Loader2, Save, ArrowLeft, AlertTriangle, X, FileText, Trash2, RotateCcw
 import { ContractModal } from "./ContractModal"
 import { MobileDeListingModal } from "./MobileDeListingModal"
 import { VehicleImageUpload } from "./VehicleImageUpload"
-import { FinancialMetricsStrip } from "./FinancialMetricsStrip"
+import { FinancialMetricsStrip, KpiModal, type KpiItem } from "./FinancialMetricsStrip"
 import { VehiclePipeline } from "./VehiclePipeline"
 import { VehicleExpensesEarningsCard } from "./VehicleExpensesEarningsCard"
 import { AutoSaveToast } from "@/components/AutoSaveIndicator"
@@ -37,7 +37,7 @@ import { getBoolPref, saveBoolPref } from "@/lib/paginationPrefs"
 import { SmartDeleteModal } from "@/components/common/SmartDeleteModal"
 import type { VehicleDetail } from "@/types/vehicle"
 
-const PREF_SHOW_VEHICLE_FINANCIALS = "acar_pref_show_vehicle_financials"
+const PREF_SHOW_VEHICLE_FINANCIALS = "drivebase_pref_show_vehicle_financials"
 
 interface VehicleFormProps {
     vehicle?: VehicleDetail
@@ -468,6 +468,7 @@ export function VehicleForm({
     const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
     const [imageUploadError, setImageUploadError] = useState<string | null>(null)
     const [isUploadingImage, setIsUploadingImage] = useState(false)
+    const [activeNetCalculation, setActiveNetCalculation] = useState<KpiItem | null>(null)
     const createEntityMutation = useCreateLegalEntity()
 
     // mobile.de integration settings query
@@ -1514,23 +1515,58 @@ export function VehicleForm({
                             title={t("vehicleForm.purchaseDetails", "Buy Details")}
                             action={
                                 buyBreakdown.hasValue ? (
-                                    <div className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 dark:border-border/80 bg-gray-100/90 dark:bg-secondary/60 px-2.5 py-0.5 text-xs font-mono font-medium shadow-2xs text-gray-700 dark:text-gray-300">
-                                        <span className="text-gray-500 dark:text-muted-foreground">{t("vehicleForm.net", "Net")}</span>
-                                        <span className="font-bold text-[#318d6c]">{formatMoneyOrDash(buyBreakdown.net)}</span>
-                                        <span className="text-gray-400">=</span>
-                                        <span className="text-gray-500 dark:text-muted-foreground">{t("vehicles.buyGross", "Gross")}</span>
-                                        <span className="font-semibold">{formatMoneyOrDash(buyBreakdown.gross)}</span>
-                                        <span className="text-gray-400">−</span>
-                                        <span className="text-gray-500 dark:text-muted-foreground">{t("vehicleForm.tax", "Tax")}</span>
-                                        <span className="font-medium text-gray-600 dark:text-gray-400">{formatMoneyOrDash(buyBreakdown.taxAmount)} ({buyBreakdown.taxRate.toFixed(1)}%)</span>
-                                    </div>
-                                ) : (
-                                    <div className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-gray-200 dark:border-border/60 bg-gray-50/60 dark:bg-muted/20 px-2.5 py-0.5 text-xs font-mono text-gray-400 dark:text-muted-foreground">
-                                        <span>{t("vehicleForm.net", "Net")}: —</span>
-                                        <span>{t("vehicles.buyGross", "Gross")} (—)</span>
-                                        <span>− {t("vehicleForm.tax", "Tax")} —</span>
-                                    </div>
-                                )
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveNetCalculation({
+                                                id: "buy-net",
+                                                label: `${t("vehicleForm.purchaseDetails", "Buy Details")} — ${t("vehicleForm.net", "Net")}`,
+                                                value: formatMoneyOrDash(buyBreakdown.net),
+                                                tone: "success",
+                                                formula: buyBreakdown.taxRate > 0
+                                                    ? `${t("vehicleForm.net", "Net")} = ${t("vehicles.buyPriceGross", "Gross")} − ${t("vehicleForm.tax", "Tax")} (${buyBreakdown.taxRate.toFixed(1)}%)`
+                                                    : `${t("vehicleForm.net", "Net")} = ${t("vehicles.buyPriceGross", "Gross")}`,
+                                                steps: buyBreakdown.taxRate > 0 ? [
+                                                    { label: t("vehicles.buyPriceGross", "Gross"), value: formatMoneyOrDash(buyBreakdown.gross) },
+                                                    { label: `− ${t("vehicleForm.tax", "Tax")} (${buyBreakdown.taxRate.toFixed(1)}%)`, value: formatMoneyOrDash(buyBreakdown.taxAmount) },
+                                                    { label: `= ${t("vehicleForm.net", "Net")}`, value: formatMoneyOrDash(buyBreakdown.net) },
+                                                ] : [
+                                                    { label: t("vehicles.buyPriceGross", "Gross"), value: formatMoneyOrDash(buyBreakdown.gross) },
+                                                    { label: `= ${t("vehicleForm.net", "Net")}`, value: formatMoneyOrDash(buyBreakdown.net) },
+                                                ],
+                                            })}
+                                            title={`${t("vehicleForm.net", "Net")}: ${formatMoneyOrDash(buyBreakdown.net)} | ${t("vehicleForm.gross", "Gross")}: ${formatMoneyOrDash(buyBreakdown.gross)} (${t("vehicles.metrics.clickToSeeCalculation", "Click to see calculation")})`}
+                                            className="inline-flex items-center rounded-md border border-gray-200 dark:border-border bg-white dark:bg-card hover:bg-gray-50/80 dark:hover:bg-muted/40 hover:border-gray-300 dark:hover:border-border/80 px-2.5 py-1 shadow-2xs transition-all cursor-pointer group gap-1.5"
+                                        >
+                                            {/* Netto Segment */}
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
+                                                    {t("vehicleForm.net", "Net")}:
+                                                </span>
+                                                <span className="text-xs sm:text-[13px] font-bold font-mono text-[#318d6c] dark:text-emerald-400">
+                                                    {formatMoneyOrDash(buyBreakdown.net)}
+                                                </span>
+                                            </div>
+
+                                            {/* Subtle Vertical Divider */}
+                                            <div className="h-3.5 w-px bg-gray-200 dark:bg-border mx-1 shrink-0" />
+
+                                            {/* Brutto Segment */}
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
+                                                    {t("vehicleForm.gross", "Gross")}:
+                                                </span>
+                                                <span className="text-xs sm:text-[13px] font-bold font-mono text-gray-800 dark:text-gray-200">
+                                                    {formatMoneyOrDash(buyBreakdown.gross)}
+                                                </span>
+                                            </div>
+                                        </button>
+                                    ) : (
+                                        <div className="inline-flex items-center rounded-md border border-dashed border-gray-200 dark:border-border/60 bg-gray-50/50 dark:bg-muted/20 px-2.5 py-1 text-xs font-mono text-muted-foreground gap-1.5">
+                                            <span>{t("vehicleForm.net", "Net")}: —</span>
+                                            <div className="h-3 w-px bg-gray-200 dark:bg-border mx-1 shrink-0" />
+                                            <span>{t("vehicleForm.gross", "Gross")}: —</span>
+                                        </div>
+                                    )
                             }
                         />
                         <div className="grid grid-cols-2 gap-x-2.5 gap-y-2 sm:grid-cols-4">
@@ -1609,21 +1645,56 @@ export function VehicleForm({
                                 title={t("vehicleForm.saleDetails", "Sale Details")}
                                 action={
                                     saleBreakdown.hasValue ? (
-                                        <div className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 dark:border-border/80 bg-gray-100/90 dark:bg-secondary/60 px-2.5 py-0.5 text-xs font-mono font-medium shadow-2xs text-gray-700 dark:text-gray-300">
-                                            <span className="text-gray-500 dark:text-muted-foreground">{t("vehicleForm.net", "Net")}</span>
-                                            <span className="font-bold text-[#318d6c]">{formatMoneyOrDash(saleBreakdown.net)}</span>
-                                            <span className="text-gray-400">=</span>
-                                            <span className="text-gray-500 dark:text-muted-foreground">{t("vehicles.saleGross", "Gross")}</span>
-                                            <span className="font-semibold">{formatMoneyOrDash(saleBreakdown.gross)}</span>
-                                            <span className="text-gray-400">−</span>
-                                            <span className="text-gray-500 dark:text-muted-foreground">{t("vehicleForm.tax", "Tax")}</span>
-                                            <span className="font-medium text-gray-600 dark:text-gray-400">{formatMoneyOrDash(saleBreakdown.taxAmount)} ({saleBreakdown.taxRate.toFixed(1)}%)</span>
-                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveNetCalculation({
+                                                id: "sale-net",
+                                                label: `${t("vehicleForm.saleDetails", "Sale Details")} — ${t("vehicleForm.net", "Net")}`,
+                                                value: formatMoneyOrDash(saleBreakdown.net),
+                                                tone: "success",
+                                                formula: saleBreakdown.taxRate > 0
+                                                    ? `${t("vehicleForm.net", "Net")} = ${t("vehicles.salePriceGross", "Gross")} − ${t("vehicleForm.tax", "Tax")} (${saleBreakdown.taxRate.toFixed(1)}%)`
+                                                    : `${t("vehicleForm.net", "Net")} = ${t("vehicles.salePriceGross", "Gross")}`,
+                                                steps: saleBreakdown.taxRate > 0 ? [
+                                                    { label: t("vehicles.salePriceGross", "Gross"), value: formatMoneyOrDash(saleBreakdown.gross) },
+                                                    { label: `− ${t("vehicleForm.tax", "Tax")} (${saleBreakdown.taxRate.toFixed(1)}%)`, value: formatMoneyOrDash(saleBreakdown.taxAmount) },
+                                                    { label: `= ${t("vehicleForm.net", "Net")}`, value: formatMoneyOrDash(saleBreakdown.net) },
+                                                ] : [
+                                                    { label: t("vehicles.salePriceGross", "Gross"), value: formatMoneyOrDash(saleBreakdown.gross) },
+                                                    { label: `= ${t("vehicleForm.net", "Net")}`, value: formatMoneyOrDash(saleBreakdown.net) },
+                                                ],
+                                            })}
+                                            title={`${t("vehicleForm.net", "Net")}: ${formatMoneyOrDash(saleBreakdown.net)} | ${t("vehicleForm.gross", "Gross")}: ${formatMoneyOrDash(saleBreakdown.gross)} (${t("vehicles.metrics.clickToSeeCalculation", "Click to see calculation")})`}
+                                            className="inline-flex items-center rounded-md border border-gray-200 dark:border-border bg-white dark:bg-card hover:bg-gray-50/80 dark:hover:bg-muted/40 hover:border-gray-300 dark:hover:border-border/80 px-2.5 py-1 shadow-2xs transition-all cursor-pointer group gap-1.5"
+                                        >
+                                            {/* Netto Segment */}
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
+                                                    {t("vehicleForm.net", "Net")}:
+                                                </span>
+                                                <span className="text-xs sm:text-[13px] font-bold font-mono text-[#318d6c] dark:text-emerald-400">
+                                                    {formatMoneyOrDash(saleBreakdown.net)}
+                                                </span>
+                                            </div>
+
+                                            {/* Subtle Vertical Divider */}
+                                            <div className="h-3.5 w-px bg-gray-200 dark:bg-border mx-1 shrink-0" />
+
+                                            {/* Brutto Segment */}
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
+                                                    {t("vehicleForm.gross", "Gross")}:
+                                                </span>
+                                                <span className="text-xs sm:text-[13px] font-bold font-mono text-gray-800 dark:text-gray-200">
+                                                    {formatMoneyOrDash(saleBreakdown.gross)}
+                                                </span>
+                                            </div>
+                                        </button>
                                     ) : (
-                                        <div className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-gray-200 dark:border-border/60 bg-gray-50/60 dark:bg-muted/20 px-2.5 py-0.5 text-xs font-mono text-gray-400 dark:text-muted-foreground">
+                                        <div className="inline-flex items-center rounded-md border border-dashed border-gray-200 dark:border-border/60 bg-gray-50/50 dark:bg-muted/20 px-2.5 py-1 text-xs font-mono text-muted-foreground gap-1.5">
                                             <span>{t("vehicleForm.net", "Net")}: —</span>
-                                            <span>{t("vehicles.saleGross", "Gross")} (—)</span>
-                                            <span>− {t("vehicleForm.tax", "Tax")} —</span>
+                                            <div className="h-3 w-px bg-gray-200 dark:bg-border mx-1 shrink-0" />
+                                            <span>{t("vehicleForm.gross", "Gross")}: —</span>
                                         </div>
                                     )
                                 }
@@ -1821,6 +1892,14 @@ export function VehicleForm({
                 <AutoSaveToast
                     status={autoSaveStatus}
                     errorMessage={autoSaveErrorMessage}
+                />
+            )}
+
+            {/* Net Calculation Breakdown Modal */}
+            {activeNetCalculation && (
+                <KpiModal
+                    kpi={activeNetCalculation}
+                    onClose={() => setActiveNetCalculation(null)}
                 />
             )}
         </>

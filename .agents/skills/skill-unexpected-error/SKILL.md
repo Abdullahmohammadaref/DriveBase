@@ -12,7 +12,7 @@ description: >
 ## When This Applies
 
 - Creating a **new Django Ninja router** (e.g., `dashboard_api.py`, `reports_api.py`)
-- Adding a **new import** to `backend/acar/urls.py`
+- Adding a **new import** to `backend/drivebase/urls.py`
 - Modifying any file imported transitively by `urls.py`
 
 ## Why This Matters
@@ -51,7 +51,7 @@ This has happened multiple times in this project. The pattern is always:
 
 3. **Match the existing `urls.py` registration pattern:**
    ```python
-   # In backend/acar/urls.py
+   # In backend/drivebase/urls.py
    from manager.your_new_api import your_router
    api.add_router("/your-prefix", your_router)
    ```
@@ -74,7 +74,7 @@ This has happened multiple times in this project. The pattern is always:
 
 6. **Check the traceback** — it will always point to the bad import:
    ```
-   File ".../backend/acar/urls.py", line XX, in <module>
+   File ".../backend/drivebase/urls.py", line XX, in <module>
        from manager.broken_file import broken_thing
    ImportError: cannot import name 'broken_thing' from 'manager.broken_file'
    ```

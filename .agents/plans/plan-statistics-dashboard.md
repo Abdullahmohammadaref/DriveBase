@@ -122,7 +122,7 @@ This plan covers **three interconnected problems**:
 - `avg_days_on_stock` = average of `Vehicle.active_for` property (already computed on model) for status in `['purchased', 'ready_for_sale', 'reserved']`
 - Monthly revenue uses `Transaction.date` field grouped by month
 
-**Register in `acar/urls.py`:**
+**Register in `drivebase/urls.py`:**
 ```python
 api.add_router("/dashboard/", dashboard_router)
 ```
@@ -342,7 +342,7 @@ This is a **single row of 4 KPI chips** + a **formula transparency bar** below t
 | File | Action | Why |
 |------|--------|-----|
 | `backend/manager/dashboard_api.py` | **Create** | New dashboard endpoint |
-| `backend/acar/urls.py` | **Edit** | Register dashboard router |
+| `backend/drivebase/urls.py` | **Edit** | Register dashboard router |
 
 ### Frontend
 | File | Action | Why |
@@ -386,7 +386,7 @@ Run in this exact order to avoid broken intermediate states:
 
 ```
 Step 1  backend/manager/dashboard_api.py       ← creates the endpoint
-Step 2  backend/acar/urls.py                   ← wires it up
+Step 2  backend/drivebase/urls.py                   ← wires it up
 Step 3  frontend/src/types/dashboard.ts        ← types before hook
 Step 4  frontend/src/hooks/useDashboard.ts     ← hook before page
 Step 5  frontend/src/pages/DashboardPage.tsx   ← use the hook

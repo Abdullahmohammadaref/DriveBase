@@ -3,7 +3,7 @@ import sys
 import json
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'acar.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'drivebase.settings')
 import django
 django.setup()
 
@@ -52,7 +52,7 @@ storage_state = {
             "origin": "http://localhost:5173",
             "localStorage": [
                 {
-                    "name": "acar_active_business",
+                    "name": "drivebase_active_business",
                     "value": json.dumps({
                         "id": user.business.id,
                         "slug": user.business.name.lower().replace(" ", "-"),

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { UserCircle, Users, ArrowRight } from "lucide-react"
+import { UserCircle, Users, ArrowRight, Download } from "lucide-react"
+import { isTauri, getDesktopDownloadUrl } from "@/lib/desktop/platform"
 
 /**
  * Login Landing Page - Selection between Manager and Employee login
@@ -51,11 +52,26 @@ export function LoginPage() {
                 </Link>
             </div>
 
+            {/* Desktop App Download (Only visible on web) */}
+            {!isTauri() && (
+                <div className="pt-1">
+                    <a
+                        href={getDesktopDownloadUrl()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-2.5 px-3 rounded-lg border border-dashed border-gray-300 dark:border-border hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center justify-center gap-2 transition-all group"
+                    >
+                        <Download className="h-4 w-4 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform" />
+                        <span>{t("auth.downloadDesktopApp", "Download DriveBase for Windows (Desktop App)")}</span>
+                    </a>
+                </div>
+            )}
+
             {/* Help & Register Links */}
             <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-border text-center">
                 <p className="text-xs text-gray-500 dark:text-muted-foreground">
                     {t('auth.needHelp')}{" "}
-                    <a href="mailto:support@acar.de" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
+                    <a href="mailto:support@drivebase.de" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
                         {t('auth.contactSupport')}
                     </a>
                 </p>

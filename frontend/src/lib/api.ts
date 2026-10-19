@@ -2,27 +2,59 @@ import axios from "axios"
 
 /**
  * Axios instance configured for the Django API
- * Uses relative URLs which Vite proxies to localhost:8000 in development
+ * Uses dynamic API_BASE (defaults to relative /api for web proxying, or cloud URL for desktop)
  */
+export const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api"
+
 const api = axios.create({
-    baseURL: "/api",
+    baseURL: API_BASE,
     headers: {
         "Content-Type": "application/json",
     },
     withCredentials: true, // Include cookies for session authentication
 })
 
-/**
- * Get CSRF token from document.cookie
- * Uses the exact parsing logic to find csrftoken cookie
- */
-function getCsrfToken(): string | null {
-    const token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("csrftoken="))
-        ?.split("=")[1]
+let inMemoryCsrfToken: string | null = null
 
-    return token ? decodeURIComponent(token) : null
+/**
+ * Get CSRF token from document.cookie, in-memory cache, or sessionStorage
+ */
+export function getCsrfToken(): string | null {
+    // 1. Try document.cookie (standard browser web client)
+    if (typeof document !== "undefined" && document.cookie) {
+        const token = document.cookie
+            .split("; ")
+            .find((row) => row.startsWith("csrftoken="))
+            ?.split("=")[1]
+        if (token) return decodeURIComponent(token)
+    }
+
+    // 2. Try in-memory token (desktop webview fallback)
+    if (inMemoryCsrfToken) return inMemoryCsrfToken
+
+    // 3. Try sessionStorage
+    try {
+        const saved = sessionStorage.getItem("csrftoken")
+        if (saved) return saved
+    } catch {
+        // Ignore sessionStorage errors in restricted environments
+    }
+
+    return null
+}
+
+/**
+ * Set and persist CSRF token across headers and storage
+ */
+export function setCsrfToken(token: string): void {
+    inMemoryCsrfToken = token
+    try {
+        sessionStorage.setItem("csrftoken", token)
+    } catch {
+        // Ignore
+    }
+    axios.defaults.headers.common["X-CSRFToken"] = token
+    api.defaults.headers.common["X-CSRFToken"] = token
 }
 
 /**
@@ -33,24 +65,31 @@ export async function ensureCsrfToken(): Promise<string | null> {
     let token = getCsrfToken()
 
     if (!token) {
-        // No cookie exists - fetch the CSRF endpoint to seed it
-        console.log("[CSRF] No token found, fetching from /api/auth/csrf...")
+        console.log("[CSRF] No token found, fetching from /auth/csrf...")
         try {
-            await axios.get("/api/auth/csrf", { withCredentials: true })
-            // Wait a tick for cookie to be set
+            const response = await api.get<{ detail: string; csrfToken?: string }>("/auth/csrf")
+            // Wait a tick for cookie to be set in browser
             await new Promise((resolve) => setTimeout(resolve, 50))
-            // Now read the cookie that was just set
+            
+            // Check cookie first
             token = getCsrfToken()
+
+            // If cookie missing (e.g. desktop webview cross-origin/third-party cookie isolation),
+            // use csrfToken provided directly in the JSON response body
+            if (!token && response.data?.csrfToken) {
+                token = response.data.csrfToken
+                console.log("[CSRF] Token acquired from response body for desktop/webview client")
+            }
+
+            if (token) {
+                setCsrfToken(token)
+            }
             console.log("[CSRF] Token after fetch:", token ? "Found" : "Still missing")
         } catch (error) {
             console.error("[CSRF] Failed to fetch CSRF token:", error)
         }
-    }
-
-    // Set the default header for all future requests
-    if (token) {
-        axios.defaults.headers.common["X-CSRFToken"] = token
-        api.defaults.headers.common["X-CSRFToken"] = token
+    } else {
+        setCsrfToken(token)
     }
 
     return token
@@ -61,7 +100,7 @@ api.interceptors.request.use(async (config) => {
     // Only add CSRF for state-changing methods
     const method = config.method?.toLowerCase()
     if (method && ["post", "put", "patch", "delete"].includes(method)) {
-        // Try to get token from cookie
+        // Try to get token
         let token = getCsrfToken()
 
         // If no token, try to seed it
@@ -84,7 +123,9 @@ api.interceptors.response.use(
     (error) => {
         // Handle unauthorized - redirect to login
         if (error.response?.status === 401) {
-            window.location.href = "/login"
+            if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+                window.location.href = "/login"
+            }
         }
 
         // Log CSRF errors for debugging
@@ -93,7 +134,7 @@ api.interceptors.response.use(
                 url: error.config?.url,
                 method: error.config?.method,
                 hasToken: !!getCsrfToken(),
-                cookies: document.cookie,
+                cookies: typeof document !== "undefined" ? document.cookie : "",
             })
         }
 

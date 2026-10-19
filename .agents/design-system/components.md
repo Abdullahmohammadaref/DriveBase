@@ -103,7 +103,7 @@ The VehicleFormPage supports a toggleable split view:
 - Toggle button renders in the StickyFooter (passed via `splitViewToggle` prop)
 - Uses `PanelRightOpen` / `PanelRightClose` icons from lucide-react
 - Side-by-side layout activates at `2xl` breakpoint only (1536px+)
-- Preference persisted in `localStorage` key `acar_vehicle_split_view`
+- Preference persisted in `localStorage` key `drivebase_vehicle_split_view`
 
 ## 9. Transaction Financial Summary
 The transaction dashboard and form use a high-density, horizontal 9-card summary:

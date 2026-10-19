@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react"
 import { Link, Outlet } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { Moon, Sun, Car, ZoomIn, ZoomOut } from "lucide-react"
+import { Moon, Sun, ZoomIn, ZoomOut } from "lucide-react"
 import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, type SupportedLocale, type AnyLocale } from "@/lib/i18n"
+import drivebaseLogo from "@/assets/logo/drivebase-horizontal.svg"
 
 // SVG Flag components matching the legacy design
 const GermanFlag = () => (
@@ -64,7 +65,7 @@ const getNextLocale = (current: SupportedLocale): SupportedLocale => {
  */
 export function AuthLayout() {
     const [darkMode, setDarkMode] = useState(false)
-    const [uiScale, setUiScale] = useState<number>(0.7)
+    const [uiScale, setUiScale] = useState<number>(0.9)
     const { t, i18n } = useTranslation()
 
     const currentLocale = ((SUPPORTED_LOCALES as readonly string[]).includes(i18n.language))
@@ -98,9 +99,9 @@ export function AuthLayout() {
         document.documentElement.classList.remove("dark")
         localStorage.setItem("theme", "light")
 
-        // Initialize UI scale
+        // Initialize UI scale (default 90%)
         const storedScale = localStorage.getItem("ui-scale")
-        const scale = storedScale ? parseFloat(storedScale) : 0.7
+        const scale = storedScale ? parseFloat(storedScale) : 0.9
         setUiScale(scale)
         ;(document.documentElement.style as any).zoom = ""
         document.documentElement.style.fontSize = `${16 * scale}px`
@@ -145,11 +146,8 @@ export function AuthLayout() {
             {/* Header */}
             <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-3.5 bg-[#F8F9FA]/90 dark:bg-background/80 backdrop-blur-sm border-b border-gray-200 dark:border-border">
                 {/* Logo */}
-                <Link to="/login" className="flex items-center gap-2">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white shadow-xs">
-                        <Car className="h-5 w-5" />
-                    </div>
-                    <span className="text-lg font-bold text-gray-900 dark:text-foreground">ACAR</span>
+                <Link to="/login" className="flex items-center gap-2" aria-label="DriveBase">
+                    <img src={drivebaseLogo} alt="DriveBase" className="h-8 w-auto object-contain" />
                 </Link>
 
                 {/* Right Controls */}
@@ -223,7 +221,7 @@ export function AuthLayout() {
 
             {/* Footer */}
             <footer className="fixed bottom-0 left-0 right-0 py-3 text-center text-xs text-gray-500 dark:text-muted-foreground bg-[#F8F9FA]/90 dark:bg-background/80 backdrop-blur-sm border-t border-gray-200 dark:border-border">
-                {t("auth.footerCopyright", "© {{year}} ACAR Vehicle Management", { year: new Date().getFullYear() })}
+                {t("auth.footerCopyright", "© {{year}} DriveBase Vehicle Management", { year: new Date().getFullYear() })}
             </footer>
         </div>
     )

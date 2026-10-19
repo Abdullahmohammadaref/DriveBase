@@ -41,20 +41,20 @@ export function EditTransactionPage() {
      */
     /*
     const [isSplitView, setIsSplitView] = useState<boolean>(() => {
-        const stored = localStorage.getItem("acar_transaction_split_view")
+        const stored = localStorage.getItem("drivebase_transaction_split_view")
         return stored === null ? true : stored === "true"
     })
 
     useEffect(() => {
-        localStorage.setItem("acar_transaction_split_view", String(isSplitView))
+        localStorage.setItem("drivebase_transaction_split_view", String(isSplitView))
     }, [isSplitView])
 
-    const [panelWidth, setPanelWidth] = useState(() => getSplitWidth("acar_transaction_split_width", 450))
+    const [panelWidth, setPanelWidth] = useState(() => getSplitWidth("drivebase_transaction_split_width", 450))
     const [isDragging, setIsDragging] = useState(false)
 
     const handleWidthSave = () => {
         setIsDragging(false)
-        saveSplitWidth("acar_transaction_split_width", panelWidth)
+        saveSplitWidth("drivebase_transaction_split_width", panelWidth)
     }
 
     const splitViewToggle = (

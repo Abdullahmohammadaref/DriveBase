@@ -21,7 +21,7 @@ export default defineConfig({
   server: {
     port: 5173,
     watch: {
-      ignored: ['**/test_artifacts/**', '**/test-results/**', '**/playwright-report/**', '**/.auth/**'],
+      ignored: ['**/test_artifacts/**', '**/test-results/**', '**/playwright-report/**', '**/.auth/**', '**/src-tauri/**'],
     },
     // Proxy API requests to Django backend
     proxy: {

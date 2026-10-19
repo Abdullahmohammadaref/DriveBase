@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **acar** (4449 symbols, 7598 relationships, 118 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **drivebase** (4449 symbols, 7598 relationships, 118 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -24,10 +24,10 @@ This project is indexed by GitNexus as **acar** (4449 symbols, 7598 relationship
 
 | Resource | Use for |
 |----------|---------|
-| `gitnexus://repo/acar/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/acar/clusters` | All functional areas |
-| `gitnexus://repo/acar/processes` | All execution flows |
-| `gitnexus://repo/acar/process/{name}` | Step-by-step execution trace |
+| `gitnexus://repo/drivebase/context` | Codebase overview, check index freshness |
+| `gitnexus://repo/drivebase/clusters` | All functional areas |
+| `gitnexus://repo/drivebase/processes` | All execution flows |
+| `gitnexus://repo/drivebase/process/{name}` | Step-by-step execution trace |
 
 ## CLI
 

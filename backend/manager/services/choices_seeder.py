@@ -1,10 +1,10 @@
 """
-ACAR Dealership OS - Choices Seeder Service
-===========================================
+DriveBase Dealership OS - Choices Seeder Service
+================================================
 Populates all baseline and standard choices for a dealership business:
   Tier 1: mobile.de Marketplace Choices (Makes, Models, Body Types, Colors, Fuel Types, Doors, Vehicle Types)
           Protected and mapped to official mobile.de codes.
-  Tier 2: ACAR-Internal Choices (Countries, Cities, Payment Methods, Tax Percentages,
+  Tier 2: DriveBase-Internal Choices (Countries, Cities, Payment Methods, Tax Percentages,
           Damage Types, Categories, Subcategories, Key Numbers)
           Defaults customizable by dealership management.
 

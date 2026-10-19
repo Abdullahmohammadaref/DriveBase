@@ -1,12 +1,12 @@
 # Implementation Plan: AI Agent Workspace & Entrypoint Architecture Migration
 
-This plan audits the current workflow and AI configuration in ACAR, organizes all agent assets into a clear, predictable hierarchy, establishes root entrypoints (`GEMINI.md` and `AGENTS.md`), creates a dedicated AI scratch environment, and ensures all future agent sessions navigate the project without hallucinating.
+This plan audits the current workflow and AI configuration in DriveBase, organizes all agent assets into a clear, predictable hierarchy, establishes root entrypoints (`GEMINI.md` and `AGENTS.md`), creates a dedicated AI scratch environment, and ensures all future agent sessions navigate the project without hallucinating.
 
 ---
 
 ## 1. Goal Description
 
-Currently, ACAR has rich AI context scattered across multiple directories:
+Currently, DriveBase has rich AI context scattered across multiple directories:
 - `.agentrules` in root (336 lines of core domain laws, stack definitions, and skill routing).
 - `.agents/skills/` (65+ specialized skill packs).
 - `.agents/developer_guide.md` & `.agents/idea.md` (detailed technical rules and business/persona specifications).
@@ -54,7 +54,7 @@ Based on our scan across global (`~/.gemini/config/`) and workspace directories:
 | Scope | Discovered Workflows | Target Path | Status |
 | :--- | :--- | :--- | :--- |
 | Global | None (`.migrated` exists) | `~/.gemini/config/skills/` | Already Migrated |
-| Workspace (`acar`) | 0 legacy `.md` workflows | `.agents/skills/` | Already Migrated (65+ skills active) |
+| Workspace (`drivebase`) | 0 legacy `.md` workflows | `.agents/skills/` | Already Migrated (65+ skills active) |
 
 No `.md` workflow files require conversion. All capabilities are already provided through `.agents/skills/`.
 
@@ -63,7 +63,7 @@ No `.md` workflow files require conversion. All capabilities are already provide
 ## 4. Proposed Changes
 
 ```
-acar/
+drivebase/
 ├── GEMINI.md                             # [NEW] Master project instructions for Gemini & Antigravity
 ├── AGENTS.md                             # [NEW] Root agent entrypoint pointing to GEMINI.md + GitNexus
 ├── PROJECT_MAP.md                        # [NEW] Root file map satisfying Rule 0
@@ -82,7 +82,7 @@ acar/
 
 #### [NEW] `GEMINI.md`
 Will contain:
-- **Project Identity**: ACAR Vehicle Management System (multi-tenant German auto dealerships).
+- **Project Identity**: DriveBase Vehicle Management System (multi-tenant German auto dealerships).
 - **Stack & Architecture**: Django 5.2 + Django Ninja (backend, SQLite), React 19 + TypeScript + Vite 7 + TailwindCSS 4 (frontend).
 - **Core Personas**: Manager (2FA email, full access, dense view, no scrolling, light mode), Employees (approval-based login, permission-controlled transactions).
 - **Core Domain Concepts**: Vehicle pipeline (`Purchased → Ready for Sale → Reserved → Sold → Inactive`), Transactions (StarMoney CSV import, Decimal math, German tax rates), German Legal PDFs (6 types via ReportLab).
@@ -105,12 +105,12 @@ Will contain:
   - GitNexus: MCP impact analysis and query tools.
 
 ```markdown
-# 🚗 ACAR — Gemini & Antigravity Agent Configuration
+# 🚗 DriveBase — Gemini & Antigravity Agent Configuration
 
-> This is the primary root configuration and context beacon for AI agents working on the ACAR repository.
+> This is the primary root configuration and context beacon for AI agents working on the DriveBase repository.
 
 ## 📌 Project Identity
-ACAR is a full-stack, multi-tenant vehicle management platform built for used-car dealerships operating in the German market.
+DriveBase is a full-stack, multi-tenant vehicle management platform built for used-car dealerships operating in the German market.
 - **Backend:** Python 3.12 · Django 5.2 · Django Ninja (REST API) · SQLite (`backend/db.sqlite3`)
 - **Frontend:** React 19 · TypeScript · Vite 7 · TailwindCSS 4 · Radix UI / shadcn/ui · TanStack Query
 - **Multi-Tenancy:** Strict tenant isolation — every database query and mutation MUST filter by `business_id` / `request.user.business`.
@@ -124,11 +124,11 @@ Root agent file for Cursor, Claude Code, and other agent engines.
 
 ```markdown
 <!-- gitnexus:start -->
-# GitNexus & Agent Guidelines — ACAR
+# GitNexus & Agent Guidelines — DriveBase
 
 > For full architecture, domain conventions, and mandatory agent rules, see [GEMINI.md](./GEMINI.md).
 
-This project is indexed by GitNexus as **acar** (4449 symbols, 7598 relationships, 118 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **drivebase** (4449 symbols, 7598 relationships, 118 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 ## Primary Instructions
 All agents must adhere to the rules and workspace topology specified in:

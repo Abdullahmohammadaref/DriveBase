@@ -20,7 +20,7 @@ import { PageInput } from "@/components/PageInput"
 import { getPagePref, savePagePref, getBoolPref, saveBoolPref } from "@/lib/paginationPrefs"
 // import { getSplitWidth, saveSplitWidth } from "@/lib/paginationPrefs" // DEACTIVATED: SplitViewDivider
 
-const PREF_SHOW_FINANCIAL_SUMMARY = "acar_pref_show_vehicles_summary"
+const PREF_SHOW_FINANCIAL_SUMMARY = "drivebase_pref_show_vehicles_summary"
 // import { SplitViewDivider } from "@/components/SplitViewDivider" // DEACTIVATED: SplitViewDivider
 import type { VehicleFilters, VehicleListItem } from "@/types/vehicle"
 
@@ -38,7 +38,7 @@ export function VehiclesPage() {
         const statusFromUrl = searchParams.get("status")
         return {
             page: 1,
-            per_page: getPagePref("acar_vehicles_per_page", 20),
+            per_page: getPagePref("drivebase_vehicles_per_page", 20),
             order: "desc",
             sort: "internal_id",
             status: statusFromUrl || undefined,
@@ -102,7 +102,7 @@ export function VehiclesPage() {
      */
     /*
     const [panelWidth, setPanelWidth] = useState(() => 
-        getSplitWidth("acar_vehicles_filter_width", 260, 200, 500)
+        getSplitWidth("drivebase_vehicles_filter_width", 260, 200, 500)
     )
     const [isDragging, setIsDragging] = useState(false)
 
@@ -115,7 +115,7 @@ export function VehiclesPage() {
 
     const handleDragEnd = () => {
         setIsDragging(false)
-        saveSplitWidth("acar_vehicles_filter_width", panelWidth, 200, 500)
+        saveSplitWidth("drivebase_vehicles_filter_width", panelWidth, 200, 500)
     }
     */
 
@@ -174,7 +174,7 @@ export function VehiclesPage() {
 
     // Handle per page
     const handlePerPageChange = useCallback((newPerPage: number) => {
-        savePagePref("acar_vehicles_per_page", newPerPage)
+        savePagePref("drivebase_vehicles_per_page", newPerPage)
         setFilters(prev => ({ ...prev, per_page: newPerPage, page: 1 }))
     }, [])
 

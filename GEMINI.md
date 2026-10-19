@@ -1,13 +1,13 @@
-# 🚗 ACAR — Gemini & Antigravity Master Agent Guide
+# 🚗 DriveBase — Gemini & Antigravity Master Agent Guide
 
-> **Primary AI Configuration Beacon for the ACAR Repository.**
+> **Primary AI Configuration Beacon for the DriveBase Repository.**
 > All Gemini and Antigravity agents working in this repository must follow this document as the master entrypoint and architectural index.
 
 ---
 
 ## 1. Project Identity & Domain Context
 
-**ACAR** is a private, multi-tenant vehicle management platform custom-built for used-car dealerships in Germany. It replaces a legacy Microsoft Access application that the business ran for years.
+**DriveBase** is a private, multi-tenant vehicle management platform custom-built for used-car dealerships in Germany. It replaces a legacy Microsoft Access application that the business ran for years.
 
 - **Backend:** Python 3.12 · Django 5.2 · Django Ninja (REST API with Pydantic schemas) · SQLite (`backend/db.sqlite3`)
 - **Frontend:** React 19 · TypeScript · Vite 7 · TailwindCSS 4 · Radix UI / shadcn/ui · TanStack Query v5 · React Router v7
@@ -54,7 +54,7 @@ All AI-related configurations, specifications, skills, and references are struct
    5. Prior conversation artifacts.
 
 2. **🏢 Strict Tenant Isolation:**
-   ACAR is multi-tenant. Every single query and mutation MUST be scoped to `business_id` / `request.user.business`. Cross-tenant data leaks are critical security violations. Never expose internal database auto-increment IDs to users; use `internal_id` scoped per business.
+   DriveBase is multi-tenant. Every single query and mutation MUST be scoped to `business_id` / `request.user.business`. Cross-tenant data leaks are critical security violations. Never expose internal database auto-increment IDs to users; use `internal_id` scoped per business.
 
 3. **💰 Financial & Currency Precision:**
    Never use `float` for monetary values. Always use Python `Decimal` / string representations. Respect the German tax calculation rules:
@@ -68,10 +68,10 @@ All AI-related configurations, specifications, skills, and references are struct
    - In Django: Model fields must use `gettext_lazy` (`_`) for `verbose_name`.
 
 5. **📄 ReportLab PDF Stability:**
-   ACAR produces 6 German legal documents: Kaufvertrag, Verbindliche Bestellung, Verkaufvertrag, Quittung, Identitätsprüfung, and Transaktionsbeleg. Never modify PDF layout or coordinates without explicit approval. Number-to-words conversion must use `num2words` with the German language setting.
+   DriveBase produces 6 German legal documents: Kaufvertrag, Verbindliche Bestellung, Verkaufvertrag, Quittung, Identitätsprüfung, and Transaktionsbeleg. Never modify PDF layout or coordinates without explicit approval. Number-to-words conversion must use `num2words` with the German language setting.
 
 6. **🧪 Verification Before Completion:**
-   - Backend tests must pass: `python manage.py test manager.tests` (using `acar_venv`).
+   - Backend tests must pass: `python manage.py test manager.tests` (using `drivebase_venv` or active venv).
    - Frontend TypeScript must build cleanly: `npm run build` in `frontend/`.
 
 ---
@@ -106,7 +106,7 @@ Consult the corresponding skill in [`.agents/skills/`](./.agents/skills/) before
 | **Forms & Zod Validation** | `designing-zod-schemas` |
 | **Tailwind CSS Styling** | `tailwind-css` |
 | **i18n & RTL Layout** | `i18n`, `localization-i18n` |
-| **End-to-End & Integration Tests** | `acar-testing-framework`, `typescript-testing`, `react-testing` |
+| **End-to-End & Integration Tests** | `drivebase-testing-framework`, `typescript-testing`, `react-testing` |
 | **PDF Inspection & Generation** | `nano-pdf` |
 | **Mobile.de API Integration** | `mobile-de-api` |
 | **Multi-Tenant Architecture** | `multi-tenant-architecture` |

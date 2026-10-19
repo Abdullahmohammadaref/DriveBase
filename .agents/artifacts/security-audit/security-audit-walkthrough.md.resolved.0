@@ -4330,7 +4330,7 @@ def create_auth_request(user, action_type: str, payload: dict = None, ip_address
 def send_auth_email(recipient_email: str, subject: str, action_url: str, message_html: str):
     """Send an authentication email with an action link."""
     email_message = EmailMultiAlternatives(
-        subject=f"[ACAR] {subject}",
+        subject=f"[DriveBase] {subject}",
         body=strip_tags(message_html),
         to=[recipient_email]
     )
@@ -4433,7 +4433,7 @@ def request_login(request: HttpRequest, payload: LoginRequestPayload):
         recipient_email = manager.email
         email_html = build_email_html(
             title="Employee Login Request",
-            body=f"<strong>{authenticated_user.username}</strong> is requesting to log in to ACAR.",
+            body=f"<strong>{authenticated_user.username}</strong> is requesting to log in to DriveBase.",
             button_text="Approve Login",
             button_url=approval_url,
             expiry_mins=AUTH_REQUEST_EXPIRY_MINUTES
@@ -5046,7 +5046,7 @@ def create_auth_request(user, action_type: str, payload: dict = None, ip_address
 def send_auth_email(recipient_email: str, subject: str, action_url: str, message_html: str):
     """Send an authentication email with an action link."""
     email_message = EmailMultiAlternatives(
-        subject=f"[ACAR] {subject}",
+        subject=f"[DriveBase] {subject}",
         body=strip_tags(message_html),
         to=[recipient_email]
     )
@@ -5149,7 +5149,7 @@ def request_login(request: HttpRequest, payload: LoginRequestPayload):
         recipient_email = manager.email
         email_html = build_email_html(
             title="Employee Login Request",
-            body=f"<strong>{authenticated_user.username}</strong> is requesting to log in to ACAR.",
+            body=f"<strong>{authenticated_user.username}</strong> is requesting to log in to DriveBase.",
             button_text="Approve Login",
             button_url=approval_url,
             expiry_mins=AUTH_REQUEST_EXPIRY_MINUTES

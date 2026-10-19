@@ -7,7 +7,7 @@
 
 ## Summary
 
-Created all deployment infrastructure files to make ACAR production-ready for Oracle Cloud Always Free ARM instance with GitHub Actions CI/CD.
+Created all deployment infrastructure files to make DriveBase production-ready for Oracle Cloud Always Free ARM instance with GitHub Actions CI/CD.
 
 ---
 
@@ -18,7 +18,7 @@ Created all deployment infrastructure files to make ACAR production-ready for Or
 | 1 | `Dockerfile` | Python 3.11-slim container with system deps for Pillow/ReportLab/Pandas, Gunicorn WSGI server |
 | 2 | `docker-compose.yml` | Orchestrates Django + Nginx services with volume mounts for DB, media, locale, SSL certs |
 | 3 | `nginx/nginx.conf` | HTTPS redirect, Let's Encrypt ACME, API proxy, static/media serving, React SPA fallback |
-| 4 | `backend/acar/settings_prod.py` | Production settings overlay — DEBUG=False, WhiteNoise, secure cookies, env-based config |
+| 4 | `backend/drivebase/settings_prod.py` | Production settings overlay — DEBUG=False, WhiteNoise, secure cookies, env-based config |
 | 5 | `backend/requirements.txt` | Added `whitenoise==6.8.2` and `gunicorn==23.0.0` |
 | 6 | `.github/workflows/deploy.yml` | GitHub Actions CI/CD — SSH deploy on push to `main` |
 | 7 | `scripts/backup.sh` | Daily cron backup script — SQLite hot backup + media tarball, 7-day rotation |
@@ -29,8 +29,8 @@ Created all deployment infrastructure files to make ACAR production-ready for Or
 
 ## Files NOT Modified (per plan)
 
-- `backend/acar/settings.py` — untouched (development settings stay as-is)
-- `backend/acar/urls.py` — untouched
+- `backend/drivebase/settings.py` — untouched (development settings stay as-is)
+- `backend/drivebase/urls.py` — untouched
 - `frontend/vite.config.ts` — untouched (build output path already correct)
 
 ---

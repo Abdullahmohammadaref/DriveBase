@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 import { ChevronDown, ChevronRight, ChevronUp, Loader2, Lock, Plus, Search, Trash2, X, Car, FileText, Globe, CreditCard, Key, Pencil } from "lucide-react"
@@ -12,6 +13,7 @@ import { PageInput } from "@/components/PageInput"
 import { getPagePref, savePagePref } from "@/lib/paginationPrefs"
 import { cn } from "@/lib/utils"
 import { findMatchingStandardOption } from "@/lib/choiceMatching"
+import { SUPPORTED_LOCALES, DEFAULT_LOCALE, type SupportedLocale } from "@/lib/i18n"
 
 interface ChoiceItem {
     id: number
@@ -96,6 +98,19 @@ function matchesSearch(name: string | undefined | null, searchValue: string) {
 export default function ChoicesManagementPage() {
     const { t } = useTranslation()
     const queryClient = useQueryClient()
+    const navigate = useNavigate()
+    const { business_slug, locale } = useParams<{ business_slug: string; locale?: string }>()
+
+    const currentLocale = (locale && (SUPPORTED_LOCALES as readonly string[]).includes(locale))
+        ? locale as SupportedLocale
+        : DEFAULT_LOCALE
+
+    const buildHref = (path: string) => {
+        if (currentLocale === DEFAULT_LOCALE) {
+            return `/${business_slug}/${path}`
+        }
+        return `/${business_slug}/${currentLocale}/${path}`
+    }
 
     const [activeTab, setActiveTab] = useState<string>("vehicle_model")
 
@@ -114,7 +129,7 @@ export default function ChoicesManagementPage() {
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
     const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(() => {
         try {
-            const saved = localStorage.getItem("acar_choices_sidebar_collapsed")
+            const saved = localStorage.getItem("drivebase_choices_sidebar_collapsed")
             return saved ? JSON.parse(saved) : {}
         } catch {
             return {}
@@ -125,7 +140,7 @@ export default function ChoicesManagementPage() {
         setCollapsedSections((prev) => {
             const next = { ...prev, [sectionId]: !prev[sectionId] }
             try {
-                localStorage.setItem("acar_choices_sidebar_collapsed", JSON.stringify(next))
+                localStorage.setItem("drivebase_choices_sidebar_collapsed", JSON.stringify(next))
             } catch {}
             return next
         })
@@ -199,11 +214,11 @@ export default function ChoicesManagementPage() {
     const [modalVehicleClasses, setModalVehicleClasses] = useState<string[]>(["Car"])
     const [modalParentMake, setModalParentMake] = useState<MakeWithModels | { id: number; name: string; vehicle_classes?: string[]; models_active?: ChoiceItem[] } | null>(null)
     const [page, setPage] = useState<number>(1)
-    const [perPage, setPerPage] = useState<number>(() => getPagePref("acar_choices_per_page", getPagePref("acar_choices_makes_per_page", 20)))
+    const [perPage, setPerPage] = useState<number>(() => getPagePref("drivebase_choices_per_page", 20))
     const scrollContainerRef = React.useRef<HTMLDivElement>(null)
 
     const handlePerPageChange = (newPerPage: number) => {
-        savePagePref("acar_choices_per_page", newPerPage)
+        savePagePref("drivebase_choices_per_page", newPerPage)
         setPerPage(newPerPage)
         setPage(1)
     }
@@ -1181,9 +1196,25 @@ export default function ChoicesManagementPage() {
                             </span>
                         )}
                         {(item as any).vehicle_name && (
-                            <span className="text-xs text-muted-foreground italic">
-                                — {(item as any).vehicle_name}
-                            </span>
+                            (item as any).vehicle_id ? (
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        navigate(buildHref(`vehicles/${(item as any).vehicle_id}/edit`))
+                                    }}
+                                    className="text-xs text-primary hover:text-primary/80 hover:underline cursor-pointer inline-flex items-center gap-1 font-medium transition-colors"
+                                    title={t("choices.goToVehicle", "Go to vehicle")}
+                                >
+                                    <span className="text-muted-foreground">—</span>
+                                    <Car className="h-3 w-3 shrink-0 text-muted-foreground" />
+                                    <span>{(item as any).vehicle_name}</span>
+                                </button>
+                            ) : (
+                                <span className="text-xs text-muted-foreground italic">
+                                    — {(item as any).vehicle_name}
+                                </span>
+                            )
                         )}
                         {typeKey === "payment_method" && (
                             <div className="inline-flex flex-wrap items-center gap-1">
@@ -1218,8 +1249,16 @@ export default function ChoicesManagementPage() {
                         )}
                     </div>
                 ) : (
-                    <button
+                    <div
+                        role="button"
+                        tabIndex={0}
                         onClick={() => openEditModal(typeKey, item)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault()
+                                openEditModal(typeKey, item)
+                            }
+                        }}
                         className="flex flex-wrap items-center gap-1.5 font-medium text-foreground hover:text-primary transition-colors text-left flex-1 min-w-0 py-0.5 cursor-pointer"
                     >
                         <span>{item.name}</span>
@@ -1229,9 +1268,25 @@ export default function ChoicesManagementPage() {
                             </span>
                         )}
                         {(item as any).vehicle_name && (
-                            <span className="text-xs text-muted-foreground italic">
-                                — {(item as any).vehicle_name}
-                            </span>
+                            (item as any).vehicle_id ? (
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        navigate(buildHref(`vehicles/${(item as any).vehicle_id}/edit`))
+                                    }}
+                                    className="text-xs text-primary hover:text-primary/80 hover:underline cursor-pointer inline-flex items-center gap-1 font-medium transition-colors"
+                                    title={t("choices.goToVehicle", "Go to vehicle")}
+                                >
+                                    <span className="text-muted-foreground">—</span>
+                                    <Car className="h-3 w-3 shrink-0 text-muted-foreground" />
+                                    <span>{(item as any).vehicle_name}</span>
+                                </button>
+                            ) : (
+                                <span className="text-xs text-muted-foreground italic">
+                                    — {(item as any).vehicle_name}
+                                </span>
+                            )
                         )}
                         {typeKey === "payment_method" && (
                             <div className="inline-flex flex-wrap items-center gap-1">
@@ -1269,7 +1324,7 @@ export default function ChoicesManagementPage() {
                                 ))}
                             </span>
                         )}
-                    </button>
+                    </div>
                 )}
                 {item.is_protected ? (
                     <span className="inline-flex items-center text-xs text-muted-foreground font-medium shrink-0 ml-2" title={t("choices.protectedTooltip", "Protected system choice locked for marketplace integrity")}>
@@ -2630,7 +2685,6 @@ export default function ChoicesManagementPage() {
                                             : "text-muted-foreground hover:text-foreground hover:bg-white/50 dark:hover:bg-card/50"
                                     )}
                                 >
-                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
                                     <span>{t("choices.scopeInUse", "In-Use & Custom")}</span>
                                 </button>
                                 <button

@@ -19,11 +19,11 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn whitenoise
 COPY backend/ /app/
 
 # Collect static files (React build will be in /app/static/dist from CI)
-RUN python manage.py collectstatic --noinput --settings=acar.settings_prod || true
+RUN python manage.py collectstatic --noinput --settings=drivebase.settings_prod || true
 
 EXPOSE 8000
 
-CMD ["gunicorn", "acar.wsgi:application", \
+CMD ["gunicorn", "drivebase.wsgi:application", \
     "--bind", "0.0.0.0:8000", \
     "--workers", "2", \
     "--timeout", "120", \

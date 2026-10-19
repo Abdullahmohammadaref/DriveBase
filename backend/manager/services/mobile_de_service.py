@@ -19,7 +19,7 @@ from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
-# Official vehicle class mapping from ACAR VehicleType names to mobile.de class enums
+# Official vehicle class mapping from DriveBase VehicleType names to mobile.de class enums
 CLASS_MAP = {
     'pkw': 'Car',
     'car': 'Car',
@@ -66,7 +66,7 @@ CLASS_MAP = {
     'pedelec': 'EBike',
 }
 
-# Category mapping from ACAR BodyType names to mobile.de category enums
+# Category mapping from DriveBase BodyType names to mobile.de category enums
 CATEGORY_MAP = {
     # Car (PKW)
     'limousine': 'Limousine',

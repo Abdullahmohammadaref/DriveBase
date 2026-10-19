@@ -291,7 +291,7 @@ const [isSplitView, setIsSplitView] = useState<boolean>(() => {
 })
 ```
 
-This is the same pattern the vehicle split view uses (see `components.md` section 8, key `acar_vehicle_split_view`). Copy that pattern exactly — consistency matters.
+This is the same pattern the vehicle split view uses (see `components.md` section 8, key `drivebase_vehicle_split_view`). Copy that pattern exactly — consistency matters.
 
 **Light mode default:** This should already be implemented. Verify that the app defaults to light mode on first load (no `.dark` class on `<html>` by default). If a `localStorage` theme preference is stored, it overrides this. If it's not already defaulting to light, find where the theme is initialized (likely `App.tsx` or `Header.tsx`) and set the default to `'light'`.
 

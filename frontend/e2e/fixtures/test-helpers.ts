@@ -1,5 +1,5 @@
 /**
- * E2E Test Helpers & API Utilities for ACAR
+ * E2E Test Helpers & API Utilities for DriveBase
  */
 
 export interface TestAuthRequest {

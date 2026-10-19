@@ -14,12 +14,12 @@ interface FinancialMetricsStripProps {
     annualTargetRate?: number
 }
 
-interface KpiStep {
+export interface KpiStep {
     label: string
     value: string
 }
 
-interface KpiItem {
+export interface KpiItem {
     id: string
     label: string
     value: string
@@ -28,7 +28,7 @@ interface KpiItem {
     steps: KpiStep[]
 }
 
-function KpiModal({ kpi, onClose }: { kpi: KpiItem; onClose: () => void }) {
+export function KpiModal({ kpi, onClose }: { kpi: KpiItem; onClose: () => void }) {
     const { t } = useTranslation()
 
     return (

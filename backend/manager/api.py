@@ -1948,7 +1948,7 @@ def get_choices_for_management(request):
         'key_number': {
             'name': 'Key Numbers',
             'displayName': 'Schlüsselnummern',
-            'active': [{'id': k.id, 'name': str(k.number), 'usage_count': 1 if k.vehicle_id else 0, 'vehicle_id': k.vehicle_id, 'vehicle_name': f"{k.vehicle.make.name if k.vehicle and k.vehicle.make else ''} {k.vehicle.model.name if k.vehicle and k.vehicle.model else ''} (#{k.vehicle.internal_id})" if k.vehicle else None} for k in KeyNumber.objects.filter(business=business, is_active=True).select_related('vehicle', 'vehicle__make', 'vehicle__model')],
+            'active': [{'id': k.id, 'name': str(k.number), 'usage_count': 1 if k.vehicle_id else 0, 'vehicle_id': k.vehicle.internal_id if k.vehicle else None, 'vehicle_internal_id': k.vehicle.internal_id if k.vehicle else None, 'vehicle_name': f"{k.vehicle.make.name if k.vehicle and k.vehicle.make else ''} {k.vehicle.model.name if k.vehicle and k.vehicle.model else ''} (#{k.vehicle.internal_id})" if k.vehicle else None} for k in KeyNumber.objects.filter(business=business, is_active=True).select_related('vehicle', 'vehicle__make', 'vehicle__model')],
             'inactive': [{'id': k.id, 'name': str(k.number), 'usage_count': 0} for k in KeyNumber.objects.filter(business=business, is_active=False)],
         },
     }
@@ -3087,6 +3087,63 @@ def download_receipt(request, internal_id: int, region: Optional[str] = Query(No
     
     from . import views as legacy_views
     return legacy_views.generate_receipt_verkaufvertrag_pdf(request, business.name, internal_id, region=region)
+
+
+@router.get("/vehicles/{internal_id}/pdf/download-zip")
+def download_vehicle_documents_zip(
+    request,
+    internal_id: int,
+    docs: str = Query(...),
+    region: Optional[str] = Query(None)
+):
+    """
+    Package requested vehicle PDFs into a single ZIP archive for instant download.
+    Provides guaranteed native download compatibility across Web and Desktop (Tauri/WebView2).
+    """
+    business = get_user_business(request)
+    vehicle = get_object_or_404(Vehicle, business=business, internal_id=internal_id)
+    
+    from . import views as legacy_views
+    import zipfile
+    
+    doc_types = [d.strip() for d in docs.split(",") if d.strip()]
+    zip_buffer = io.BytesIO()
+    
+    safe_make = (vehicle.make_name or "Fahrzeug").replace(" ", "_")
+    safe_model = (vehicle.model_name or "").replace(" ", "_")
+    safe_name = f"{safe_make}_{safe_model}".strip("_")
+    
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        for idx, doc_type in enumerate(doc_types, start=1):
+            pdf_response = None
+            filename = f"{idx:02d}_{doc_type}.pdf"
+            
+            if doc_type == "buy-contract":
+                pdf_response = legacy_views.generate_vehicle_buy_contract_pdf(request, business.name, internal_id)
+                filename = f"{idx:02d}_Kaufvertrag_Einkauf.pdf"
+            elif doc_type == "sale-contract":
+                pdf_response = legacy_views.generate_vehicle_sale_contract_pdf(request, business.name, internal_id)
+                filename = f"{idx:02d}_Kaufvertrag_Verkauf.pdf"
+            elif doc_type == "identity-check":
+                pdf_response = legacy_views.generate_identity_check_pdf(request, business.name, internal_id)
+                filename = f"{idx:02d}_Identitaetspruefung.pdf"
+            elif doc_type == "binding-order":
+                pdf_response = legacy_views.generate_binding_order_pdf(request, business.name, internal_id)
+                filename = f"{idx:02d}_Verbindliche_Bestellung.pdf"
+            elif doc_type == "sale-agreement":
+                pdf_response = legacy_views.generate_sale_agreement_pdf(request, business.name, internal_id)
+                filename = f"{idx:02d}_Verkaufvertrag.pdf"
+            elif doc_type == "receipt":
+                pdf_response = legacy_views.generate_receipt_verkaufvertrag_pdf(request, business.name, internal_id, region=region)
+                filename = f"{idx:02d}_Quittung.pdf"
+                
+            if pdf_response and hasattr(pdf_response, "content"):
+                zf.writestr(filename, pdf_response.content)
+                
+    zip_buffer.seek(0)
+    response = HttpResponse(zip_buffer.getvalue(), content_type="application/zip")
+    response["Content-Disposition"] = f'attachment; filename="{safe_name}_Dokumente.zip"'
+    return response
 
 
 

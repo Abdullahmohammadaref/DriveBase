@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright E2E configuration for ACAR Dealership Operating System.
+ * Playwright E2E configuration for DriveBase Dealership Operating System.
  */
 export default defineConfig({
   testDir: './e2e',

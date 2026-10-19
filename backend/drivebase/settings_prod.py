@@ -1,7 +1,7 @@
 """
-Production settings for ACAR.
-Loaded by Gunicorn via: --settings=acar.settings_prod
-Or set DJANGO_SETTINGS_MODULE=acar.settings_prod in .env.production
+Production settings for DriveBase.
+Loaded by Gunicorn via: --settings=drivebase.settings_prod
+Or set DJANGO_SETTINGS_MODULE=drivebase.settings_prod in .env.production
 """
 from .settings import *  # noqa: F401, F403
 import os
