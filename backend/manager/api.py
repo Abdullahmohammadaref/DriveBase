@@ -1715,31 +1715,66 @@ def get_all_choices(request, vehicle_id: Optional[int] = Query(None)):
         
     available_keys = KeyNumber.objects.filter(business=business, is_active=True).exclude(taken_keys_q)
     
+    v_filter = Q(vehicles__business=business)
+    t_filter = Q(transactions__business=business)
+    le_filter = Q(legal_entities__business=business)
+    
     return {
-        "branches": list(Branch.objects.filter(business=business, is_active=True).values('id', 'name', 'address', 'is_active')),
-        "vehicle_types": list(VehicleType.objects.filter(business=business, is_active=True).values('id', 'name', 'mobile_de_mapping', 'is_protected')),
-        "body_types": list(BodyType.objects.filter(business=business, is_active=True).values('id', 'name', 'mobile_de_mapping', 'vehicle_classes', 'is_protected')),
-        "makes": list(Make.objects.filter(business=business, is_active=True).values('id', 'name', 'mobile_de_mapping', 'vehicle_classes', 'is_protected')),
-        "colors": list(Color.objects.filter(business=business, is_active=True).values('id', 'name', 'mobile_de_mapping', 'is_protected')),
-        "fuel_types": list(FuelType.objects.filter(business=business, is_active=True).values('id', 'name', 'mobile_de_mapping', 'vehicle_classes', 'is_protected')),
-        "damage_types": list(DamageType.objects.filter(business=business, is_active=True).values('id', 'name')),
-        "doors": list(DoorsChoice.objects.filter(business=business, is_active=True).values('id', 'name', 'mobile_de_mapping', 'vehicle_classes', 'is_protected')),
-        "payment_methods": list(PaymentMethod.objects.filter(business=business, is_active=True).values('id', 'name', 'applies_to_buy', 'applies_to_sale', 'applies_to_transactions')),
-        "tax_percentages": list(TaxPercentage.objects.filter(business=business, is_active=True).values('id', 'name', 'percentage', 'is_no_tax')),
+        "branches": list(Branch.objects.filter(business=business, is_active=True).annotate(
+            usage_count=Count('branch_vehicles', filter=Q(branch_vehicles__business=business))
+        ).order_by('-usage_count', 'name').values('id', 'name', 'address', 'is_active')),
+        "vehicle_types": list(VehicleType.objects.filter(business=business, is_active=True).annotate(
+            usage_count=Count('vehicles', filter=v_filter)
+        ).order_by('-usage_count', 'name').values('id', 'name', 'mobile_de_mapping', 'is_protected')),
+        "body_types": list(BodyType.objects.filter(business=business, is_active=True).annotate(
+            usage_count=Count('vehicles', filter=v_filter)
+        ).order_by('-usage_count', 'name').values('id', 'name', 'mobile_de_mapping', 'vehicle_classes', 'is_protected')),
+        "makes": list(Make.objects.filter(business=business, is_active=True).annotate(
+            usage_count=Count('vehicles', filter=v_filter)
+        ).order_by('-usage_count', 'name').values('id', 'name', 'mobile_de_mapping', 'vehicle_classes', 'is_protected')),
+        "colors": list(Color.objects.filter(business=business, is_active=True).annotate(
+            usage_count=Count('vehicles', filter=v_filter)
+        ).order_by('-usage_count', 'name').values('id', 'name', 'mobile_de_mapping', 'is_protected')),
+        "fuel_types": list(FuelType.objects.filter(business=business, is_active=True).annotate(
+            usage_count=Count('vehicles', filter=v_filter)
+        ).order_by('-usage_count', 'name').values('id', 'name', 'mobile_de_mapping', 'vehicle_classes', 'is_protected')),
+        "damage_types": list(DamageType.objects.filter(business=business, is_active=True).annotate(
+            usage_count=Count('vehicles', filter=v_filter)
+        ).order_by('-usage_count', 'name').values('id', 'name')),
+        "doors": list(DoorsChoice.objects.filter(business=business, is_active=True).annotate(
+            usage_count=Count('vehicles', filter=v_filter)
+        ).order_by('-usage_count', 'name').values('id', 'name', 'mobile_de_mapping', 'vehicle_classes', 'is_protected')),
+        "payment_methods": list(PaymentMethod.objects.filter(business=business, is_active=True).annotate(
+            usage_count=Count('transactions', filter=t_filter)
+        ).order_by('-usage_count', 'name').values('id', 'name', 'applies_to_buy', 'applies_to_sale', 'applies_to_transactions')),
+        "tax_percentages": list(TaxPercentage.objects.filter(business=business, is_active=True).annotate(
+            usage_count=Count('buy_vehicles', filter=Q(buy_vehicles__business=business)) + Count('sale_vehicles', filter=Q(sale_vehicles__business=business))
+        ).order_by('-usage_count', 'percentage', 'name').values('id', 'name', 'percentage', 'is_no_tax')),
         "legal_entities": list(LegalEntity.objects.filter(business=business).exclude(status='inactive').annotate(
             address_city_name=F('address_city__name'),
-            address_country_name=F('address_country__name')
-        ).values(
+            address_country_name=F('address_country__name'),
+            usage_count=Count('buyer_vehicles', filter=Q(buyer_vehicles__business=business)) + Count('seller_vehicles', filter=Q(seller_vehicles__business=business))
+        ).order_by('-usage_count', 'name').values(
             'id', 'internal_id', 'name', 'type', 
             'address_street', 'address_street_number', 'address_postal_code',
             'address_city_id', 'address_city_name', 'address_country_id', 'address_country_name', 'email', 'phone_number',
             'tax_identification_number'
         )),
-        "categories": list(Category.objects.filter(business=business, is_active=True).values('id', 'name')),
-        "subcategories": list(Subcategory.objects.filter(business=business, is_active=True).values('id', 'name', 'category_id')),
-        "currencies": list(Currency.objects.filter(business=business, is_active=True).values('id', 'name', 'code')),
-        "countries": list(Country.objects.filter(business=business, is_active=True).values('id', 'name')),
-        "cities": list(City.objects.filter(business=business, is_active=True).values('id', 'name', 'country_id')),
+        "categories": list(Category.objects.filter(business=business, is_active=True).annotate(
+            usage_count=Count('transactions', filter=t_filter)
+        ).order_by('-usage_count', 'name').values('id', 'name')),
+        "subcategories": list(Subcategory.objects.filter(business=business, is_active=True).annotate(
+            usage_count=Count('transactions', filter=t_filter)
+        ).order_by('-usage_count', 'name').values('id', 'name', 'category_id')),
+        "currencies": list(Currency.objects.filter(business=business, is_active=True).annotate(
+            usage_count=Count('transactions', filter=t_filter)
+        ).order_by('-usage_count', 'name').values('id', 'name', 'code')),
+        "countries": list(Country.objects.filter(business=business, is_active=True).annotate(
+            usage_count=Count('legal_entities', filter=le_filter)
+        ).order_by('-usage_count', 'name').values('id', 'name')),
+        "cities": list(City.objects.filter(business=business, is_active=True).annotate(
+            usage_count=Count('legal_entities', filter=le_filter)
+        ).order_by('-usage_count', 'name').values('id', 'name', 'country_id')),
         "key_numbers": [{"id": k.id, "name": str(k.number)} for k in available_keys],
         "status_choices": [
             {"value": "purchased", "label": "Purchased"},
@@ -1756,12 +1791,15 @@ def get_all_choices(request, vehicle_id: Optional[int] = Query(None)):
 def get_models_for_make(request, make_id: int):
     """Get models for a specific make"""
     business = get_user_business(request)
+    v_filter = Q(vehicles__business=business)
     
     models = VehicleModel.objects.filter(
         make_id=make_id,
         business=business,
         is_active=True
-    ).select_related('make')
+    ).select_related('make').annotate(
+        usage_count=Count('vehicles', filter=v_filter)
+    ).order_by('-usage_count', 'name')
     
     return [
         {

@@ -21,6 +21,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, Client, override_settings
 from django.contrib.auth import get_user_model
 from PIL import Image
+import pypdf
+import zipfile
 
 from manager.models import (
     Vehicle, Transaction, LegalEntity, Make, VehicleModel,
@@ -1143,4 +1145,162 @@ class VehicleExpenseEarningApiTests(BaseTestCase):
         # 6. Verify detail has 0 active entries
         res_detail_after = self.client.get(f"/api/vehicles/{self.vehicle_a.internal_id}")
         self.assertEqual(len(res_detail_after.json()["expenses_earnings"]), 0)
+
+
+# =============================================================================
+# Vehicle PDF Generation & Model Display Regression Tests
+# =============================================================================
+
+class VehiclePdfGenerationTests(BaseTestCase):
+    """
+    Test all vehicle PDF generation endpoints to ensure vehicle make and model
+    are properly rendered and never output 'None' (e.g. 'BMW None').
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.login_manager_a()
+
+        # Configure vehicle_a with all required buy and sale contract fields
+        self.vehicle_a.seller = self.legal_entity_a
+        self.vehicle_a.buyer = self.legal_entity_a
+        self.vehicle_a.buy_price = Decimal("20000.00")
+        self.vehicle_a.buy_date = date(2024, 1, 1)
+        self.vehicle_a.buy_payment_method = self.payment_method_a
+        self.vehicle_a.buy_tax = self.tax_19_a
+        self.vehicle_a.sale_price = Decimal("25000.00")
+        self.vehicle_a.sale_date = date(2024, 2, 1)
+        self.vehicle_a.sale_payment_method = self.payment_method_a
+        self.vehicle_a.sale_tax = self.tax_19_a
+        self.vehicle_a.sale_invoice_number = "RNG-0001"
+        self.vehicle_a.save()
+
+        # Specifically set legacy manufacturer_model to None in the database
+        # to simulate migrated vehicles that have model FK set but NULL legacy CharField
+        Vehicle.objects.filter(id=self.vehicle_a.id).update(manufacturer_model=None)
+        self.vehicle_a.refresh_from_db()
+        self.assertIsNone(self.vehicle_a.manufacturer_model)
+
+        # Create an associated transaction for dynamic pricing / receipts
+        self.transaction_pdf_test = Transaction.objects.create(
+            business=self.business_a,
+            vehicle=self.vehicle_a,
+            amount=Decimal("25000.00"),
+            date=date(2024, 2, 1),
+            category="car_sale",
+            subcategory="used_car",
+            description="Vehicle sale",
+            method="cash",
+        )
+
+    def _extract_pdf_text(self, pdf_bytes):
+        reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+        return "\n".join(page.extract_text() for page in reader.pages)
+
+    def test_buy_contract_pdf_renders_model_without_none(self):
+        res = self.client.get(f"/api/vehicles/{self.vehicle_a.internal_id}/pdf/buy-contract")
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res["Content-Type"], "application/pdf")
+        text = self._extract_pdf_text(res.content)
+        self.assertNotIn("BMW None", text)
+        self.assertIn("BMW X5", text)
+
+    def test_sale_contract_pdf_renders_model_without_none(self):
+        res = self.client.get(f"/api/vehicles/{self.vehicle_a.internal_id}/pdf/sale-contract")
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res["Content-Type"], "application/pdf")
+        text = self._extract_pdf_text(res.content)
+        self.assertNotIn("BMW None", text)
+        self.assertIn("BMW X5", text)
+
+    def test_identity_check_pdf_renders_model_without_none(self):
+        res = self.client.get(f"/api/vehicles/{self.vehicle_a.internal_id}/pdf/identity-check")
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res["Content-Type"], "application/pdf")
+        text = self._extract_pdf_text(res.content)
+        self.assertNotIn("BMW None", text)
+        self.assertIn("BMW X5", text)
+
+    def test_binding_order_pdf_renders_model_without_none(self):
+        res = self.client.get(f"/api/vehicles/{self.vehicle_a.internal_id}/pdf/binding-order")
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res["Content-Type"], "application/pdf")
+        text = self._extract_pdf_text(res.content)
+        self.assertNotIn("BMW None", text)
+        self.assertIn("BMW X5", text)
+
+    def test_sale_agreement_pdf_renders_model_without_none(self):
+        res = self.client.get(f"/api/vehicles/{self.vehicle_a.internal_id}/pdf/sale-agreement")
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res["Content-Type"], "application/pdf")
+        text = self._extract_pdf_text(res.content)
+        self.assertNotIn("BMW None", text)
+        self.assertIn("BMW X5", text)
+
+    def test_receipt_pdf_renders_model_without_none(self):
+        res = self.client.get(f"/api/vehicles/{self.vehicle_a.internal_id}/pdf/receipt")
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res["Content-Type"], "application/pdf")
+        text = self._extract_pdf_text(res.content)
+        self.assertNotIn("BMW None", text)
+        self.assertIn("BMW X5", text)
+
+    def test_download_zip_contains_all_valid_pdfs_without_none(self):
+        url = (
+            f"/api/vehicles/{self.vehicle_a.internal_id}/pdf/download-zip?"
+            "docs=buy-contract,sale-contract,identity-check,binding-order,sale-agreement,receipt"
+        )
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res["Content-Type"], "application/zip")
+        with zipfile.ZipFile(io.BytesIO(res.content), "r") as zf:
+            file_names = zf.namelist()
+            self.assertEqual(len(file_names), 6)
+            for fname in file_names:
+                pdf_data = zf.read(fname)
+                text = self._extract_pdf_text(pdf_data)
+                self.assertNotIn("BMW None", text, f"Found 'BMW None' in {fname}")
+                self.assertIn("BMW X5", text, f"Missing 'BMW X5' in {fname}")
+
+    def test_transaction_pdf_renders_vehicle_model_without_none(self):
+        from manager.pdf_generators.transaction_pdfs import generate_transaction_pdf_with_data
+        buf = generate_transaction_pdf_with_data(self.transaction_pdf_test, self.business_a)
+        buf.seek(0)
+        text = self._extract_pdf_text(buf.read())
+        self.assertNotIn("BMW None", text)
+        self.assertIn("BMW X5", text)
+
+    def test_legacy_vehicle_without_model_fk_renders_legacy_string(self):
+        legacy_vehicle = Vehicle.objects.create(
+            business=self.business_a,
+            make=self.make_a,
+            model=None,
+            manufacturer_model="320d",
+            seller=self.legal_entity_a,
+            buyer=self.legal_entity_a,
+            buy_price=Decimal("15000.00"),
+            buy_date=date(2024, 1, 1),
+            buy_payment_method=self.payment_method_a,
+            buy_tax=self.tax_19_a,
+            sale_price=Decimal("18000.00"),
+            sale_date=date(2024, 2, 1),
+            sale_payment_method=self.payment_method_a,
+            sale_tax=self.tax_19_a,
+            sale_invoice_number="RNG-0002",
+        )
+        # Test buy contract
+        res = self.client.get(f"/api/vehicles/{legacy_vehicle.internal_id}/pdf/buy-contract")
+        self.assertEqual(res.status_code, 200)
+        text = self._extract_pdf_text(res.content)
+        self.assertNotIn("BMW None", text)
+        self.assertIn("BMW 320d", text)
+
+        # Test binding order
+        res_bo = self.client.get(f"/api/vehicles/{legacy_vehicle.internal_id}/pdf/binding-order")
+        self.assertEqual(res_bo.status_code, 200)
+        text_bo = self._extract_pdf_text(res_bo.content)
+        self.assertNotIn("BMW None", text_bo)
+        self.assertIn("BMW 320d", text_bo)
+
+
 

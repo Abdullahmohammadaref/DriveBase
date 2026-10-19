@@ -68,7 +68,7 @@ export function FilterSelect({
     }
 
     return (
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover modal={true} open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
                 <Button
                     variant="outline"

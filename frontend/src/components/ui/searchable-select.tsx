@@ -59,7 +59,7 @@ export function SearchableSelect({
         : options
 
     return (
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover modal={true} open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
                 <Button
                     variant="outline"
@@ -107,7 +107,10 @@ export function SearchableSelect({
                         className="h-7 text-xs text-foreground placeholder:text-muted-foreground"
                     />
                 </div>
-                <div className="max-h-[260px] overflow-y-auto overflow-x-hidden p-1">
+                <div
+                    className="max-h-[260px] overflow-y-auto overflow-x-hidden p-1"
+                    onWheel={(e) => e.stopPropagation()}
+                >
                     {filteredOptions.length === 0 ? (
                         <div className="p-2 text-xs text-muted-foreground text-center">
                             No results found

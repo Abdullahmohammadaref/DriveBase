@@ -291,7 +291,7 @@ export function DynamicSelect({
 
     return (
         <>
-            <Popover open={open} onOpenChange={setOpen}>
+            <Popover modal={true} open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                     <Button
                         variant="outline"
@@ -318,7 +318,10 @@ export function DynamicSelect({
                             className="h-7 text-xs text-foreground placeholder:text-muted-foreground"
                         />
                     </div>
-                    <div className="max-h-[260px] overflow-y-auto overflow-x-hidden p-1">
+                    <div
+                        className="max-h-[260px] overflow-y-auto overflow-x-hidden p-1"
+                        onWheel={(e) => e.stopPropagation()}
+                    >
                         {filteredOptions.length === 0 ? (
                             <div className="p-2 text-xs text-muted-foreground">
                                 {allowCreate && searchQuery ? (
@@ -326,6 +329,7 @@ export function DynamicSelect({
                                         type="button"
                                         onClick={() => {
                                             setNewName(searchQuery)
+                                            setOpen(false)
                                             setDialogOpen(true)
                                         }}
                                         className="flex w-full items-center gap-1.5 rounded-sm px-2 py-1.5 text-xs md:text-sm text-foreground hover:bg-accent cursor-pointer transition-colors"
@@ -373,9 +377,9 @@ export function DynamicSelect({
                             <button
                                 type="button"
                                 onClick={() => {
+                                    setOpen(false)
+                                    setSearchQuery("")
                                     if (onAddClick) {
-                                        setOpen(false)
-                                        setSearchQuery("")
                                         onAddClick()
                                     } else {
                                         setNewName("")

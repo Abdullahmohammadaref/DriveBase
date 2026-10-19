@@ -13,7 +13,7 @@ from ninja.files import UploadedFile
 from ninja.security import django_auth
 from django.shortcuts import get_object_or_404
 from django.http import FileResponse
-from django.db.models import Sum, Case, When, FloatField, Q
+from django.db.models import Sum, Case, When, FloatField, Q, Count
 from django.core.paginator import Paginator
 from typing import Optional
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
@@ -363,9 +363,12 @@ def get_transaction_choices(request, current_method_id: Optional[int] = None):
     Called once when the transaction form loads.
     """
     business = get_user_business(request)
+    t_filter = Q(transactions__business=business)
     
     # Get category choices from Category model (dynamic, user-created)
-    categories = Category.objects.filter(business=business, is_active=True).order_by('name')
+    categories = Category.objects.filter(business=business, is_active=True).annotate(
+        usage_count=Count('transactions', filter=t_filter)
+    ).order_by('-usage_count', 'name')
     category_choices = [
         {"value": str(c.id), "label": c.name}
         for c in categories
@@ -375,7 +378,9 @@ def get_transaction_choices(request, current_method_id: Optional[int] = None):
     method_query = Q(business=business, is_active=True, applies_to_transactions=True)
     if current_method_id:
         method_query |= Q(business=business, id=current_method_id)
-    methods = PaymentMethod.objects.filter(method_query).order_by('name')
+    methods = PaymentMethod.objects.filter(method_query).annotate(
+        usage_count=Count('transactions', filter=t_filter)
+    ).order_by('-usage_count', 'name')
     method_choices = [
         {
             "value": str(m.id), 
@@ -385,7 +390,9 @@ def get_transaction_choices(request, current_method_id: Optional[int] = None):
     ]
     
     # Get currency choices from Currency model (dynamic, user-created)
-    currencies = Currency.objects.filter(business=business, is_active=True).order_by('name')
+    currencies = Currency.objects.filter(business=business, is_active=True).annotate(
+        usage_count=Count('transactions', filter=t_filter)
+    ).order_by('-usage_count', 'name')
     currency_choices = [
         {"value": str(c.id), "label": f"{c.name} ({c.code})"}
         for c in currencies
@@ -413,13 +420,16 @@ def get_subcategories(request, category_id: int):
     Returns subcategories from the Subcategory model.
     """
     business = get_user_business(request)
+    t_filter = Q(transactions__business=business)
     
     # Get subcategories linked to this category
     subcategories = Subcategory.objects.filter(
         business=business,
         category_id=category_id,
         is_active=True
-    ).order_by('name')
+    ).annotate(
+        usage_count=Count('transactions', filter=t_filter)
+    ).order_by('-usage_count', 'name')
     
     # Return list of subcategory objects with id and name
     subcategory_list = [

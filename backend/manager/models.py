@@ -1191,6 +1191,20 @@ class Vehicle(models.Model):
         """Legacy compat: old code uses vehicle.manufacturer, now it's vehicle.make."""
         return self.make.name if self.make else ""
 
+    @property
+    def make_name(self):
+        """Returns the vehicle make name from FK."""
+        return self.make.name if self.make else ""
+
+    @property
+    def model_name(self):
+        """Returns the vehicle model name from FK or fallback to legacy manufacturer_model."""
+        return self.model.name if self.model else (self.manufacturer_model or "")
+
+    def get_model_display(self):
+        """Legacy compat: was choices CharField, now FK to VehicleModel."""
+        return self.model.name if self.model else (self.manufacturer_model or "")
+
     class Meta:
         ###### Ensure internal_id is unique per business
         unique_together = ['business', 'internal_id']
@@ -1220,6 +1234,10 @@ class Vehicle(models.Model):
 
             # Create invoice number
             self.sale_invoice_number = f"Rng-{sequential_number:04d}"
+
+        # Keep legacy manufacturer_model in sync with model FK
+        if self.model and not self.manufacturer_model:
+            self.manufacturer_model = self.model.name
 
         # Auto-release key if vehicle is sold or inactive
         if self.pk and self.status in ['sold', 'inactive']:
