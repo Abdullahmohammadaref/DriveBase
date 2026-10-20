@@ -1,10 +1,20 @@
 import axios from "axios"
+import { isTauri, getWebAppUrl } from "./desktop/platform"
 
 /**
  * Axios instance configured for the Django API
  * Uses dynamic API_BASE (defaults to relative /api for web proxying, or cloud URL for desktop)
  */
-export const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api"
+export function getApiBaseUrl(): string {
+    const envBase = import.meta.env.VITE_API_BASE_URL
+    if (envBase) return envBase
+    if (isTauri()) {
+        return `${getWebAppUrl()}/api`
+    }
+    return "/api"
+}
+
+export const API_BASE = getApiBaseUrl()
 
 const api = axios.create({
     baseURL: API_BASE,
@@ -97,6 +107,14 @@ export async function ensureCsrfToken(): Promise<string | null> {
 
 // Request interceptor - Add CSRF token for mutations
 api.interceptors.request.use(async (config) => {
+    // Inside Tauri, guarantee baseURL points to the cloud backend
+    if (isTauri()) {
+        const cloudBase = `${getWebAppUrl()}/api`
+        if (!config.baseURL || config.baseURL === "/api" || !config.baseURL.startsWith("http")) {
+            config.baseURL = cloudBase
+        }
+    }
+
     // Only add CSRF for state-changing methods
     const method = config.method?.toLowerCase()
     if (method && ["post", "put", "patch", "delete"].includes(method)) {
