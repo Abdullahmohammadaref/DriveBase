@@ -23,30 +23,53 @@ jobs:
           command_timeout: 20m
           script: |
             set -e
+            APP_DIR=""
+            for dir in /home/ubuntu/drivebase /home/ubuntu/acar; do
+              if [ -d "$dir" ]; then
+                APP_DIR="$dir"
+                break
+              fi
+            done
+            if [ -z "$APP_DIR" ]; then
+              echo "No deploy directory found (checked: /home/ubuntu/drivebase, /home/ubuntu/acar)"
+              exit 1
+            fi
+
+            PRIVATE_DIR=""
+            for dir in /home/ubuntu/drivebase-private /home/ubuntu/acar-private; do
+              if [ -d "$dir" ]; then
+                PRIVATE_DIR="$dir"
+                break
+              fi
+            done
+            if [ -z "$PRIVATE_DIR" ]; then
+              echo "No private directory found (checked: /home/ubuntu/drivebase-private, /home/ubuntu/acar-private)"
+              exit 1
+            fi
             
             echo "=== Pulling latest code ==="
-            cd /home/ubuntu/drivebase
+            cd "$APP_DIR"
             git fetch --all
             git reset --hard origin/master
             
             echo "=== Pulling private files ==="
-            cd /home/ubuntu/drivebase-private
+            cd "$PRIVATE_DIR"
             git pull  # Automatically pulls whatever the default branch is for your private repo
-            cp -r pdf_generators/ /home/ubuntu/drivebase/backend/manager/
+            cp -r pdf_generators/ "$APP_DIR/backend/manager/"
             
             echo "=== Building React frontend ==="
-            cd /home/ubuntu/drivebase/frontend
+            cd "$APP_DIR/frontend"
             npm ci --prefer-offline
             NODE_OPTIONS=--max-old-space-size=4096 npm run build
 
             echo "=== Moving Frontend Dist to Staticfiles ==="
             # Remove the old dist folder to prevent junk buildup, then copy the new one over
-            rm -rf /home/ubuntu/drivebase/backend/staticfiles/dist
+            rm -rf "$APP_DIR/backend/staticfiles/dist"
             # Copy the newly built folder from where Vite actually put it
-            cp -r /home/ubuntu/drivebase/backend/static/dist /home/ubuntu/drivebase/backend/staticfiles/
+            cp -r "$APP_DIR/backend/static/dist" "$APP_DIR/backend/staticfiles/"
             
             echo "=== Rebuilding and Restarting Docker Containers ==="
-            cd /home/ubuntu/drivebase
+            cd "$APP_DIR"
             docker compose down
             docker compose up -d --build
             
