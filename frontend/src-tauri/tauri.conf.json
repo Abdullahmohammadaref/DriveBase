@@ -7,9 +7,10 @@
     "frontendDist": "../../backend/static/dist",
     "devUrl": "http://localhost:5173",
     "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build"
+    "beforeBuildCommand": "npm run build -- --mode desktop"
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "title": "DriveBase",

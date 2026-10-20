@@ -13,8 +13,15 @@ const DEFAULT_WEB_URL = "https://a-car.duckdns.org"
  */
 export function isTauri(): boolean {
   if (typeof window === "undefined") return false
-  const win = window as unknown as { __TAURI_INTERNALS__?: unknown; __TAURI__?: unknown }
-  return Boolean(win.__TAURI_INTERNALS__ || win.__TAURI__)
+  const win = window as unknown as { __TAURI_INTERNALS__?: unknown; __TAURI__?: unknown; isTauri?: boolean }
+  return Boolean(
+    win.isTauri ||
+    win.__TAURI_INTERNALS__ ||
+    win.__TAURI__ ||
+    window.location.hostname === "tauri.localhost" ||
+    window.location.protocol === "tauri:" ||
+    import.meta.env.VITE_IS_DESKTOP === "true"
+  )
 }
 
 /**
