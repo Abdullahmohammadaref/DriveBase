@@ -3,11 +3,10 @@
  * Safely distinguishes between Browser Web App and Tauri Desktop App.
  */
 
-// Fallback permanent download URL pointing to the latest release
-const DEFAULT_DOWNLOAD_URL =
-  "https://github.com/drivebase-dealership/drivebase/releases/latest/download/DriveBase_Setup.exe"
+// Fallback permanent direct download URL pointing to the server-hosted installer
+const DEFAULT_DOWNLOAD_URL = "/api/desktop/download"
 
-const DEFAULT_WEB_URL = "https://drivebase.example.com"
+const DEFAULT_WEB_URL = "https://a-car.duckdns.org"
 
 /**
  * Returns true if the application is running inside the Tauri native desktop wrapper.
@@ -20,10 +19,18 @@ export function isTauri(): boolean {
 
 /**
  * Returns the permanent download URL for the Windows Desktop Application installer.
- * Always resolves to the latest release binary.
+ * In a browser, returns relative direct download link ("/api/desktop/download").
+ * Inside Tauri, resolves against the web application domain.
  */
 export function getDesktopDownloadUrl(): string {
-  return import.meta.env.VITE_DESKTOP_DOWNLOAD_URL || DEFAULT_DOWNLOAD_URL
+  const url = import.meta.env.VITE_DESKTOP_DOWNLOAD_URL || DEFAULT_DOWNLOAD_URL
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url
+  }
+  if (isTauri()) {
+    return `${getWebAppUrl()}${url.startsWith("/") ? "" : "/"}${url}`
+  }
+  return url
 }
 
 /**

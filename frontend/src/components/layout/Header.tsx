@@ -230,8 +230,7 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
                                     <div className="border-b border-gray-100 dark:border-border mb-1 pb-1">
                                         <a
                                             href={getDesktopDownloadUrl()}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
+                                            download="DriveBase_Setup.exe"
                                             onClick={() => setUserMenuOpen(false)}
                                             className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors cursor-pointer"
                                         >

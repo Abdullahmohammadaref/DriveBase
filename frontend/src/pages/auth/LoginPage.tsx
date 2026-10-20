@@ -57,8 +57,7 @@ export function LoginPage() {
                 <div className="pt-1">
                     <a
                         href={getDesktopDownloadUrl()}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        download="DriveBase_Setup.exe"
                         className="w-full py-2.5 px-3 rounded-lg border border-dashed border-gray-300 dark:border-border hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center justify-center gap-2 transition-all group"
                     >
                         <Download className="h-4 w-4 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform" />

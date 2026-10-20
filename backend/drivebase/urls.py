@@ -14,12 +14,13 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+import os
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.conf.urls.i18n import i18n_patterns
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse, Http404
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.middleware.csrf import get_token
 
@@ -47,6 +48,24 @@ def get_csrf_token(request):
     })
 
 
+def download_desktop_app(request):
+    """Serve the Windows Desktop Application installer directly."""
+    possible_paths = [
+        os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'DriveBase_Setup.exe'),
+        os.path.join(settings.BASE_DIR, 'static', 'downloads', 'DriveBase_Setup.exe'),
+        os.path.join(settings.BASE_DIR, 'media', 'downloads', 'DriveBase_Setup.exe'),
+    ]
+    for file_path in possible_paths:
+        if os.path.exists(file_path):
+            return FileResponse(
+                open(file_path, 'rb'),
+                as_attachment=True,
+                filename='DriveBase_Setup.exe',
+                content_type='application/vnd.microsoft.portable-executable'
+            )
+    raise Http404("Desktop application installer not found.")
+
+
 # Create API instance with session authentication
 api = NinjaAPI(
     title="Vehicle Management API",
@@ -68,6 +87,9 @@ api.add_router("/", dashboard_router)
 urlpatterns = [
     # CSRF endpoint - MUST be outside NinjaAPI to use ensure_csrf_cookie
     path('api/auth/csrf', get_csrf_token, name='csrf-token'),
+    # Desktop installer direct download
+    path('api/desktop/download', download_desktop_app, name='download-desktop-app'),
+    path('downloads/DriveBase_Setup.exe', download_desktop_app, name='download-desktop-exe'),
     # API endpoints (outside i18n_patterns to avoid language prefix)
     path('api/', api.urls),
 ]
@@ -78,10 +100,7 @@ urlpatterns += i18n_patterns(
     path('rosetta/', include('rosetta.urls')),
     path('i18n/', include('django.conf.urls.i18n')),
     prefix_default_language=False,
-
 )
-
-
 
 handler404 = 'manager.views.custom_404'
 # handler500 = 'manager.views.custom_500'
@@ -92,4 +111,3 @@ if settings.DEBUG:
         path("__reload__/", include("django_browser_reload.urls")),
     ]
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
