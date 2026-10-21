@@ -66,13 +66,12 @@ def download_desktop_app(request):
     raise Http404("Desktop application installer not found.")
 
 
-# Create API instance with session authentication
+# Create API instance (session-authenticated routers enforce CSRF via django_auth)
 api = NinjaAPI(
     title="Vehicle Management API",
     version="1.0.0",
     description="REST API for Vehicle Management System",
     urls_namespace='api',
-    csrf=True,  # Enable CSRF for session auth
 )
 
 # Add routers

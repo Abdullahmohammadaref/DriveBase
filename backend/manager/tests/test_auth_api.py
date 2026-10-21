@@ -74,3 +74,19 @@ class LoginRequestApiTests(BaseTestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("Please use your username instead.", response.json()["detail"])
+
+    def test_manager_login_exempt_from_csrf_requirement(self):
+        """Verify desktop clients can request login without a pre-existing CSRF cookie."""
+        from django.test import Client
+        csrf_client = Client(enforce_csrf_checks=True)
+        response = csrf_client.post(
+            "/api/auth/request-login",
+            data=json.dumps({
+                "username": "manager_a",
+                "password": "testpass123",
+                "login_type": "manager",
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["success"])

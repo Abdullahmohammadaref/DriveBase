@@ -17,6 +17,7 @@ from datetime import timedelta
 
 from ninja import Router, Schema
 from ninja.security import django_auth
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import get_user_model, authenticate, login, logout
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -303,6 +304,7 @@ def build_email_html(
 # =============================================================================
 
 @auth_router.post("/auth/request-login", response={200: AuthResponse, 400: ErrorResponse})
+@csrf_exempt
 def request_login(request: HttpRequest, payload: LoginRequestPayload):
     """
     Request login - handles both manager and employee flows.
@@ -395,6 +397,7 @@ def request_login(request: HttpRequest, payload: LoginRequestPayload):
 
 
 @auth_router.post("/auth/request-password-reset", response={200: AuthResponse, 400: ErrorResponse})
+@csrf_exempt
 def request_password_reset(request: HttpRequest, payload: PasswordResetPayload):
     """
     Request password reset.
@@ -451,6 +454,7 @@ def request_password_reset(request: HttpRequest, payload: PasswordResetPayload):
 
 
 @auth_router.post("/auth/request-email-change", response={200: AuthResponse, 400: ErrorResponse})
+@csrf_exempt
 def request_email_change(request: HttpRequest, payload: EmailChangePayload):
     """
     Request email change.
@@ -1081,6 +1085,7 @@ def get_auth_status(request: HttpRequest):
 
 
 @auth_router.post("/auth/set-new-password", response={200: AuthResponse, 400: ErrorResponse})
+@csrf_exempt
 def set_new_password(request: HttpRequest, payload: SetPasswordPayload):
     """
     Set a new password after password reset verification.
@@ -1144,6 +1149,7 @@ def check_username(request: HttpRequest, username: str):
 
 
 @auth_router.post("/auth/register", response={200: AuthResponse, 400: ErrorResponse})
+@csrf_exempt
 def register_manager(request: HttpRequest, payload: RegisterPayload):
     """
     Register a new manager account.
@@ -1240,6 +1246,7 @@ def register_manager(request: HttpRequest, payload: RegisterPayload):
 
 if settings.DEBUG:
     @auth_router.post("/auth/debug-login", response={200: AuthResponse, 400: ErrorResponse})
+    @csrf_exempt
     def debug_login(request: HttpRequest, payload: LoginRequestPayload):
         """
         DEBUG-ONLY: Direct login that bypasses 2FA email verification.
