@@ -1329,5 +1329,12 @@
     "savedTitle": "Gespeichert",
     "errorTitle": "Speicherfehler",
     "mandatoryTitle": "Pflichtfeld fehlt"
+  },
+  "desktop": {
+    "downloading": "Aktualisierung wird heruntergeladen...",
+    "downloadingUpdateTitle": "Aktualisierung wird im Hintergrund heruntergeladen...",
+    "updateReady": "Update bereit (v{{version}}) — Neu starten",
+    "updateReadyTooltip": "Klicken, um neu zu starten und Update anzuwenden",
+    "installing": "Wird neu gestartet..."
   }
 }

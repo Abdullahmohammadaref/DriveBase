@@ -42,6 +42,8 @@ fn save_file_with_dialog(filename: String, bytes: Vec<u8>) -> Result<Option<Stri
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
+    .plugin(tauri_plugin_updater::Builder::new().build())
+    .plugin(tauri_plugin_process::init())
     .invoke_handler(tauri::generate_handler![
       save_file_with_dialog,
       save_file_to_downloads,

@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth"
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher"
 import { SUPPORTED_LOCALES, DEFAULT_LOCALE, type SupportedLocale } from "@/lib/i18n"
 import { isTauri, getDesktopDownloadUrl } from "@/lib/desktop/platform"
+import { DesktopUpdatePill } from "@/components/desktop/DesktopUpdatePill"
 
 interface HeaderProps {
     sidebarCollapsed: boolean
@@ -121,6 +122,9 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
 
             {/* Right side actions */}
             <div className="flex items-center gap-1.5">
+                {/* Desktop Auto-Updater */}
+                <DesktopUpdatePill />
+
                 {/* Notifications */}
                 <NotificationsDropdown />
 

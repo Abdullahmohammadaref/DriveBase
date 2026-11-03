@@ -9,6 +9,8 @@
     "core:default",
     "core:window:allow-destroy",
     "core:window:allow-close",
-    "core:app:allow-exit"
+    "core:app:allow-exit",
+    "updater:default",
+    "process:default"
   ]
 }

@@ -66,6 +66,47 @@ def download_desktop_app(request):
     raise Http404("Desktop application installer not found.")
 
 
+def serve_desktop_latest_manifest(request):
+    """Serve the Tauri v2 auto-updater latest.json manifest."""
+    possible_paths = [
+        os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'latest.json'),
+        os.path.join(settings.BASE_DIR, 'static', 'downloads', 'latest.json'),
+        os.path.join(settings.BASE_DIR, 'media', 'downloads', 'latest.json'),
+    ]
+    for file_path in possible_paths:
+        if os.path.exists(file_path):
+            return FileResponse(
+                open(file_path, 'rb'),
+                content_type='application/json'
+            )
+    raise Http404("Desktop update manifest not found.")
+
+
+def download_desktop_update(request):
+    """Serve the latest desktop update bundle/installer for the auto-updater."""
+    possible_paths = [
+        os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'DriveBase_1.0.1_x64-setup.exe'),
+        os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'DriveBase_Update.exe'),
+        os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'DriveBase_Update.zip'),
+        os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'DriveBase_Setup.exe'),
+        os.path.join(settings.BASE_DIR, 'static', 'downloads', 'DriveBase_1.0.1_x64-setup.exe'),
+        os.path.join(settings.BASE_DIR, 'static', 'downloads', 'DriveBase_Update.exe'),
+        os.path.join(settings.BASE_DIR, 'static', 'downloads', 'DriveBase_Update.zip'),
+        os.path.join(settings.BASE_DIR, 'static', 'downloads', 'DriveBase_Setup.exe'),
+    ]
+    for file_path in possible_paths:
+        if os.path.exists(file_path):
+            filename = os.path.basename(file_path)
+            content_type = 'application/zip' if filename.endswith('.zip') else 'application/vnd.microsoft.portable-executable'
+            return FileResponse(
+                open(file_path, 'rb'),
+                as_attachment=True,
+                filename=filename,
+                content_type=content_type
+            )
+    raise Http404("Desktop update package not found.")
+
+
 # Create API instance (session-authenticated routers enforce CSRF via django_auth)
 api = NinjaAPI(
     title="Vehicle Management API",
@@ -89,6 +130,10 @@ urlpatterns = [
     # Desktop installer direct download
     path('api/desktop/download', download_desktop_app, name='download-desktop-app'),
     path('downloads/DriveBase_Setup.exe', download_desktop_app, name='download-desktop-exe'),
+    # Desktop auto-updater endpoints
+    path('api/desktop/latest.json', serve_desktop_latest_manifest, name='desktop-latest-manifest'),
+    path('downloads/latest.json', serve_desktop_latest_manifest, name='desktop-latest-manifest-direct'),
+    path('api/desktop/update', download_desktop_update, name='download-desktop-update'),
     # API endpoints (outside i18n_patterns to avoid language prefix)
     path('api/', api.urls),
 ]

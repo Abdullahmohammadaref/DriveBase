@@ -1329,5 +1329,12 @@
     "savedTitle": "Saved",
     "errorTitle": "Save Error",
     "mandatoryTitle": "Required Field"
+  },
+  "desktop": {
+    "downloading": "Downloading update...",
+    "downloadingUpdateTitle": "Downloading update in background...",
+    "updateReady": "Update Ready (v{{version}}) — Restart",
+    "updateReadyTooltip": "Click to restart and apply update",
+    "installing": "Restarting..."
   }
 }
