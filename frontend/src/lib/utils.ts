@@ -1,5 +1,8 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { resolveMediaUrl } from "@/lib/desktop/platform"
+
+export { resolveMediaUrl }
 
 /**
  * Utility function to merge Tailwind CSS classes
@@ -41,13 +44,15 @@ export function formatNumber(value: number | null | undefined): string {
 }
 
 /**
- * Add a stable cache-busting key to media URLs so newly uploaded assets do not
- * reuse a previously cached missing/old response.
+ * Add a stable cache-busting key to media URLs and resolve them properly for desktop (Tauri)
+ * so newly uploaded assets do not reuse a previously cached missing/old response.
  */
 export function withMediaCacheKey(url: string | null | undefined, cacheKey = "media"): string | null {
   if (!url) return null
-  const separator = url.includes("?") ? "&" : "?"
-  return `${url}${separator}v=${encodeURIComponent(cacheKey)}`
+  const resolved = resolveMediaUrl(url)
+  if (!resolved) return null
+  const separator = resolved.includes("?") ? "&" : "?"
+  return `${resolved}${separator}v=${encodeURIComponent(cacheKey)}`
 }
 
 /**

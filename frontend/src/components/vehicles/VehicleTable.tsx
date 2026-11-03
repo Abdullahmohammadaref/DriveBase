@@ -41,7 +41,7 @@ import {
     ArrowDown,
     Car,
 } from "lucide-react"
-import { cn, formatCurrency, formatNumber, getStatusColor } from "@/lib/utils"
+import { cn, formatCurrency, formatNumber, getStatusColor, withMediaCacheKey } from "@/lib/utils"
 import type { VehicleListItem, PaginatedVehicles } from "@/types/vehicle"
 
 interface VehicleTableProps {
@@ -56,8 +56,9 @@ interface VehicleTableProps {
 // Vehicle thumbnail component with fallback
 function VehicleThumbnail({ src, alt }: { src: string | null; alt: string }) {
     const [hasError, setHasError] = useState(false)
+    const resolvedSrc = withMediaCacheKey(src, "vehicle-photo")
 
-    if (!src || hasError) {
+    if (!resolvedSrc || hasError) {
         return (
             <div className="flex h-12 w-16 items-center justify-center rounded-lg bg-muted">
                 <Car className="h-6 w-6 text-muted-foreground" />
@@ -67,7 +68,7 @@ function VehicleThumbnail({ src, alt }: { src: string | null; alt: string }) {
 
     return (
         <img
-            src={src}
+            src={resolvedSrc}
             alt={alt}
             className="h-12 w-16 rounded-lg object-cover"
             onError={() => setHasError(true)}

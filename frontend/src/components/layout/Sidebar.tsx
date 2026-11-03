@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Link, useLocation, useSearchParams, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { cn } from "@/lib/utils"
+import { cn, withMediaCacheKey } from "@/lib/utils"
 import {
     Car,
     LayoutDashboard,
@@ -163,6 +163,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         return true
     }
 
+    const businessLogoUrl = withMediaCacheKey(user?.business_logo, "business-logo")
     const filteredNavItems = navItems.filter((item) => {
         if (item.titleKey === "nav.transactions" && user && !user.is_manager && !user.transactions_access) {
             return false
@@ -185,15 +186,15 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 <div className="flex h-16 items-center justify-between border-b border-gray-200 dark:border-border px-3 shrink-0 mb-2">
                     {!collapsed && (
                         <Link to={buildHref("dashboard")} className="flex flex-1 items-center justify-center overflow-hidden py-1">
-                            {user?.business_logo ? (
+                            {businessLogoUrl ? (
                                 <img
-                                    src={user.business_logo}
-                                    alt={user.business_name || "Logo"}
+                                    src={businessLogoUrl || undefined}
+                                    alt={user?.business_name || "Logo"}
                                     className="h-14 max-h-14 w-auto max-w-full object-contain"
                                 />
                             ) : user?.business_name ? (
                                 <span className="text-sm font-bold text-gray-900 dark:text-foreground truncate text-center w-full">
-                                    {user.business_name}
+                                    {user?.business_name}
                                 </span>
                             ) : (
                                 <img
@@ -206,9 +207,9 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     )}
                     {collapsed && (
                         <Link to={buildHref("dashboard")} className="mx-auto flex items-center justify-center">
-                            {user?.business_logo ? (
+                            {businessLogoUrl ? (
                                 <img
-                                    src={user.business_logo}
+                                    src={businessLogoUrl || undefined}
                                     alt="Logo"
                                     className="max-h-9 max-w-[44px] w-auto h-auto object-contain rounded"
                                 />

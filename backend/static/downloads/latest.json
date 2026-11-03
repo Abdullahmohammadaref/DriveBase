@@ -1,14 +1,14 @@
 {
-  "version": "1.0.2",
-  "notes": "DriveBase Release v1.0.2 - Added Test 2 Button",
-  "pub_date": "2026-11-03T06:28:00Z",
+  "version": "1.0.3",
+  "notes": "DriveBase Release v1.0.3 - Fixed desktop image resolution and removed test button",
+  "pub_date": "2026-11-03T14:54:00Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcG9uTWZJdGkwNVY4bFZ4NlVoTGYvKzVqRkJjS1NVcEhvZ2NIL0o1SGpTdnc1SHpuSVhPaEpwalNrcGNyWHdoMDNOZk5CcGNTZWNkR0M1M2VOMTN2S0pOZGs5SGtzamc0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzNjg3MzA1CWZpbGU6RHJpdmVCYXNlXzEuMC4yX3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuMgp5aTN4VURZZmRQbVpjQmNFL3lCMWdwTFBkTlpNczlRajJsS09RMG5SQSs1bWxiL3diejBIWnVrbnhrUFhmNmMwYTFwcVNVb2MvMmxFblB2Y0FmNEZCZz09Cg==",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcG9uTWZJdGkwNWZmaTJVU1NzSUg4MWtpQTJacUF0Q2hKRHVGZHhZenpBZk1OSzBaZ0dSaHBuOUJPN3ZNcWlFQmhNT1Ava0hKd0NyVlRaZEJ2MFYvVlo0TThiOFZoV0FNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzNzE3NjE3CWZpbGU6RHJpdmVCYXNlXzEuMC4zX3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuMwowa2ZtTkdxTEhjcXZsN1hEMTBrQU5hWnd5Y3NxWmQ1QzY0Sm9EMXVYSVFWU2F2MkxscHhCM1ZGbGYxYmxKMjU0d3N0OTVzenZuQjVjV3dYSU53MzFEdz09Cg==",
       "url": "https://a-car.duckdns.org/api/desktop/update"
     },
     "windows-x86_64-nsis": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcG9uTWZJdGkwNVY4bFZ4NlVoTGYvKzVqRkJjS1NVcEhvZ2NIL0o1SGpTdnc1SHpuSVhPaEpwalNrcGNyWHdoMDNOZk5CcGNTZWNkR0M1M2VOMTN2S0pOZGs5SGtzamc0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzNjg3MzA1CWZpbGU6RHJpdmVCYXNlXzEuMC4yX3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuMgp5aTN4VURZZmRQbVpjQmNFL3lCMWdwTFBkTlpNczlRajJsS09RMG5SQSs1bWxiL3diejBIWnVrbnhrUFhmNmMwYTFwcVNVb2MvMmxFblB2Y0FmNEZCZz09Cg==",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcG9uTWZJdGkwNWZmaTJVU1NzSUg4MWtpQTJacUF0Q2hKRHVGZHhZenpBZk1OSzBaZ0dSaHBuOUJPN3ZNcWlFQmhNT1Ava0hKd0NyVlRaZEJ2MFYvVlo0TThiOFZoV0FNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzNzE3NjE3CWZpbGU6RHJpdmVCYXNlXzEuMC4zX3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuMwowa2ZtTkdxTEhjcXZsN1hEMTBrQU5hWnd5Y3NxWmQ1QzY0Sm9EMXVYSVFWU2F2MkxscHhCM1ZGbGYxYmxKMjU0d3N0OTVzenZuQjVjV3dYSU53MzFEdz09Cg==",
       "url": "https://a-car.duckdns.org/api/desktop/update"
     }
   }

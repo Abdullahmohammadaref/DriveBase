@@ -16,6 +16,7 @@ import {
     FileText,
     TrendingUp,
 } from "lucide-react"
+import { resolveMediaUrl } from "@/lib/desktop/platform"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -757,7 +758,7 @@ export function MobileDeListingModal({
                                 {listingData?.primary_image_url && (
                                     <div className="relative rounded-xl border-2 border-primary overflow-hidden group bg-muted aspect-4/3 flex items-center justify-center">
                                         <img
-                                            src={listingData.primary_image_url}
+                                            src={resolveMediaUrl(listingData.primary_image_url) || listingData.primary_image_url}
                                             alt="Primary"
                                             className="w-full h-full object-cover"
                                         />
@@ -773,7 +774,7 @@ export function MobileDeListingModal({
                                         key={img.id}
                                         className="relative rounded-xl border border-border overflow-hidden group bg-muted aspect-4/3 flex items-center justify-center"
                                     >
-                                        <img src={img.image_url} alt={`Gallery ${idx}`} className="w-full h-full object-cover" />
+                                        <img src={resolveMediaUrl(img.image_url) || img.image_url} alt={`Gallery ${idx}`} className="w-full h-full object-cover" />
                                         <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-black/60 text-white">
                                             #{img.order || idx + 2}
                                         </span>

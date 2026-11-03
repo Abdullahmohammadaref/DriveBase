@@ -241,13 +241,6 @@ export function VehiclesPage() {
                         <span>{showFinancialSummary ? t("vehicles.hideSummary", "Hide Summary") : t("vehicles.summary", "Summary")}</span>
                         {showFinancialSummary ? <ChevronUp className="h-3 w-3 opacity-60" /> : <ChevronDown className="h-3 w-3 opacity-60" />}
                     </Button>
-                    <Button
-                        type="button"
-                        className="h-8 px-3 text-xs font-bold uppercase tracking-wider bg-purple-600 hover:bg-purple-700 text-white shadow-sm"
-                        onClick={() => alert("Test 2 button clicked!")}
-                    >
-                        Test 2 Button
-                    </Button>
                     <Link
                         to="new"
                         className="inline-flex items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-xs hover:bg-primary/90"

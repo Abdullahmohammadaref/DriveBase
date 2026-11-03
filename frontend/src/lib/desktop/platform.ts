@@ -48,6 +48,22 @@ export function getWebAppUrl(): string {
 }
 
 /**
+ * Resolves a media or static asset URL to an absolute URL when running in Tauri.
+ * In a standard browser, relative URLs like "/media/..." are automatically resolved
+ * against the window origin. In Tauri desktop, the origin is "http://tauri.localhost",
+ * so relative media paths must be prepended with the Cloud Web App URL.
+ */
+export function resolveMediaUrl(url: string | null | undefined): string | null {
+  if (!url) return null
+  if (/^(https?:|data:|blob:)/i.test(url)) return url
+  if (isTauri()) {
+    const cleanPath = url.startsWith("/") ? url : `/${url}`
+    return `${getWebAppUrl()}${cleanPath}`
+  }
+  return url
+}
+
+/**
  * Opens an external URL in the system's default browser.
  */
 export async function openExternal(url: string): Promise<void> {
