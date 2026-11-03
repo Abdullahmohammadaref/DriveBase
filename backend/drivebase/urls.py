@@ -85,10 +85,12 @@ def serve_desktop_latest_manifest(request):
 def download_desktop_update(request):
     """Serve the latest desktop update bundle/installer for the auto-updater."""
     possible_paths = [
+        os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'DriveBase_1.0.2_x64-setup.exe'),
         os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'DriveBase_1.0.1_x64-setup.exe'),
         os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'DriveBase_Update.exe'),
         os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'DriveBase_Update.zip'),
         os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'DriveBase_Setup.exe'),
+        os.path.join(settings.BASE_DIR, 'static', 'downloads', 'DriveBase_1.0.2_x64-setup.exe'),
         os.path.join(settings.BASE_DIR, 'static', 'downloads', 'DriveBase_1.0.1_x64-setup.exe'),
         os.path.join(settings.BASE_DIR, 'static', 'downloads', 'DriveBase_Update.exe'),
         os.path.join(settings.BASE_DIR, 'static', 'downloads', 'DriveBase_Update.zip'),
