@@ -18,9 +18,6 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn whitenoise
 # Copy entire backend
 COPY backend/ /app/
 
-# Collect static files (React build will be in /app/static/dist from CI)
-RUN python manage.py collectstatic --noinput --settings=drivebase.settings_prod || true
-
 EXPOSE 8000
 
 CMD ["gunicorn", "drivebase.wsgi:application", \

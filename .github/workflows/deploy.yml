@@ -73,10 +73,9 @@ jobs:
             git pull
             cp -r pdf_generators/ /home/ubuntu/drivebase/backend/manager/
             
-            echo "=== Restarting Docker Containers ==="
+            echo "=== Updating Docker Containers ==="
             cd /home/ubuntu/drivebase
-            docker compose down
-            docker compose up -d --build
+            docker compose up -d --build --remove-orphans
             
             echo "=== Running migrations ==="
             docker compose exec -T django python manage.py migrate --noinput --settings=drivebase.settings_prod
