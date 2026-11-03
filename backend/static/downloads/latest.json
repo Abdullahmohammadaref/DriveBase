@@ -8,7 +8,7 @@
       "url": "https://a-car.duckdns.org/api/desktop/update"
     },
     "windows-x86_64-nsis": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcG9uTWZJdGkwNVY4bFZ4NlVoTGYvKzVqRkJjS1NVcEhvZ2NIL0o1SGpTdnc1SHpuSVhPaEpwalNrcGNyWHdoMDNOZk5CcGNTZWNkR0M1M2VOMTN2S0pOZGs5SGtzamc0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzNjg3MzA1CWZpbGU6RHJpdmVCYXNlXzEuMC4yX3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuMQpoOGZldU5GRHJpV2F1VFRob2hLc2U3YUtSalczbDBsVEQ2dFA2Rm9nRTJZVitHTGxFZmJ3VTRmY0EyajE1ckVyaDBVNk04MGJVTXhGU3I3WkhTaExBUT09Cg==",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcG9uTWZJdGkwNVY4bFZ4NlVoTGYvKzVqRkJjS1NVcEhvZ2NIL0o1SGpTdnc1SHpuSVhPaEpwalNrcGNyWHdoMDNOZk5CcGNTZWNkR0M1M2VOMTN2S0pOZGs5SGtzamc0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzNjg3MzA1CWZpbGU6RHJpdmVCYXNlXzEuMC4yX3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuMgp5aTN4VURZZmRQbVpjQmNFL3lCMWdwTFBkTlpNczlRajJsS09RMG5SQSs1bWxiL3diejBIWnVrbnhrUFhmNmMwYTFwcVNVb2MvMmxFblB2Y0FmNEZCZz09Cg==",
       "url": "https://a-car.duckdns.org/api/desktop/update"
     }
   }
