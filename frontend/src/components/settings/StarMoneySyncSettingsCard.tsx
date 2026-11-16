@@ -43,17 +43,32 @@ export default function StarMoneySyncSettingsCard() {
     message: string
   } | null>(null)
 
-  // Sync internal state with loaded hook mappings
+  const paymentMethods = choices?.method_choices || []
+
+  // Sync internal state with loaded hook mappings or default pre-filled row
   useEffect(() => {
-    setLocalList(mappings)
-  }, [mappings])
+    if (mappings && mappings.length > 0) {
+      setLocalList(mappings)
+    } else if (localList.length === 0) {
+      const firstMethod = paymentMethods[0]
+      const defaultEntry: StarMoneyBankMapping = {
+        id: crypto.randomUUID(),
+        payment_method_id: firstMethod ? parseInt(firstMethod.value) : 1,
+        payment_method_name: firstMethod ? firstMethod.label : "Bank Account",
+        file_path: DEFAULT_STARMONEY_PATH,
+        file_exists: false,
+      }
+      setLocalList([defaultEntry])
+      void checkStarMoneyCsvFile(DEFAULT_STARMONEY_PATH).then((meta) => {
+        setLocalList([{ ...defaultEntry, file_exists: meta.exists, last_file_size: meta.size_bytes }])
+      })
+    }
+  }, [mappings, paymentMethods])
 
   // Only render inside the native Windows Desktop app
   if (!isTauri()) {
     return null
   }
-
-  const paymentMethods = choices?.method_choices || []
 
   const handleAddRow = () => {
     const firstMethod = paymentMethods[0]
@@ -124,7 +139,36 @@ export default function StarMoneySyncSettingsCard() {
     try {
       const picked = await pickStarMoneyCsvFile()
       if (picked) {
-        await handlePathChange(id, picked)
+        let meta = { exists: true, size_bytes: 0 }
+        try {
+          const m = await checkStarMoneyCsvFile(picked)
+          meta = { exists: m.exists, size_bytes: m.size_bytes ?? 0 }
+        } catch {
+          meta = { exists: false, size_bytes: 0 }
+        }
+
+        const updated = localList.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                file_path: picked,
+                file_exists: meta.exists,
+                last_file_size: meta.size_bytes,
+              }
+            : item
+        )
+        setLocalList(updated)
+
+        // Automatically save immediately so it's tracked right away
+        await saveMappings(updated)
+        setFeedback({
+          type: "success",
+          message: t(
+            "businessSettings.starMoneySaved",
+            "StarMoney CSV file selected and tracked successfully!"
+          ),
+        })
+        setTimeout(() => setFeedback(null), 4000)
       }
     } catch (err) {
       console.warn("[StarMoneySettings] Browse error:", err)
