@@ -50,6 +50,9 @@ jobs:
             set -e
             cd /home/ubuntu/drivebase
             
+            # Reclaim permissions from any Docker root processes
+            sudo chown -R ubuntu:ubuntu /home/ubuntu/drivebase 2>/dev/null || true
+            
             echo "=== Checking / Configuring Swap on Low-Memory VPS ==="
             if [ $(swapon --show | wc -l) -le 1 ]; then
               echo "Configuring 2GB swapfile to prevent OOM errors..."
@@ -83,7 +86,11 @@ jobs:
             echo "=== Pulling private files ==="
             cd /home/ubuntu/drivebase-private
             git pull
-            cp -r pdf_generators/ /home/ubuntu/drivebase/backend/manager/
+            sudo chown -R ubuntu:ubuntu /home/ubuntu/drivebase/backend/manager/pdf_generators 2>/dev/null || true
+            sudo rm -rf /home/ubuntu/drivebase/backend/manager/pdf_generators/__pycache__ 2>/dev/null || true
+            sudo rm -rf /home/ubuntu/drivebase-private/pdf_generators/__pycache__ 2>/dev/null || true
+            mkdir -p /home/ubuntu/drivebase/backend/manager/pdf_generators
+            cp -rf pdf_generators/*.py /home/ubuntu/drivebase/backend/manager/pdf_generators/ 2>/dev/null || cp -rf pdf_generators/ /home/ubuntu/drivebase/backend/manager/
             
             echo "=== Updating Docker Containers ==="
             cd /home/ubuntu/drivebase
