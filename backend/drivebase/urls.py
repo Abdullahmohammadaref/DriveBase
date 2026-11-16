@@ -52,8 +52,8 @@ def get_csrf_token(request):
 def download_desktop_app(request):
     """Serve the Windows Desktop Application installer directly."""
     possible_paths = [
-        os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'DriveBase_Setup.exe'),
         os.path.join(settings.BASE_DIR, 'static', 'downloads', 'DriveBase_Setup.exe'),
+        os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'DriveBase_Setup.exe'),
         os.path.join(settings.BASE_DIR, 'media', 'downloads', 'DriveBase_Setup.exe'),
     ]
     for file_path in possible_paths:
@@ -70,8 +70,8 @@ def download_desktop_app(request):
 def serve_desktop_latest_manifest(request):
     """Serve the Tauri v2 auto-updater latest.json manifest."""
     possible_paths = [
-        os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'latest.json'),
         os.path.join(settings.BASE_DIR, 'static', 'downloads', 'latest.json'),
+        os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'latest.json'),
         os.path.join(settings.BASE_DIR, 'media', 'downloads', 'latest.json'),
     ]
     for file_path in possible_paths:
@@ -84,33 +84,57 @@ def serve_desktop_latest_manifest(request):
 
 
 def download_desktop_update(request):
-    """Serve the latest desktop update bundle/installer for the auto-updater."""
-    possible_paths = [
-        os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'DriveBase_1.0.4_x64-setup.exe'),
-        os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'DriveBase_1.0.3_x64-setup.exe'),
-        os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'DriveBase_1.0.2_x64-setup.exe'),
-        os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'DriveBase_1.0.1_x64-setup.exe'),
-        os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'DriveBase_Update.exe'),
-        os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'DriveBase_Update.zip'),
-        os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads', 'DriveBase_Setup.exe'),
-        os.path.join(settings.BASE_DIR, 'static', 'downloads', 'DriveBase_1.0.4_x64-setup.exe'),
-        os.path.join(settings.BASE_DIR, 'static', 'downloads', 'DriveBase_1.0.3_x64-setup.exe'),
-        os.path.join(settings.BASE_DIR, 'static', 'downloads', 'DriveBase_1.0.2_x64-setup.exe'),
-        os.path.join(settings.BASE_DIR, 'static', 'downloads', 'DriveBase_1.0.1_x64-setup.exe'),
-        os.path.join(settings.BASE_DIR, 'static', 'downloads', 'DriveBase_Update.exe'),
-        os.path.join(settings.BASE_DIR, 'static', 'downloads', 'DriveBase_Update.zip'),
-        os.path.join(settings.BASE_DIR, 'static', 'downloads', 'DriveBase_Setup.exe'),
+    """Serve the latest desktop update bundle/installer matching latest.json for the auto-updater."""
+    latest_version = None
+    manifest_dirs = [
+        os.path.join(settings.BASE_DIR, 'static', 'downloads'),
+        os.path.join(settings.BASE_DIR, 'staticfiles', 'downloads'),
     ]
-    for file_path in possible_paths:
-        if os.path.exists(file_path):
-            filename = os.path.basename(file_path)
-            content_type = 'application/zip' if filename.endswith('.zip') else 'application/vnd.microsoft.portable-executable'
-            return FileResponse(
-                open(file_path, 'rb'),
-                as_attachment=True,
-                filename=filename,
-                content_type=content_type
-            )
+    for d in manifest_dirs:
+        m_path = os.path.join(d, 'latest.json')
+        if os.path.exists(m_path):
+            try:
+                import json
+                with open(m_path, 'r', encoding='utf-8') as f:
+                    latest_version = json.load(f).get('version')
+                    if latest_version:
+                        break
+            except Exception:
+                pass
+
+    possible_filenames = []
+    if latest_version:
+        possible_filenames.append(f'DriveBase_{latest_version}_x64-setup.exe')
+
+    # Dynamically discover all versioned setups sorted descending (e.g. 1.0.5, 1.0.4...)
+    import glob, re
+    found_setups = []
+    for d in manifest_dirs:
+        if os.path.exists(d):
+            for p in glob.glob(os.path.join(d, 'DriveBase_*_x64-setup.exe')):
+                found_setups.append(os.path.basename(p))
+
+    def _ver_key(fname):
+        m = re.search(r'DriveBase_(\d+)\.(\d+)\.(\d+)_x64-setup\.exe', fname)
+        return tuple(int(x) for x in m.groups()) if m else (0, 0, 0)
+
+    for fname in sorted(set(found_setups), key=_ver_key, reverse=True):
+        if fname not in possible_filenames:
+            possible_filenames.append(fname)
+
+    possible_filenames.extend(['DriveBase_Setup.exe', 'DriveBase_Update.exe', 'DriveBase_Update.zip'])
+
+    for d in manifest_dirs:
+        for fname in possible_filenames:
+            file_path = os.path.join(d, fname)
+            if os.path.exists(file_path):
+                content_type = 'application/zip' if fname.endswith('.zip') else 'application/vnd.microsoft.portable-executable'
+                return FileResponse(
+                    open(file_path, 'rb'),
+                    as_attachment=True,
+                    filename=fname,
+                    content_type=content_type
+                )
     raise Http404("Desktop update package not found.")
 
 
