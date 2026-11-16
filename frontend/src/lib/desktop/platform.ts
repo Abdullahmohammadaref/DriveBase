@@ -185,3 +185,117 @@ export async function showInFolder(path: string): Promise<void> {
     }
   }
 }
+
+export interface LocalDbInfo {
+  exists: boolean
+  path?: string
+  size_bytes?: number
+  last_modified?: number
+}
+
+/**
+ * Saves business SQLite database to %APPDATA%\DriveBase\databases\business_<id>.sqlite3
+ */
+export async function saveBusinessSqlite(businessId: number, bytes: number[]): Promise<string> {
+  if (!isTauri()) throw new Error("saveBusinessSqlite only available in desktop")
+  const { invoke } = await import("@tauri-apps/api/core")
+  return invoke<string>("save_business_sqlite", { businessId, bytes })
+}
+
+/**
+ * Returns metadata about the local SQLite database file on disk.
+ */
+export async function getLocalDatabaseInfo(businessId: number): Promise<LocalDbInfo> {
+  if (!isTauri()) return { exists: false }
+  const { invoke } = await import("@tauri-apps/api/core")
+  return invoke<LocalDbInfo>("get_local_database_info", { businessId })
+}
+
+/**
+ * Saves a media file into %APPDATA%\DriveBase\media\<relative_path>
+ */
+export async function saveMediaFile(relativePath: string, bytes: number[]): Promise<string> {
+  if (!isTauri()) throw new Error("saveMediaFile only available in desktop")
+  const { invoke } = await import("@tauri-apps/api/core")
+  return invoke<string>("save_media_file", { relativePath, bytes })
+}
+
+/**
+ * Returns list of relative paths for all media files cached in %APPDATA%\DriveBase\media
+ */
+export async function getCachedMediaFiles(): Promise<string[]> {
+  if (!isTauri()) return []
+  const { invoke } = await import("@tauri-apps/api/core")
+  return invoke<string[]>("get_cached_media_files")
+}
+
+/**
+ * Launches Windows Explorer inside the local DriveBase app data directory.
+ */
+export async function openLocalDataFolder(): Promise<void> {
+  if (!isTauri()) return
+  const { invoke } = await import("@tauri-apps/api/core")
+  return invoke<void>("open_local_data_folder")
+}
+
+/**
+ * Packages the local SQLite database and media folder into a standalone disaster recovery ZIP.
+ */
+export async function exportDisasterRecoveryZip(businessId: number): Promise<string | null> {
+  if (!isTauri()) throw new Error("exportDisasterRecoveryZip only available in desktop")
+  const { invoke } = await import("@tauri-apps/api/core")
+  return invoke<string | null>("export_disaster_recovery_zip", { businessId })
+}
+
+export interface StarMoneyFileMeta {
+  exists: boolean
+  path: string
+  size_bytes?: number
+  last_modified?: number
+  bytes?: number[]
+}
+
+/**
+ * Opens native Windows file dialog to choose a StarMoney CSV export file.
+ */
+export async function pickStarMoneyCsvFile(): Promise<string | null> {
+  if (!isTauri()) return null
+  const { invoke } = await import("@tauri-apps/api/core")
+  return invoke<string | null>("pick_starmoney_csv_file")
+}
+
+/**
+ * Checks if a StarMoney CSV file exists on disk and returns its size & modified timestamp.
+ */
+export async function checkStarMoneyCsvFile(filePath: string): Promise<StarMoneyFileMeta> {
+  if (!isTauri()) return { exists: false, path: filePath }
+  const { invoke } = await import("@tauri-apps/api/core")
+  return invoke<StarMoneyFileMeta>("check_starmoney_csv_file", { filePath })
+}
+
+/**
+ * Reads the bytes and metadata of a StarMoney CSV file.
+ */
+export async function readStarMoneyCsvFile(filePath: string): Promise<StarMoneyFileMeta> {
+  if (!isTauri()) throw new Error("readStarMoneyCsvFile only available on desktop")
+  const { invoke } = await import("@tauri-apps/api/core")
+  return invoke<StarMoneyFileMeta>("read_starmoney_csv_file", { filePath })
+}
+
+/**
+ * Saves the local StarMoney bank synchronization config.
+ */
+export async function saveStarMoneySyncConfig(configJson: string): Promise<void> {
+  if (!isTauri()) return
+  const { invoke } = await import("@tauri-apps/api/core")
+  return invoke<void>("save_starmoney_sync_config", { configJson })
+}
+
+/**
+ * Loads the local StarMoney bank synchronization config.
+ */
+export async function loadStarMoneySyncConfig(): Promise<string> {
+  if (!isTauri()) return "[]"
+  const { invoke } = await import("@tauri-apps/api/core")
+  return invoke<string>("load_starmoney_sync_config")
+}

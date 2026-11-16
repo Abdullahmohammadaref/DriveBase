@@ -2,6 +2,7 @@ import { useState, useCallback } from "react"
 import { Outlet } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { useAppWarmup } from "@/hooks/useAppWarmup"
+import { useDataSovereigntySync } from "@/hooks/useDataSovereigntySync"
 import { Sidebar } from "./Sidebar"
 import { Header } from "./Header"
 import { SidebarLayoutContext } from "./SidebarLayoutContext"
@@ -12,6 +13,9 @@ import { SidebarLayoutContext } from "./SidebarLayoutContext"
 export function AppLayout() {
     // Eagerly warm up choices & reference data in background
     useAppWarmup()
+
+    // Background data sovereignty sync (Tauri desktop only)
+    useDataSovereigntySync()
 
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 

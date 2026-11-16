@@ -333,3 +333,44 @@
 # ❌ Never return password hashes, approval tokens, or session IDs in API responses
 # ❌ Never use `any` in TypeScript
 # ❌ Never remove existing comments/docstrings unless explicitly asked
+
+
+# ============================================================================
+# §9 — CODE INTELLIGENCE ROUTING & MANDATORY BOOKEND SYNC PROTOCOL
+# ============================================================================
+
+## 9.1 Single-Tool Dispatch Law
+# Never call two intelligence engines for the same inquiry or task step.
+#
+# 1. Implementation & Bug Fixing (90% of tasks):
+#    - ALWAYS use CodeGraph (`codegraph_explore`).
+#    - Yields verbatim source code, line numbers, and cross-file call paths in 1 turn.
+#    - Replaces grep and multiple `read_file` loops.
+#
+# 2. Refactoring, Renaming & Blast Radius:
+#    - Use GitNexus (`gitnexus_impact`, `gitnexus_context`).
+#    - Check callers and downstream dependents BEFORE editing shared models or core functions.
+#    - Verify changes with `gitnexus_detect_changes()` before committing.
+#    - DO NOT run for isolated component styling, CSS, or translation changes.
+#
+# 3. Macro Architecture, God Nodes & Coupling:
+#    - Use Graphify (`god_nodes`, `get_community`, `query_graph`).
+#    - NEVER use Graphify to inspect source code lines (it stores metadata only).
+
+## 9.2 Mandatory Bookend Sync Protocol (Sync-Before-Use, Sync-After-Task)
+# You MUST execute the corresponding sync command at the START and at the END:
+#
+# 1. AT THE START (Before querying):
+#    - If you choose to query an intelligence tool, you MUST run its refresh command
+#      FIRST and wait for it to finish before querying or inspecting the graph.
+#      Never make decisions or write code based on a stale graph.
+#      • CodeGraph:  run `codegraph sync`
+#      • GitNexus:   run `npx gitnexus analyze --skip-agents-md --skip-skills`
+#      • Graphify:   run `python -m graphify update .`
+#
+# 2. AT THE END (After completing code modifications):
+#    - Once you finish modifying, adding, or deleting code, you MUST run the sync
+#      command again for the affected tool(s) before concluding the task or running
+#      confirmation tests.
+#    - This guarantees that the knowledge graph is 100% updated for verification,
+#      subsequent tasks, and next agent turns.

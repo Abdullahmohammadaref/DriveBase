@@ -44,11 +44,22 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          timeout: 10m
-          command_timeout: 10m
+          timeout: 15m
+          command_timeout: 15m
           script: |
             set -e
             cd /home/ubuntu/drivebase
+            
+            echo "=== Checking / Configuring Swap on Low-Memory VPS ==="
+            if [ $(swapon --show | wc -l) -le 1 ]; then
+              echo "Configuring 2GB swapfile to prevent OOM errors..."
+              sudo fallocate -l 2G /swapfile 2>/dev/null || sudo dd if=/dev/zero of=/swapfile bs=1M count=2048 2>/dev/null || true
+              sudo chmod 600 /swapfile 2>/dev/null || true
+              sudo mkswap /swapfile 2>/dev/null || true
+              sudo swapon /swapfile 2>/dev/null || true
+            else
+              echo "Swap is already active."
+            fi
             
             echo "=== Pulling latest code ==="
             git fetch --all
@@ -76,10 +87,28 @@ jobs:
             
             echo "=== Updating Docker Containers ==="
             cd /home/ubuntu/drivebase
-            docker compose up -d --build --remove-orphans
             
-            echo "=== Running migrations ==="
-            docker compose exec -T django python manage.py migrate --noinput --settings=drivebase.settings_prod
+            # Rebuild image only if Dockerfile or requirements.txt changed, or if image is missing
+            if ! docker image inspect drivebase-django:latest >/dev/null 2>&1; then
+              echo "Django image not found. Building..."
+              docker compose build django
+            elif git diff --name-only HEAD@{1} HEAD 2>/dev/null | grep -qE "Dockerfile|backend/requirements.txt"; then
+              echo "Dependencies changed. Rebuilding Django image..."
+              docker compose build django
+            else
+              echo "Dependencies unchanged. Skipping slow image rebuild."
+            fi
+            
+            # Free memory caches before running database migrations
+            docker builder prune -f 2>/dev/null || true
+            docker image prune -f 2>/dev/null || true
+            
+            echo "=== Running migrations (isolated process) ==="
+            docker compose run --rm --no-deps django python manage.py migrate --noinput --settings=drivebase.settings_prod
+            
+            echo "=== Starting/Reloading Services ==="
+            docker compose up -d --remove-orphans
+            docker compose restart django
             
             echo "=== Collecting static ==="
             docker compose exec -T django python manage.py collectstatic --noinput --settings=drivebase.settings_prod

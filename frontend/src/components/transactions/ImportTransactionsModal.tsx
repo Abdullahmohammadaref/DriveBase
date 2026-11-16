@@ -1,5 +1,5 @@
 import { useState, useRef } from "react"
-import { Upload, FileText, X, Loader2 } from "lucide-react"
+import { Upload, FileText, X, Loader2, Landmark, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import {
     Dialog,
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { DynamicSelect } from "@/components/ui/dynamic-select"
 import { useTransactionChoices, useImportTransactions } from "@/hooks/useTransactions"
+import { useStarMoneySync } from "@/hooks/useStarMoneySync"
 import { cn } from "@/lib/utils"
 
 interface ImportTransactionsModalProps {
@@ -27,7 +28,13 @@ export function ImportTransactionsModal({
     open,
     onOpenChange,
 }: ImportTransactionsModalProps) {
-    const { } = useTranslation() // Import for future i18n support
+    const { t } = useTranslation()
+    const { isDesktop, mappings, isSyncing, syncSingleMapping } = useStarMoneySync()
+    const [syncingMappingId, setSyncingMappingId] = useState<string | null>(null)
+    const [starMoneyFeedback, setStarMoneyFeedback] = useState<{
+        type: "success" | "error"
+        message: string
+    } | null>(null)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [selectedMethod, setSelectedMethod] = useState<number | null>(null)
     const [isDragging, setIsDragging] = useState(false)
@@ -48,6 +55,8 @@ export function ImportTransactionsModal({
             setSelectedFile(null)
             setSelectedMethod(null)
             importMutation.reset()
+            setStarMoneyFeedback(null)
+            setSyncingMappingId(null)
         }
         onOpenChange(newOpen)
     }
@@ -109,17 +118,134 @@ export function ImportTransactionsModal({
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Upload className="h-5 w-5" />
-                        Import Transactions
+                        {t("transactions.importTransactions", "Import Transactions")}
                     </DialogTitle>
                     <DialogDescription>
-                        Upload a StarMoney CSV export to import transactions.
+                        {t("transactions.importTransactionsDesc", "Upload a StarMoney CSV export to import transactions.")}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
+                    {/* StarMoney Configured Accounts (Desktop Only) */}
+                    {isDesktop && mappings.some((m) => m.file_exists) && (
+                        <div className="rounded-lg border border-primary/20 bg-primary/5 p-3.5 space-y-2.5">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                                    <Landmark className="h-4 w-4 text-primary" />
+                                    {t("transactions.configuredStarMoneyAccounts", "Configured StarMoney Accounts")}
+                                </span>
+                                <span className="text-[11px] text-muted-foreground">
+                                    {t("transactions.autoSyncReady", "Ready to sync")}
+                                </span>
+                            </div>
+                            <div className="space-y-1.5">
+                                {mappings
+                                    .filter((m) => m.file_exists)
+                                    .map((m) => (
+                                        <div
+                                            key={m.id}
+                                            className="flex items-center justify-between gap-2 p-2 rounded-md bg-background border border-border/60 text-xs"
+                                        >
+                                            <div className="min-w-0 flex-1">
+                                                <div className="font-medium text-foreground truncate">
+                                                    {m.payment_method_name}
+                                                </div>
+                                                <div className="text-[11px] text-muted-foreground font-mono truncate" title={m.file_path}>
+                                                    {m.file_path}
+                                                </div>
+                                            </div>
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                className="h-7 px-2.5 text-xs gap-1 shrink-0 border-primary/30 text-primary hover:bg-primary/5"
+                                                disabled={syncingMappingId === m.id || isSyncing}
+                                                onClick={async () => {
+                                                    setSyncingMappingId(m.id)
+                                                    setStarMoneyFeedback(null)
+                                                    try {
+                                                        const res = await syncSingleMapping(m, true)
+                                                        if (res.success) {
+                                                            setStarMoneyFeedback({
+                                                                type: "success",
+                                                                message: t(
+                                                                    "transactions.singleSyncSuccess",
+                                                                    `Synced ${m.payment_method_name}: ${res.imported ?? 0} imported, ${res.duplicates ?? 0} duplicate(s).`,
+                                                                    {
+                                                                        bank: m.payment_method_name,
+                                                                        imported: res.imported ?? 0,
+                                                                        duplicates: res.duplicates ?? 0,
+                                                                    }
+                                                                ),
+                                                            })
+                                                        } else {
+                                                            setStarMoneyFeedback({
+                                                                type: "error",
+                                                                message: res.error || t("transactions.syncFailed", "Sync failed"),
+                                                            })
+                                                        }
+                                                    } finally {
+                                                        setSyncingMappingId(null)
+                                                    }
+                                                }}
+                                            >
+                                                {syncingMappingId === m.id ? (
+                                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                                ) : (
+                                                    <RefreshCw className="h-3 w-3" />
+                                                )}
+                                                {t("transactions.syncNow", "Sync Now")}
+                                            </Button>
+                                        </div>
+                                    ))}
+                            </div>
+
+                            {starMoneyFeedback && (
+                                <div
+                                    className={cn(
+                                        "flex items-center gap-1.5 text-xs p-2 rounded border",
+                                        starMoneyFeedback.type === "success"
+                                            ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                                            : "bg-destructive/10 border-destructive/20 text-destructive"
+                                    )}
+                                >
+                                    {starMoneyFeedback.type === "success" ? (
+                                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                                    ) : (
+                                        <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                                    )}
+                                    <span>{starMoneyFeedback.message}</span>
+                                </div>
+                            )}
+
+                            <div className="relative py-1 flex items-center">
+                                <div className="flex-grow border-t border-border/60" />
+                                <span className="flex-shrink mx-2 text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
+                                    {t("transactions.orUploadManually", "or upload manually")}
+                                </span>
+                                <div className="flex-grow border-t border-border/60" />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Missing File Warning / Fallback Notice (Desktop Only) */}
+                    {isDesktop && mappings.some((m) => !m.file_exists && m.file_path) && (
+                        <div className="flex items-start gap-2 p-2.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-400">
+                            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                            <div className="space-y-0.5">
+                                <p className="font-medium">{t("transactions.fileNotFoundNotice", "Configured file not found:")}</p>
+                                <p className="font-mono text-[11px] truncate">
+                                    {mappings.find((m) => !m.file_exists && m.file_path)?.file_path}
+                                </p>
+                                <p className="text-[11px] text-muted-foreground">
+                                    {t("transactions.fileNotFoundFallbackHint", "Please choose the CSV file manually below or update the path in Business Settings.")}
+                                </p>
+                            </div>
+                        </div>
+                    )}
                     {/* File Drop Zone */}
                     <div className="space-y-2">
-                        <Label>CSV File</Label>
+                        <Label>{t("transactions.csvFile", "CSV File")}</Label>
                         <div
                             onClick={() => fileInputRef.current?.click()}
                             onDragOver={handleDragOver}
@@ -167,8 +293,8 @@ export function ImportTransactionsModal({
                             ) : (
                                 <div className="flex flex-col items-center gap-2 text-muted-foreground">
                                     <Upload className="h-8 w-8" />
-                                    <p>Click or drag CSV file here</p>
-                                    <p className="text-xs">StarMoney export format</p>
+                                    <p>{t("transactions.clickOrDragCsv", "Click or drag CSV file here")}</p>
+                                    <p className="text-xs">{t("transactions.starmoneyFormat", "StarMoney export format")}</p>
                                 </div>
                             )}
                         </div>
@@ -176,13 +302,13 @@ export function ImportTransactionsModal({
 
                     {/* Method Selection - Searchable & Creatable */}
                     <div className="space-y-2">
-                        <Label htmlFor="method">Payment Method</Label>
+                        <Label htmlFor="method">{t("transactions.paymentMethod", "Payment Method")}</Label>
                         <DynamicSelect
                             choiceType="method"
                             options={methodOptions}
                             value={selectedMethod}
                             onChange={(id) => setSelectedMethod(id)}
-                            placeholder="Select payment method..."
+                            placeholder={t("transactions.selectMethodPlaceholder", "Select payment method...")}
                             disabled={choicesLoading}
                             allowCreate={true}
                             createLabel="Method"
@@ -209,7 +335,7 @@ export function ImportTransactionsModal({
                         onClick={() => handleOpenChange(false)}
                         disabled={importMutation.isPending}
                     >
-                        {importMutation.isSuccess ? "Close" : "Cancel"}
+                        {importMutation.isSuccess ? t("common.close", "Close") : t("common.cancel", "Cancel")}
                     </Button>
                     {!importMutation.isSuccess && (
                         <Button
@@ -219,10 +345,10 @@ export function ImportTransactionsModal({
                             {importMutation.isPending ? (
                                 <>
                                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                    Importing...
+                                    {t("transactions.importing", "Importing...")}
                                 </>
                             ) : (
-                                "Import"
+                                t("transactions.import", "Import")
                             )}
                         </Button>
                     )}

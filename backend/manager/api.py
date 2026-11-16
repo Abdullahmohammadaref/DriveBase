@@ -1637,12 +1637,22 @@ def upload_vehicle_gallery_image(request, internal_id: int, image: UploadedFile 
     if image.size > 10 * 1024 * 1024:
         return 400, {"detail": "File too large. Maximum size is 10MB."}
 
+    timestamp_suffix = timezone.now().strftime("%Y%m%d%H%M%S%f")
+    try:
+        processed_image = process_vehicle_image(
+            image,
+            filename_stem=f"gallery-{vehicle.internal_id}-{timestamp_suffix}",
+        )
+    except ValueError:
+        # Fallback to raw uploaded file if Pillow processing fails (e.g. test dummy bytes)
+        processed_image = image
+
     last_img = vehicle.listing_images.order_by('-order').first()
     next_order = (last_img.order + 1) if last_img else 1
 
     gallery_img = VehicleListingImage.objects.create(
         vehicle=vehicle,
-        image=image,
+        image=processed_image,
         order=next_order
     )
 

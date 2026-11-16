@@ -946,15 +946,28 @@ def export_business_data(request: HttpRequest):
         )
         
         # --- media/images/vehicles/* ---
-        # Include all uploaded vehicle images
-        media_root = django_settings.MEDIA_ROOT
-        vehicle_images_dir = os.path.join(media_root, 'images', 'vehicles')
-        
-        if os.path.exists(vehicle_images_dir):
-            for filename in os.listdir(vehicle_images_dir):
-                file_path = os.path.join(vehicle_images_dir, filename)
-                if os.path.isfile(file_path):
-                    zf.write(file_path, f"media/images/vehicles/{filename}")
+        # Include all uploaded vehicle images belonging strictly to this business
+        for v in vehicles_qs:
+            if v.image:
+                try:
+                    img_path = v.image.path
+                    if os.path.exists(img_path):
+                        rel_name = os.path.basename(img_path)
+                        zf.write(img_path, f"media/images/vehicles/{rel_name}")
+                except Exception:
+                    pass
+
+        # Also include listing gallery images belonging to this business's vehicles
+        gallery_images_qs = VehicleListingImage.objects.filter(vehicle__business=business)
+        for g_img in gallery_images_qs:
+            if g_img.image:
+                try:
+                    g_path = g_img.image.path
+                    if os.path.exists(g_path):
+                        rel_name = os.path.basename(g_path)
+                        zf.write(g_path, f"media/images/vehicles/listing_gallery/{rel_name}")
+                except Exception:
+                    pass
         
         # Also include business logo if it exists
         if business.logo:

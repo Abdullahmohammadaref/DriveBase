@@ -95,3 +95,10 @@ playwright-report/
 
 # ----- Agent Scratch temporary files -----
 .agents/scratch/
+
+# ----- Graphify -----
+graphify-out/
+.graphify/
+graph.html
+graph.svg
+*-callflow.html

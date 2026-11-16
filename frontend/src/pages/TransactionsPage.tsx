@@ -5,6 +5,8 @@ import { Plus, Search, X, Upload, CheckCircle2, Download, Loader2, RefreshCw, Ba
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useTransactions, useDeleteTransaction, useActivateTransaction, useUpdateTransaction } from "@/hooks/useTransactions"
+import { useStarMoneySync } from "@/hooks/useStarMoneySync"
+import { cn } from "@/lib/utils"
 import { FinancialSummaryTable, TransactionFiltersSidebar, TransactionTable, ImportTransactionsModal } from "@/components/transactions"
 import { SmartDeleteModal } from "@/components/common/SmartDeleteModal"
 import { StickyFooter } from "@/components/StickyFooter"
@@ -64,6 +66,35 @@ export function TransactionsPage() {
 
     // Import modal state
     const [importModalOpen, setImportModalOpen] = useState(false)
+
+    // StarMoney Desktop Auto-Sync
+    const {
+        isDesktop,
+        mappings: starMoneyMappings,
+        isSyncing: isSyncingStarMoney,
+        syncAllMappings: syncStarMoney,
+    } = useStarMoneySync()
+
+    const handleSyncStarMoney = async () => {
+        const results = await syncStarMoney(true)
+        const totalImported = results.reduce((acc, r) => acc + (r.imported || 0), 0)
+        const failed = results.filter((r) => !r.success)
+
+        if (totalImported > 0) {
+            setSuccessMessage(
+                t("transactions.starMoneySyncSuccess", `Successfully imported ${totalImported} transaction(s) from StarMoney.`, {
+                    count: totalImported,
+                })
+            )
+            setTimeout(() => setSuccessMessage(null), 6000)
+        } else if (failed.length > 0) {
+            // Some file was not found or failed; open import modal as fallback
+            setImportModalOpen(true)
+        } else {
+            setSuccessMessage(t("transactions.starMoneyUpToDate", "StarMoney files are up to date (no new transactions)."))
+            setTimeout(() => setSuccessMessage(null), 5000)
+        }
+    }
 
     // Delete confirmation dialog
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -273,6 +304,21 @@ export function TransactionsPage() {
                     <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-foreground">{t("transactions.title", "Transactions")}</h1>
                 </div>
                 <div className="flex items-center gap-1.5">
+                    {isDesktop && starMoneyMappings.length > 0 && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7.5 px-2.5 text-xs gap-1.5 border-primary/30 text-primary hover:bg-primary/5"
+                            onClick={handleSyncStarMoney}
+                            disabled={isSyncingStarMoney}
+                            title={t("transactions.syncStarMoneyTooltip", "Synchronize StarMoney CSV files")}
+                        >
+                            <RefreshCw className={cn("h-3.5 w-3.5", isSyncingStarMoney && "animate-spin")} />
+                            {isSyncingStarMoney
+                                ? t("transactions.syncingStarMoney", "Syncing...")
+                                : t("transactions.syncStarMoney", "Sync StarMoney")}
+                        </Button>
+                    )}
                     <Button
                         variant="outline"
                         size="sm"

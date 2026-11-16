@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { StickyFooter } from "@/components/StickyFooter"
 import { VehicleImageUpload } from "@/components/vehicles/VehicleImageUpload"
 import MobileDeSettingsCard from "@/components/settings/MobileDeSettingsCard"
+import DataSovereigntyCard from "@/components/settings/DataSovereigntyCard"
+import StarMoneySyncSettingsCard from "@/components/settings/StarMoneySyncSettingsCard"
 
 interface Branch {
     id: number
@@ -529,6 +531,12 @@ export default function BusinessSettingsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* StarMoney Automated Bank CSV Sync Card */}
+            <StarMoneySyncSettingsCard />
+
+            {/* Local Data Sovereignty & Offline Backup Card */}
+            <DataSovereigntyCard />
 
             {/* mobile.de Marketplace Integration Card */}
             <MobileDeSettingsCard />

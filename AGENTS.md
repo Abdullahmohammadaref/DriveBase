@@ -19,13 +19,20 @@ This project is indexed by GitNexus as **drivebase** (4449 symbols, 7598 relatio
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
-## Always Do
+## Tri-Engine Dispatch & Always Do
 
-- **MUST run impact analysis before editing any symbol.** Before modifying a function, class, or method, run `gitnexus_impact({target: "symbolName", direction: "upstream"})` and report the blast radius (direct callers, affected processes, risk level) to the user.
+> **Follow the Triad Dispatch Rule:** Use **CodeGraph** (`codegraph_explore`) for routine implementation, source viewing, and localized bug fixes. Use **GitNexus** (`gitnexus_impact`) for refactoring shared symbols, database models, and critical service interfaces. Use **Graphify** for macro architecture and package dependency audits.
+
+- **MUST run impact analysis before modifying shared/core symbols.** Before modifying a shared model, base class, or widely used service function, run `gitnexus_impact({target: "symbolName", direction: "upstream"})` and report the blast radius (direct callers, affected processes, risk level) to the user. (Omit for isolated UI styling/CSS or local leaf components).
 - **MUST run `gitnexus_detect_changes()` before committing** to verify your changes only affect expected symbols and execution flows.
 - **MUST warn the user** if impact analysis returns HIGH or CRITICAL risk before proceeding with edits.
 - When exploring unfamiliar code, use `gitnexus_query({query: "concept"})` to find execution flows instead of grepping. It returns process-grouped results ranked by relevance.
 - When you need full context on a specific symbol — callers, callees, which execution flows it participates in — use `gitnexus_context({name: "symbolName"})`.
+
+## Mandatory Bookend Sync Protocol
+Whenever using an intelligence tool:
+1. **Before Querying:** Run the tool's update command (`codegraph sync`, `npx gitnexus analyze`, or `python -m graphify update .`) and wait for it to finish before inspecting the graph. Never use a stale index.
+2. **After Finishing Task:** Re-run the update command after completing code edits so the knowledge graph is fully up-to-date for testing and future tasks.
 
 ## Never Do
 

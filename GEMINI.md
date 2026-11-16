@@ -76,19 +76,43 @@ All AI-related configurations, specifications, skills, and references are struct
 
 ---
 
-## 4. Code Intelligence Tools
+## 4. Code Intelligence Triad & Dispatch Policy
 
-This repository is indexed by two code intelligence engines:
+This repository is indexed by three specialized code intelligence engines. To optimize token usage and avoid redundant tool calls, follow the **strict single-engine dispatch policy**:
 
-### CodeGraph (`.codegraph/`)
-When answering architecture questions, finding callers, or exploring symbols:
-- **MCP Tool:** Use `codegraph_explore` before grepping. It returns verbatim source code and dynamic call hops across files in a single turn.
-- **Shell Alternative:** `codegraph explore "<query>"`.
+```
+Task Intent
+ │
+ ├── 1. Inspect source code, locate symbols, or trace direct call hops (90% of tasks)
+ │    └── ➡️ CODEGRAPH (`codegraph_explore`)
+ │
+ ├── 2. Refactor/rename shared functions, models, or verify git diff safety
+ │    └── ➡️ GITNEXUS (`gitnexus_impact`, `gitnexus_detect_changes`)
+ │
+ └── 3. Macro architecture audit, module coupling, god nodes, or PR triage
+      └── ➡️ GRAPHIFY (`god_nodes`, `get_community`, `query_graph`)
+```
 
-### GitNexus (`.gitnexus/`)
-When making symbol refactors or assessing blast radius:
-- **Impact Analysis:** Run `gitnexus_impact` before modifying shared functions, models, or methods. Report callers and risk level.
-- **Detect Changes:** Run `gitnexus_detect_changes()` to verify changes before committing.
+### 4.1 Engine Responsibilities & Tools
+
+| Engine | Primary Scope | MCP Tools | CLI Update Command | Auto-Update Behavior |
+| :--- | :--- | :--- | :--- | :--- |
+| **CodeGraph** (`.codegraph/`) | **Daily Implementation Workhorse:** Verbatim source retrieval, exact line numbers, cross-file dynamic hops. | `codegraph_explore` | `codegraph sync` | Incremental via `codegraph sync` (or background daemon) |
+| **GitNexus** (`.gitnexus/`) | **Refactoring & Blast Radius Gate:** Upstream/downstream callers, execution flow impact, pre-commit diff checks. | `gitnexus_impact`, `gitnexus_detect_changes`, `gitnexus_query`, `gitnexus_context` | `npx gitnexus analyze` | On-demand / Manual refresh |
+| **Graphify** (`graphify-out/`) | **Architectural Auditor:** High-level module dependencies, god nodes, circular coupling, PR package triage. | `query_graph`, `god_nodes`, `get_community`, `get_neighbors`, `get_pr_impact` | `python -m graphify update .` | On-demand / Manual refresh |
+
+### 4.2 Mandatory Anti-Duplication Laws
+1. **Never Double-Dip:** Never query multiple tools for the same information. If investigating a bug, use CodeGraph. Do not call GitNexus or Graphify unless performing a cross-cutting refactor.
+2. **No Source Code via Graphify:** Graphify only stores graph topology and metadata. Never query Graphify expecting verbatim code.
+3. **No Blast-Radius Over-Engineering:** Do not run `gitnexus_impact` for minor UI styling, CSS tweaks, or isolated leaf view changes. Reserve it for models, core shared utils, and API contracts.
+
+### 4.3 Mandatory Bookend Synchronization Protocol (Sync-Before-Use, Sync-After-Task)
+Whenever you interact with any code intelligence engine, you **MUST follow the bookend sync cycle**:
+1. **At the Start (Before Querying):** If you decide to query a graph tool, run its refresh command first and wait for completion before relying on the index:
+   - **CodeGraph:** `codegraph sync`
+   - **GitNexus:** `npx gitnexus analyze --skip-agents-md --skip-skills`
+   - **Graphify:** `python -m graphify update .`
+2. **At the End (After Modifying Code):** After finishing all code modifications and before completing the turn or running confirmation tests, run the refresh command again so the knowledge graph is 100% synchronized with the newly modified codebase.
 
 ---
 

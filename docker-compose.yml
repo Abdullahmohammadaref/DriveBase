@@ -4,17 +4,18 @@ services:
     restart: unless-stopped
     env_file: backend/.env.production
     volumes:
-      - ./backend/db.sqlite3:/app/db.sqlite3
+      - ./backend:/app
       - ./backend/media:/app/media
       - ./backend/locale:/app/locale
       - ./backend/staticfiles:/app/staticfiles
     expose:
       - "8000"
     healthcheck:
-      test: ["CMD", "python", "manage.py", "check", "--settings=drivebase.settings_prod"]
+      test: ["CMD-SHELL", "python -c 'import socket; s = socket.create_connection((\"127.0.0.1\", 8000), timeout=2); s.close()' || exit 1"]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 3
+      start_period: 30s
 
   nginx:
     image: nginx:alpine
