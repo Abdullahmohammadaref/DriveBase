@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react"
 import { useTranslation } from "react-i18next"
-import { History, ArrowUpDown, ChevronUp, ChevronDown, Car, FileText, Building2, User, Settings, List, Clock, ChevronLeft, ChevronRight } from "lucide-react"
+import { History, ArrowUpDown, ChevronUp, ChevronDown, Car, FileText, Building2, User, Settings, List, Clock, ChevronLeft, ChevronRight, Bot } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     Table,
@@ -113,7 +113,7 @@ export function ActivityLogsPage() {
     const handleUserFilter = useCallback((value: string) => {
         setFilters((prev) => ({
             ...prev,
-            user_id: value === "all" ? undefined : parseInt(value, 10),
+            user_id: value === "all" ? undefined : value,
             page: 1,
         }))
     }, [])
@@ -268,14 +268,21 @@ export function ActivityLogsPage() {
                                 data.items.map((log) => (
                                     <TableRow key={log.id} className="h-8 hover:bg-gray-50/60 dark:hover:bg-muted/40 transition-colors border-b border-gray-100 dark:border-border last:border-b-0 text-xs">
                                         <TableCell className="px-3 py-1">
-                                            <div className="flex items-center gap-2">
-                                                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
-                                                    <User className="h-3 w-3 text-primary" />
+                                            {log.is_system || log.user_name === "System" || !log.user_id ? (
+                                                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-[11px] font-medium">
+                                                    <Bot className="h-3 w-3 text-purple-600 dark:text-purple-400" />
+                                                    <span>{t("activityLogs.system", "System")}</span>
                                                 </div>
-                                                <span className="font-medium text-foreground text-xs">
-                                                    {log.user_name}
-                                                </span>
-                                            </div>
+                                            ) : (
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
+                                                        <User className="h-3 w-3 text-primary" />
+                                                    </div>
+                                                    <span className="font-medium text-foreground text-xs">
+                                                        {log.user_name}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </TableCell>
                                         <TableCell className="px-3 py-1">
                                             <ActionBadge action={log.action} display={log.action_display} />

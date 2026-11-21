@@ -951,7 +951,8 @@ def download_transaction_pdf(request, internal_id: int):
 def import_transactions_csv(
     request,
     transactions_file: UploadedFile = File(...),
-    method: str = Form(...)
+    method: str = Form(...),
+    is_auto_sync: bool = Form(False),
 ):
     """
     Import transactions from a StarMoney CSV export file.
@@ -1286,7 +1287,46 @@ def import_transactions_csv(
     message = f"Import completed: {', '.join(parts) if parts else 'no changes'}"
     if error_count > 0 and error_details[:5]:
         message += f". First errors: {'; '.join(error_details[:5])}"
-    
+
+    # =========================================================================
+    # Activity Logging (distinguishes System vs User)
+    # =========================================================================
+    if created_count > 0 or updated_count > 0:
+        try:
+            from .models import ActivityLog
+            import json
+
+            # If automated background sync, record under System (user=None). Otherwise use current user.
+            log_user = None if is_auto_sync else getattr(request, 'user', None)
+            file_display_name = getattr(transactions_file, 'name', 'StarMoney CSV')
+            log_entity_name = f"StarMoney Auto-Sync: {method_name}" if is_auto_sync else f"StarMoney Import: {method_name}"
+            actor_name = "System" if is_auto_sync else (getattr(log_user, 'username', 'User') if log_user else "System")
+
+            log_details = {
+                "en": f"{actor_name} imported {created_count} new transaction(s) ({skipped_count} skipped/duplicate, {updated_count} updated) from {file_display_name} for {method_name}.",
+                "de": f"{actor_name} hat {created_count} neue Transaktion(en) ({skipped_count} übersprungen/Duplikat, {updated_count} aktualisiert) aus {file_display_name} für {method_name} importiert.",
+                "source": "starmoney_auto_sync" if is_auto_sync else "starmoney_manual_import",
+                "file": file_display_name,
+                "bank": method_name,
+                "created": created_count,
+                "updated": updated_count,
+                "skipped": skipped_count,
+                "errors": error_count,
+            }
+
+            ActivityLog.objects.create(
+                business=business,
+                user=log_user,
+                action='create',
+                entity_type='transaction',
+                entity_id=None,
+                entity_name=log_entity_name,
+                details=json.dumps(log_details, ensure_ascii=False)
+            )
+            print(f"[ActivityLog-TX] Successfully logged CSV import ({'System' if is_auto_sync else 'User'})")
+        except Exception as log_ex:
+            print(f"[ActivityLog-TX] Failed to create activity log: {log_ex}")
+
     return 200, ImportTransactionsResponse(
         success=True,
         message=message,

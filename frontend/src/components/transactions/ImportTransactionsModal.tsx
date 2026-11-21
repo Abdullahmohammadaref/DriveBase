@@ -29,7 +29,7 @@ export function ImportTransactionsModal({
     onOpenChange,
 }: ImportTransactionsModalProps) {
     const { t } = useTranslation()
-    const { isDesktop, mappings, isSyncing, syncSingleMapping } = useStarMoneySync()
+    const { isDesktop, mappings, detectedExports, isSyncing, syncExport } = useStarMoneySync()
     const [syncingMappingId, setSyncingMappingId] = useState<string | null>(null)
     const [starMoneyFeedback, setStarMoneyFeedback] = useState<{
         type: "success" | "error"
@@ -127,77 +127,75 @@ export function ImportTransactionsModal({
 
                 <div className="space-y-4 py-4">
                     {/* StarMoney Configured Accounts (Desktop Only) */}
-                    {isDesktop && mappings.some((m) => m.file_exists) && (
+                    {isDesktop && detectedExports.length > 0 && (
                         <div className="rounded-lg border border-primary/20 bg-primary/5 p-3.5 space-y-2.5">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                                     <Landmark className="h-4 w-4 text-primary" />
-                                    {t("transactions.configuredStarMoneyAccounts", "Configured StarMoney Accounts")}
+                                    {t("transactions.configuredStarMoneyAccounts", "Detected StarMoney Exports")}
                                 </span>
                                 <span className="text-[11px] text-muted-foreground">
                                     {t("transactions.autoSyncReady", "Ready to sync")}
                                 </span>
                             </div>
                             <div className="space-y-1.5">
-                                {mappings
-                                    .filter((m) => m.file_exists)
-                                    .map((m) => (
-                                        <div
-                                            key={m.id}
-                                            className="flex items-center justify-between gap-2 p-2 rounded-md bg-background border border-border/60 text-xs"
-                                        >
-                                            <div className="min-w-0 flex-1">
-                                                <div className="font-medium text-foreground truncate">
-                                                    {m.payment_method_name}
-                                                </div>
-                                                <div className="text-[11px] text-muted-foreground font-mono truncate" title={m.file_path}>
-                                                    {m.file_path}
-                                                </div>
+                                {detectedExports.map((item) => (
+                                    <div
+                                        key={item.mapping.id}
+                                        className="flex items-center justify-between gap-2 p-2 rounded-md bg-background border border-border/60 text-xs"
+                                    >
+                                        <div className="min-w-0 flex-1">
+                                            <div className="font-medium text-foreground truncate">
+                                                {item.mapping.payment_method_name}
                                             </div>
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                variant="outline"
-                                                className="h-7 px-2.5 text-xs gap-1 shrink-0 border-primary/30 text-primary hover:bg-primary/5"
-                                                disabled={syncingMappingId === m.id || isSyncing}
-                                                onClick={async () => {
-                                                    setSyncingMappingId(m.id)
-                                                    setStarMoneyFeedback(null)
-                                                    try {
-                                                        const res = await syncSingleMapping(m, true)
-                                                        if (res.success) {
-                                                            setStarMoneyFeedback({
-                                                                type: "success",
-                                                                message: t(
-                                                                    "transactions.singleSyncSuccess",
-                                                                    `Synced ${m.payment_method_name}: ${res.imported ?? 0} imported, ${res.duplicates ?? 0} duplicate(s).`,
-                                                                    {
-                                                                        bank: m.payment_method_name,
-                                                                        imported: res.imported ?? 0,
-                                                                        duplicates: res.duplicates ?? 0,
-                                                                    }
-                                                                ),
-                                                            })
-                                                        } else {
-                                                            setStarMoneyFeedback({
-                                                                type: "error",
-                                                                message: res.error || t("transactions.syncFailed", "Sync failed"),
-                                                            })
-                                                        }
-                                                    } finally {
-                                                        setSyncingMappingId(null)
-                                                    }
-                                                }}
-                                            >
-                                                {syncingMappingId === m.id ? (
-                                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                                ) : (
-                                                    <RefreshCw className="h-3 w-3" />
-                                                )}
-                                                {t("transactions.syncNow", "Sync Now")}
-                                            </Button>
+                                            <div className="text-[11px] text-muted-foreground font-mono truncate" title={item.file.path}>
+                                                {item.file.name}
+                                            </div>
                                         </div>
-                                    ))}
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-7 px-2.5 text-xs gap-1 shrink-0 border-primary/30 text-primary hover:bg-primary/5 cursor-pointer"
+                                            disabled={syncingMappingId === item.mapping.id || isSyncing}
+                                            onClick={async () => {
+                                                setSyncingMappingId(item.mapping.id)
+                                                setStarMoneyFeedback(null)
+                                                try {
+                                                    const res = await syncExport(item.mapping, item.file, true)
+                                                    if (res.success) {
+                                                        setStarMoneyFeedback({
+                                                            type: "success",
+                                                            message: t(
+                                                                "transactions.singleSyncSuccess",
+                                                                `Synced ${item.mapping.payment_method_name}: ${res.imported ?? 0} imported, ${res.duplicates ?? 0} duplicate(s).`,
+                                                                {
+                                                                    bank: item.mapping.payment_method_name,
+                                                                    imported: res.imported ?? 0,
+                                                                    duplicates: res.duplicates ?? 0,
+                                                                }
+                                                            ),
+                                                        })
+                                                    } else {
+                                                        setStarMoneyFeedback({
+                                                            type: "error",
+                                                            message: res.error || t("transactions.syncFailed", "Sync failed"),
+                                                        })
+                                                    }
+                                                } finally {
+                                                    setSyncingMappingId(null)
+                                                }
+                                            }}
+                                        >
+                                            {syncingMappingId === item.mapping.id ? (
+                                                <Loader2 className="h-3 w-3 animate-spin" />
+                                            ) : (
+                                                <RefreshCw className="h-3 w-3" />
+                                            )}
+                                            {t("transactions.syncNow", "Sync Now")}
+                                        </Button>
+                                    </div>
+                                ))}
                             </div>
 
                             {starMoneyFeedback && (
@@ -229,16 +227,13 @@ export function ImportTransactionsModal({
                     )}
 
                     {/* Missing File Warning / Fallback Notice (Desktop Only) */}
-                    {isDesktop && mappings.some((m) => !m.file_exists && m.file_path) && (
+                    {isDesktop && mappings.length > 0 && detectedExports.length === 0 && (
                         <div className="flex items-start gap-2 p-2.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-400">
                             <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                             <div className="space-y-0.5">
-                                <p className="font-medium">{t("transactions.fileNotFoundNotice", "Configured file not found:")}</p>
-                                <p className="font-mono text-[11px] truncate">
-                                    {mappings.find((m) => !m.file_exists && m.file_path)?.file_path}
-                                </p>
+                                <p className="font-medium">{t("transactions.fileNotFoundNotice", "No export files detected in export folder:")}</p>
                                 <p className="text-[11px] text-muted-foreground">
-                                    {t("transactions.fileNotFoundFallbackHint", "Please choose the CSV file manually below or update the path in Business Settings.")}
+                                    {t("transactions.fileNotFoundFallbackHint", "Please choose the CSV file manually below or update the folder in Business Settings.")}
                                 </p>
                             </div>
                         </div>

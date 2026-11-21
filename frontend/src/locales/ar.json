@@ -152,7 +152,13 @@
         "starmoneyFormat": "تنسيق تصدير StarMoney",
         "selectMethodPlaceholder": "اختر طريقة الدفع...",
         "importing": "جارٍ الاستيراد...",
-        "import": "استيراد"
+        "import": "استيراد",
+        "detectedExportTitle": "تصدير StarMoney جاهز",
+        "detectedExportDesc": "تم اكتشاف معاملات بنكية جديدة في مجلد التصدير. انقر فوق استيراد لإضافتها تلقائيًا.",
+        "unmappedExportTitle": "تم اكتشاف حساب بنكي جديد",
+        "unmappedExportDesc": "تم العثور على ملف التصدير \"{{name}}\". حدد البنك الذي ينتمي إليه هذا الملف:",
+        "linkAndImport": "ربط واستيراد",
+        "bindSuccess": "تم ربط {{bank}} واستيراد {{count}} معاملة."
     },
     "userManagement": {
         "title": "إدارة المستخدمين",
@@ -276,5 +282,27 @@
         "browse": "استعراض...",
         "lastSyncedAt": "آخر مزامنة:",
         "addAnotherBank": "إضافة حساب بنكي آخر"
+    },
+    "settings": {
+        "starmoneySyncTitle": "مزامنة StarMoney البنكية الذكية",
+        "starmoneySyncDesc": "يكتشف تلقائيًا صادرات StarMoney في المجلد المخصص لديك، ويدعم كلاً من الأسماء الثابتة وصادرات الحسابات الموقوتة.",
+        "scanNow": "مسح المجلد",
+        "watchDir": "مجلد تصدير StarMoney",
+        "folderReady": "المجلد جاهز",
+        "folderMissing": "المجلد مفقود",
+        "watchDirHelp": "عند النقر فوق تصدير في StarMoney، احفظ في هذا المجلد. يكتشف DriveBase المعاملات الجديدة تلقائيًا.",
+        "watchDirUpdated": "تم تحديث مجلد التصدير والتحقق منه.",
+        "savedSuccessfully": "تم حفظ الإعدادات بنجاح!",
+        "bankMappingsTitle": "ربط الحسابات البنكية والأنماط",
+        "bankMappingsDesc": "اربط كل طريقة دفع بأرقام الحسابات أو أنماط أسماء الملفات (مثل \"sparkasse, 1076843790\").",
+        "addBankMapping": "+ إضافة بنك آخر",
+        "paymentMethod": "طريقة الدفع",
+        "accountPatterns": "معرف الحساب / أنماط اسم الملف",
+        "detectedFile": "حالة المجلد",
+        "noMappings": "لا توجد تعيينات بنكية تم تكوينها.",
+        "noFileFound": "لا يوجد ملف تصدير في المجلد"
+    },
+    "activityLogs": {
+        "system": "النظام"
     }
 }

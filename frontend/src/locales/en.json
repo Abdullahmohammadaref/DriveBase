@@ -600,7 +600,13 @@
         "starmoneyFormat": "StarMoney export format",
         "selectMethodPlaceholder": "Select payment method...",
         "importing": "Importing...",
-        "import": "Import"
+        "import": "Import",
+        "detectedExportTitle": "StarMoney Export Ready",
+        "detectedExportDesc": "New bank transactions detected in export folder. Click Import to add them automatically.",
+        "unmappedExportTitle": "New Bank Account Detected",
+        "unmappedExportDesc": "Found export file \"{{name}}\". Select which bank this belongs to:",
+        "linkAndImport": "Link & Import",
+        "bindSuccess": "Linked {{bank}} and imported {{count}} transaction(s)."
     },
     "userManagement": {
         "title": "User Management",
@@ -885,7 +891,8 @@
             "user": "User",
             "business_settings": "Business Settings",
             "choice": "Choice"
-        }
+        },
+        "system": "System"
     },
     "errors": {
         "fieldRequired": "This field is required"
@@ -1394,5 +1401,24 @@
         "updateReady": "Update Ready (v{{version}}) — Restart",
         "updateReadyTooltip": "Click to restart and apply update",
         "installing": "Restarting..."
+    },
+    "settings": {
+        "starmoneySyncTitle": "StarMoney Smart Bank Sync",
+        "starmoneySyncDesc": "Automatically detects StarMoney exports in your designated folder, supporting both fixed names (sparkasse.csv) and timestamped account exports.",
+        "scanNow": "Scan Folder",
+        "watchDir": "StarMoney Export Folder",
+        "folderReady": "Folder Ready",
+        "folderMissing": "Folder Missing",
+        "watchDirHelp": "When you click Export in StarMoney, save to this folder. DriveBase automatically detects new transactions.",
+        "watchDirUpdated": "Export folder updated and verified.",
+        "savedSuccessfully": "Settings saved successfully!",
+        "bankMappingsTitle": "Bank Account Mappings & Patterns",
+        "bankMappingsDesc": "Link each payment method to account numbers or filename patterns (e.g. \"sparkasse, 1076843790\").",
+        "addBankMapping": "+ Add Another Bank",
+        "paymentMethod": "Payment Method",
+        "accountPatterns": "Account ID / Filename Patterns",
+        "detectedFile": "Folder Status",
+        "noMappings": "No bank mappings configured.",
+        "noFileFound": "No export in folder"
     }
 }

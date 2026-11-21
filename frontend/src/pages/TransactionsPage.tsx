@@ -1,11 +1,11 @@
 import { useState, useCallback, useEffect } from "react"
 import { Link, useSearchParams, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { Plus, Search, X, Upload, CheckCircle2, Download, Loader2, RefreshCw, BarChart3, ChevronDown, ChevronUp } from "lucide-react"
+import { Plus, Search, X, Upload, CheckCircle2, Download, Loader2, RefreshCw, BarChart3, ChevronDown, ChevronUp, Landmark, Zap, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useTransactions, useDeleteTransaction, useActivateTransaction, useUpdateTransaction } from "@/hooks/useTransactions"
-import { useStarMoneySync } from "@/hooks/useStarMoneySync"
+import { useTransactions, useDeleteTransaction, useActivateTransaction, useUpdateTransaction, useTransactionChoices } from "@/hooks/useTransactions"
+import { useStarMoneySync, type UnmappedExport } from "@/hooks/useStarMoneySync"
 import { cn } from "@/lib/utils"
 import { FinancialSummaryTable, TransactionFiltersSidebar, TransactionTable, ImportTransactionsModal } from "@/components/transactions"
 import { SmartDeleteModal } from "@/components/common/SmartDeleteModal"
@@ -67,16 +67,24 @@ export function TransactionsPage() {
     // Import modal state
     const [importModalOpen, setImportModalOpen] = useState(false)
 
-    // StarMoney Desktop Auto-Sync
+    // StarMoney Desktop Auto-Sync & Directory Detection
     const {
         isDesktop,
         mappings: starMoneyMappings,
+        detectedExports,
+        unmappedExports,
         isSyncing: isSyncingStarMoney,
-        syncAllMappings: syncStarMoney,
+        syncExport,
+        syncAllDetected,
+        bindNewAccount,
     } = useStarMoneySync()
 
+    const { data: choicesData } = useTransactionChoices()
+    const paymentMethods = choicesData?.method_choices || []
+    const [selectedUnmappedMethod, setSelectedUnmappedMethod] = useState<string>("")
+
     const handleSyncStarMoney = async () => {
-        const results = await syncStarMoney(true)
+        const results = await syncAllDetected(true)
         const totalImported = results.reduce((acc, r) => acc + (r.imported || 0), 0)
         const failed = results.filter((r) => !r.success)
 
@@ -88,11 +96,40 @@ export function TransactionsPage() {
             )
             setTimeout(() => setSuccessMessage(null), 6000)
         } else if (failed.length > 0) {
-            // Some file was not found or failed; open import modal as fallback
             setImportModalOpen(true)
         } else {
             setSuccessMessage(t("transactions.starMoneyUpToDate", "StarMoney files are up to date (no new transactions)."))
             setTimeout(() => setSuccessMessage(null), 5000)
+        }
+    }
+
+    const handleBindAndSync = async (unmapped: UnmappedExport) => {
+        const methodVal = selectedUnmappedMethod || (paymentMethods[0] ? paymentMethods[0].value : "")
+        if (!methodVal) return
+        const found = paymentMethods.find((m) => m.value === methodVal)
+        const pmId = parseInt(methodVal)
+        const pmName = found ? found.label : "Bank"
+
+        await bindNewAccount(unmapped.suggestedAccount, pmId, pmName)
+        const res = await syncExport(
+            {
+                id: crypto.randomUUID(),
+                payment_method_id: pmId,
+                payment_method_name: pmName,
+                patterns: unmapped.suggestedAccount,
+            },
+            unmapped.file,
+            true
+        )
+
+        if (res.success) {
+            setSuccessMessage(
+                t("transactions.bindSuccess", `Linked ${unmapped.suggestedAccount} to ${pmName} and imported ${res.imported || 0} transaction(s).`, {
+                    bank: pmName,
+                    count: res.imported || 0,
+                })
+            )
+            setTimeout(() => setSuccessMessage(null), 6000)
         }
     }
 
@@ -379,6 +416,84 @@ export function TransactionsPage() {
                     >
                         <X className="h-3.5 w-3.5" />
                     </button>
+                </div>
+            )}
+
+            {/* StarMoney Auto-Detection Banner (Desktop Only) */}
+            {isDesktop && detectedExports.some((d) => d.isNew) && (
+                <div className="rounded-lg border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 p-3 flex flex-wrap items-center justify-between gap-3 shadow-xs animate-in slide-in-from-top-1">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/60 flex items-center justify-center text-emerald-700 dark:text-emerald-300 shrink-0">
+                            <Landmark className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                            <div className="text-xs font-semibold text-emerald-900 dark:text-emerald-100 flex items-center gap-2 flex-wrap">
+                                <span>{t("transactions.detectedExportTitle", "StarMoney Export Ready")}</span>
+                                <span className="text-[11px] font-normal text-emerald-700 dark:text-emerald-300 truncate">
+                                    {detectedExports
+                                        .filter((d) => d.isNew)
+                                        .map((d) => `${d.mapping.payment_method_name} (${d.file.name})`)
+                                        .join(" • ")}
+                                </span>
+                            </div>
+                            <div className="text-[11px] text-emerald-700/90 dark:text-emerald-300/90">
+                                {t("transactions.detectedExportDesc", "New bank transactions detected in export folder. Click Import to add them automatically.")}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                            size="sm"
+                            className="h-7.5 px-3 text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer font-medium"
+                            onClick={handleSyncStarMoney}
+                            disabled={isSyncingStarMoney}
+                        >
+                            {isSyncingStarMoney ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
+                            {t("transactions.importNow", "Import Now")}
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            {/* Unmapped Bank Account Detected */}
+            {isDesktop && unmappedExports.length > 0 && (
+                <div className="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 p-3 flex flex-wrap items-center justify-between gap-3 shadow-xs animate-in slide-in-from-top-1">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="h-8 w-8 rounded-full bg-amber-100 dark:bg-amber-900/60 flex items-center justify-center text-amber-700 dark:text-amber-300 shrink-0">
+                            <AlertCircle className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                            <div className="text-xs font-semibold text-amber-900 dark:text-amber-100">
+                                {t("transactions.unmappedExportTitle", "New Bank Account Detected")}
+                            </div>
+                            <div className="text-[11px] text-amber-700 dark:text-amber-300">
+                                {t("transactions.unmappedExportDesc", "Found export file '{{name}}'. Select which bank this belongs to:", {
+                                    name: unmappedExports[0].file.name,
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <select
+                            value={selectedUnmappedMethod || (paymentMethods[0]?.value ?? "")}
+                            onChange={(e) => setSelectedUnmappedMethod(e.target.value)}
+                            className="h-7.5 px-2.5 text-xs bg-background border border-border rounded-md text-foreground font-medium shadow-xs"
+                        >
+                            {paymentMethods.map((pm) => (
+                                <option key={pm.value} value={pm.value}>
+                                    {pm.label}
+                                </option>
+                            ))}
+                        </select>
+                        <Button
+                            size="sm"
+                            className="h-7.5 px-3 text-xs bg-amber-600 hover:bg-amber-700 text-white font-medium cursor-pointer shadow-xs"
+                            onClick={() => handleBindAndSync(unmappedExports[0])}
+                            disabled={isSyncingStarMoney}
+                        >
+                            {t("transactions.linkAndImport", "Link & Import")}
+                        </Button>
+                    </div>
                 </div>
             )}
 

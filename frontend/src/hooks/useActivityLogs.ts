@@ -8,6 +8,7 @@ export interface ActivityLogItem {
     id: number
     user_name: string
     user_id?: number | null
+    is_system?: boolean
     action: string
     action_display: string
     entity_type: string
@@ -35,13 +36,13 @@ export interface ActivityLogFilters {
     per_page?: number
     action?: string
     entity_type?: string
-    user_id?: number
+    user_id?: number | string
     sort?: string
     order?: "asc" | "desc"
 }
 
 export interface ActivityLogUser {
-    id: number
+    id: number | string
     name: string
 }
 

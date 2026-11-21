@@ -122,6 +122,66 @@ class SyncApiTests(BaseTestCase):
                 except PermissionError:
                     pass
 
+
+class StarMoneyAutoSyncActivityLogTests(BaseTestCase):
+    """Test suite verifying StarMoney CSV auto-sync creates System ActivityLog."""
+
+    def test_auto_sync_creates_system_activity_log(self):
+        """Auto-sync (is_auto_sync=True) logs activity under System actor (user=None)."""
+        from manager.models import ActivityLog, PaymentMethod
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        self.login_manager_a()
+
+        pm, _ = PaymentMethod.objects.get_or_create(
+            business=self.business_a,
+            name="Sparkasse",
+            defaults={"applies_to_buy": True, "applies_to_sale": True}
+        )
+
+        csv_content = (
+            "Buchungstag;Begünstigter/Absender - Name;Betrag;Betrag - Währung;Verwendungszweckzeile 1\n"
+            "22.11.2026;Auto Teile GmbH;-150,50;EUR;Ersatzteile Bremse #101\n"
+        ).encode("utf-8")
+
+        csv_file = SimpleUploadedFile("sparkasse.csv", csv_content, content_type="text/csv")
+
+        response = self.client.post(
+            "/api/transactions/import/csv/",
+            {
+                "transactions_file": csv_file,
+                "method": str(pm.id),
+                "is_auto_sync": "true",
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["success"])
+
+        # Check ActivityLog
+        log = ActivityLog.objects.filter(
+            business=self.business_a,
+            entity_name__icontains="StarMoney Auto-Sync"
+        ).first()
+        self.assertIsNotNone(log)
+        self.assertIsNone(log.user)  # System actor has user=None
+        self.assertEqual(log.action, "create")
+        self.assertEqual(log.entity_type, "transaction")
+
+        # Test activity log filtering for system
+        list_resp = self.client.get("/api/activity-logs/?user_id=system")
+        self.assertEqual(list_resp.status_code, 200)
+        items = list_resp.json()["items"]
+        self.assertGreaterEqual(len(items), 1)
+        self.assertEqual(items[0]["user_name"], "System")
+        self.assertTrue(items[0]["is_system"])
+
+        # Test users list includes System
+        users_resp = self.client.get("/api/activity-logs/users")
+        self.assertEqual(users_resp.status_code, 200)
+        users = users_resp.json()["users"]
+        self.assertTrue(any(u["id"] == "system" for u in users))
+
+
     def test_tenant_isolation_business_b(self):
         """Business B's export contains only Business B data."""
         self.login_manager_b()
@@ -149,3 +209,63 @@ class SyncApiTests(BaseTestCase):
                     os.remove(tmp_path)
                 except PermissionError:
                     pass
+
+
+class StarMoneyAutoSyncActivityLogTests(BaseTestCase):
+    """Test suite verifying StarMoney CSV auto-sync creates System ActivityLog."""
+
+    def test_auto_sync_creates_system_activity_log(self):
+        """Auto-sync (is_auto_sync=True) logs activity under System actor (user=None)."""
+        from manager.models import ActivityLog, PaymentMethod
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        self.login_manager_a()
+
+        pm, _ = PaymentMethod.objects.get_or_create(
+            business=self.business_a,
+            name="Sparkasse",
+            defaults={"applies_to_buy": True, "applies_to_sale": True}
+        )
+
+        csv_content = (
+            "Buchungstag;Begünstigter/Absender - Name;Betrag;Betrag - Währung;Verwendungszweckzeile 1\n"
+            "22.11.2026;Auto Teile GmbH;-150,50;EUR;Ersatzteile Bremse #101\n"
+        ).encode("utf-8")
+
+        csv_file = SimpleUploadedFile("sparkasse.csv", csv_content, content_type="text/csv")
+
+        response = self.client.post(
+            "/api/transactions/import/csv/",
+            {
+                "transactions_file": csv_file,
+                "method": str(pm.id),
+                "is_auto_sync": "true",
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["success"])
+
+        # Check ActivityLog
+        log = ActivityLog.objects.filter(
+            business=self.business_a,
+            entity_name__icontains="StarMoney Auto-Sync"
+        ).first()
+        self.assertIsNotNone(log)
+        self.assertIsNone(log.user)  # System actor has user=None
+        self.assertEqual(log.action, "create")
+        self.assertEqual(log.entity_type, "transaction")
+
+        # Test activity log filtering for system
+        list_resp = self.client.get("/api/activity-logs/?user_id=system")
+        self.assertEqual(list_resp.status_code, 200)
+        items = list_resp.json()["items"]
+        self.assertGreaterEqual(len(items), 1)
+        self.assertEqual(items[0]["user_name"], "System")
+        self.assertTrue(items[0]["is_system"])
+
+        # Test users list includes System
+        users_resp = self.client.get("/api/activity-logs/users")
+        self.assertEqual(users_resp.status_code, 200)
+        users = users_resp.json()["users"]
+        self.assertTrue(any(u["id"] == "system" for u in users))
+

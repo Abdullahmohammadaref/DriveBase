@@ -255,6 +255,13 @@ export interface StarMoneyFileMeta {
   bytes?: number[]
 }
 
+export interface ScannedExportFile {
+  name: string
+  path: string
+  size_bytes: number
+  last_modified: number
+}
+
 /**
  * Opens native Windows file dialog to choose a StarMoney CSV export file.
  */
@@ -262,6 +269,33 @@ export async function pickStarMoneyCsvFile(): Promise<string | null> {
   if (!isTauri()) return null
   const { invoke } = await import("@tauri-apps/api/core")
   return invoke<string | null>("pick_starmoney_csv_file")
+}
+
+/**
+ * Opens native Windows folder dialog to choose the StarMoney watch/export directory.
+ */
+export async function pickStarMoneyWatchDir(): Promise<string | null> {
+  if (!isTauri()) return null
+  const { invoke } = await import("@tauri-apps/api/core")
+  return invoke<string | null>("pick_starmoney_watch_dir")
+}
+
+/**
+ * Ensures the StarMoney watch directory exists on disk, creating it if necessary.
+ */
+export async function ensureStarMoneyDir(dirPath: string): Promise<boolean> {
+  if (!isTauri()) return false
+  const { invoke } = await import("@tauri-apps/api/core")
+  return invoke<boolean>("ensure_starmoney_dir", { dirPath })
+}
+
+/**
+ * Scans the StarMoney watch directory for all CSV and TXT export files, sorted newest first.
+ */
+export async function scanStarMoneyDir(dirPath: string): Promise<ScannedExportFile[]> {
+  if (!isTauri()) return []
+  const { invoke } = await import("@tauri-apps/api/core")
+  return invoke<ScannedExportFile[]>("scan_starmoney_dir", { dirPath })
 }
 
 /**

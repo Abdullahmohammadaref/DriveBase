@@ -204,6 +204,73 @@ fn pick_starmoney_csv_file() -> Result<Option<String>, String> {
 }
 
 #[tauri::command]
+fn pick_starmoney_watch_dir() -> Result<Option<String>, String> {
+  let folder_path = rfd::FileDialog::new()
+    .set_title("Select StarMoney Export Folder")
+    .pick_folder();
+
+  Ok(folder_path.map(|p| p.to_string_lossy().to_string()))
+}
+
+#[tauri::command]
+fn ensure_starmoney_dir(dir_path: String) -> Result<bool, String> {
+  let path = std::path::Path::new(&dir_path);
+  if !path.exists() {
+    std::fs::create_dir_all(path).map_err(|e| format!("Failed to create folder: {}", e))?;
+  }
+  Ok(true)
+}
+
+#[tauri::command]
+fn scan_starmoney_dir(dir_path: String) -> Result<Vec<serde_json::Value>, String> {
+  let path = std::path::Path::new(&dir_path);
+  if !path.exists() || !path.is_dir() {
+    return Ok(Vec::new());
+  }
+
+  let mut files = Vec::new();
+  if let Ok(entries) = std::fs::read_dir(path) {
+    for entry in entries.flatten() {
+      let p = entry.path();
+      if p.is_file() {
+        if let Some(ext) = p.extension().and_then(|e| e.to_str()) {
+          let ext_lower = ext.to_lowercase();
+          if ext_lower == "csv" || ext_lower == "txt" {
+            let metadata = entry.metadata().ok();
+            let size_bytes = metadata.as_ref().map(|m| m.len()).unwrap_or(0);
+            let modified = metadata.as_ref()
+              .and_then(|m| m.modified().ok())
+              .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+              .map(|d| d.as_secs())
+              .unwrap_or(0);
+
+            let file_name = p.file_name()
+              .map(|n| n.to_string_lossy().to_string())
+              .unwrap_or_default();
+
+            files.push(serde_json::json!({
+              "name": file_name,
+              "path": p.to_string_lossy().to_string(),
+              "size_bytes": size_bytes,
+              "last_modified": modified,
+            }));
+          }
+        }
+      }
+    }
+  }
+
+  // Sort by last_modified descending (newest first)
+  files.sort_by(|a, b| {
+    let mod_b = b.get("last_modified").and_then(|v| v.as_u64()).unwrap_or(0);
+    let mod_a = a.get("last_modified").and_then(|v| v.as_u64()).unwrap_or(0);
+    mod_b.cmp(&mod_a)
+  });
+
+  Ok(files)
+}
+
+#[tauri::command]
 fn check_starmoney_csv_file(file_path: String) -> Result<serde_json::Value, String> {
   let path = std::path::Path::new(&file_path);
   if !path.exists() {
@@ -294,6 +361,9 @@ pub fn run() {
       open_local_data_folder,
       export_disaster_recovery_zip,
       pick_starmoney_csv_file,
+      pick_starmoney_watch_dir,
+      ensure_starmoney_dir,
+      scan_starmoney_dir,
       check_starmoney_csv_file,
       read_starmoney_csv_file,
       save_starmoney_sync_config,

@@ -600,7 +600,13 @@
         "starmoneyFormat": "StarMoney-Exportformat",
         "selectMethodPlaceholder": "Zahlungsmethode auswählen...",
         "importing": "Wird importiert...",
-        "import": "Importieren"
+        "import": "Importieren",
+        "detectedExportTitle": "StarMoney-Export bereit",
+        "detectedExportDesc": "Neue Banktransaktionen im Exportordner erkannt. Klicken Sie auf Importieren, um sie automatisch hinzuzufügen.",
+        "unmappedExportTitle": "Neues Bankkonto erkannt",
+        "unmappedExportDesc": "Exportdatei \"{{name}}\" gefunden. Wählen Sie aus, zu welcher Bank dies gehört:",
+        "linkAndImport": "Verknüpfen & Importieren",
+        "bindSuccess": "{{bank}} verknüpft und {{count}} Transaktion(en) importiert."
     },
     "userManagement": {
         "title": "Benutzerverwaltung",
@@ -885,7 +891,8 @@
             "user": "Benutzer",
             "business_settings": "Firmeneinstellungen",
             "choice": "Auswahlfeld"
-        }
+        },
+        "system": "System"
     },
     "errors": {
         "fieldRequired": "Dieses Feld ist erforderlich"
@@ -1394,5 +1401,24 @@
         "updateReady": "Update bereit (v{{version}}) — Neu starten",
         "updateReadyTooltip": "Klicken, um neu zu starten und Update anzuwenden",
         "installing": "Wird neu gestartet..."
+    },
+    "settings": {
+        "starmoneySyncTitle": "StarMoney Smart Bank-Sync",
+        "starmoneySyncDesc": "Erkennt StarMoney-Exporte automatisch im Zielordner und unterstützt sowohl feste Namen (sparkasse.csv) als auch zeitgestempelte Kontoexporte.",
+        "scanNow": "Ordner scannen",
+        "watchDir": "StarMoney-Exportordner",
+        "folderReady": "Ordner bereit",
+        "folderMissing": "Ordner nicht gefunden",
+        "watchDirHelp": "Wenn Sie in StarMoney auf Exportieren klicken, speichern Sie in diesen Ordner. DriveBase erkennt neue Transaktionen automatisch.",
+        "watchDirUpdated": "Exportordner aktualisiert und verifiziert.",
+        "savedSuccessfully": "Einstellungen erfolgreich gespeichert!",
+        "bankMappingsTitle": "Bankkonto-Zuordnungen & Muster",
+        "bankMappingsDesc": "Verknüpfen Sie jede Zahlungsmethode mit Kontonummern oder Dateinamenmustern (z. B. \"sparkasse, 1076843790\").",
+        "addBankMapping": "+ Weitere Bank hinzufügen",
+        "paymentMethod": "Zahlungsmethode",
+        "accountPatterns": "Konto-ID / Dateinamen-Muster",
+        "detectedFile": "Ordnerstatus",
+        "noMappings": "Keine Bankzuordnungen konfiguriert.",
+        "noFileFound": "Kein Export im Ordner"
     }
 }

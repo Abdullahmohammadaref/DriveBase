@@ -31,13 +31,19 @@ def get_users_for_filter(request):
     
     # Get all users that have activity logs for this business
     user_ids = ActivityLog.objects.filter(business=business).values_list('user_id', flat=True).distinct()
-    users = User.objects.filter(id__in=user_ids, business=business)
+    has_system_logs = None in user_ids
+    valid_user_ids = [uid for uid in user_ids if uid is not None]
+    users = User.objects.filter(id__in=valid_user_ids, business=business)
     
+    user_list = [
+        {"id": u.id, "name": u.username}
+        for u in users
+    ]
+    if has_system_logs:
+        user_list.insert(0, {"id": "system", "name": "System"})
+
     return {
-        "users": [
-            {"id": u.id, "name": u.username}
-            for u in users
-        ]
+        "users": user_list
     }
 
 
@@ -64,6 +70,7 @@ def get_recent_activity_logs(request):
             {
                 "id": log.id,
                 "user_name": log.user.username if log.user else "System",
+                "is_system": log.user is None,
                 "action": log.action,
                 "action_display": str(dict(ActivityLog.ACTION_CHOICES).get(log.action, log.action)),
                 "entity_type": log.entity_type,
@@ -84,7 +91,7 @@ def list_activity_logs(
     per_page: int = 20,
     action: Optional[str] = None,
     entity_type: Optional[str] = None,
-    user_id: Optional[int] = None,
+    user_id: Optional[str] = None,
     sort: str = "timestamp",
     order: str = "desc",
 ):
@@ -106,7 +113,13 @@ def list_activity_logs(
         qs = qs.filter(entity_type=entity_type)
     
     if user_id:
-        qs = qs.filter(user_id=user_id)
+        if str(user_id).lower() in ["system", "none", "null"]:
+            qs = qs.filter(user__isnull=True)
+        else:
+            try:
+                qs = qs.filter(user_id=int(user_id))
+            except (ValueError, TypeError):
+                pass
     
     # Apply sorting
     sort_field = sort if sort in ["timestamp", "action", "entity_type", "user__username"] else "timestamp"
@@ -128,6 +141,7 @@ def list_activity_logs(
                 "id": log.id,
                 "user_name": log.user.username if log.user else "System",
                 "user_id": log.user.id if log.user else None,
+                "is_system": log.user is None,
                 "action": log.action,
                 "action_display": str(dict(ActivityLog.ACTION_CHOICES).get(log.action, log.action)),
                 "entity_type": log.entity_type,

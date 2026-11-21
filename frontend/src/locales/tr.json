@@ -152,7 +152,13 @@
         "starmoneyFormat": "StarMoney dışa aktarma biçimi",
         "selectMethodPlaceholder": "Ödeme yöntemi seçin...",
         "importing": "İçe aktarılıyor...",
-        "import": "İçe Aktar"
+        "import": "İçe Aktar",
+        "detectedExportTitle": "StarMoney Dışa Aktarımı Hazır",
+        "detectedExportDesc": "Dışa aktarma klasöründe yeni banka işlemleri algılandı. Otomatik olarak eklemek için İçe Aktar'a tıklayın.",
+        "unmappedExportTitle": "Yeni Banka Hesabı Algılandı",
+        "unmappedExportDesc": "\"{{name}}\" dışa aktarma dosyası bulundu. Bunun hangi bankaya ait olduğunu seçin:",
+        "linkAndImport": "Bağla ve İçe Aktar",
+        "bindSuccess": "{{bank}} bağlandı ve {{count}} işlem içe aktarıldı."
     },
     "userManagement": {
         "title": "Kullanıcı Yönetimi",
@@ -276,5 +282,27 @@
         "browse": "Göz At...",
         "lastSyncedAt": "Son senkronizasyon:",
         "addAnotherBank": "Başka Banka Hesabı Ekle"
+    },
+    "settings": {
+        "starmoneySyncTitle": "StarMoney Akıllı Banka Eşitleme",
+        "starmoneySyncDesc": "Belirlediğiniz klasördeki StarMoney dışa aktarımlarını otomatik olarak algılar; hem sabit adları (sparkasse.csv) hem de zaman damgalı hesap dışa aktarımlarını destekler.",
+        "scanNow": "Klasörü Tara",
+        "watchDir": "StarMoney Dışa Aktarma Klasörü",
+        "folderReady": "Klasör Hazır",
+        "folderMissing": "Klasör Eksik",
+        "watchDirHelp": "StarMoney'de Dışa Aktar'a tıkladığınızda bu klasöre kaydedin. DriveBase yeni işlemleri otomatik olarak algılar.",
+        "watchDirUpdated": "Dışa aktarma klasörü güncellendi ve doğrulandı.",
+        "savedSuccessfully": "Ayarlar başarıyla kaydedildi!",
+        "bankMappingsTitle": "Banka Hesabı Eşlemeleri ve Desenleri",
+        "bankMappingsDesc": "Her ödeme yöntemini hesap numaraları veya dosya adı kalıplarıyla bağlayın (örn. \"sparkasse, 1076843790\").",
+        "addBankMapping": "+ Başka Bir Banka Ekle",
+        "paymentMethod": "Ödeme Yöntemi",
+        "accountPatterns": "Hesap Kimliği / Dosya Adı Kalıpları",
+        "detectedFile": "Klasör Durumu",
+        "noMappings": "Yapılandırılmış banka eşlemesi yok.",
+        "noFileFound": "Klasörde dışa aktarım yok"
+    },
+    "activityLogs": {
+        "system": "Sistem"
     }
 }
