@@ -139,9 +139,9 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        // Handle unauthorized - redirect to login
+        // Handle unauthorized - redirect to login (skip if already on any login screen)
         if (error.response?.status === 401) {
-            if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+            if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
                 window.location.href = "/login"
             }
         }

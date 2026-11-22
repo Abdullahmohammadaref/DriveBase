@@ -225,7 +225,19 @@ export default function App() {
   return (
     <DesktopErrorBoundary>
       <DesktopWindowGuard />
-      <PersistQueryClientProvider client={queryClient} persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 * 7 }}>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{
+          persister,
+          maxAge: 1000 * 60 * 60 * 24 * 7,
+          dehydrateOptions: {
+            shouldDehydrateQuery: (query) => {
+              if (query.queryKey[0] === "auth") return false
+              return query.state.status === "success"
+            },
+          },
+        }}
+      >
         <BrowserRouter>
           <ScrollToTop />
           <AuthProvider>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
 
 export type AuthActionType = "employee_login" | "manager_login" | "password_reset" | "verify_email" | "confirm_email" | "password_change" | "email_change_verify_old" | "email_change_verify_new" | "backup_email_verify_official" | "backup_email_verify_new" | "register_verify_email" | "register_verify_backup" | "admin_activate"
@@ -49,6 +50,7 @@ interface UseAuthPollingReturn {
  * ```
  */
 export function useAuthPolling(options: UseAuthPollingOptions = {}): UseAuthPollingReturn {
+    const queryClient = useQueryClient()
     const {
         onApproved,
         onWaitingForNewEmail,
@@ -114,15 +116,33 @@ export function useAuthPolling(options: UseAuthPollingOptions = {}): UseAuthPoll
                         try {
                             const meResponse = await api.get("/auth/me")
                             if (meResponse.data.authenticated && meResponse.data.user) {
+                                queryClient.setQueryData(["auth", "me"], meResponse.data)
                                 const slug = meResponse.data.user.business_slug
                                 // CRITICAL: Use window.location.href for HARD RELOAD
                                 // This ensures the browser picks up the new session cookie
                                 window.location.href = `/${slug}/dashboard`
+                            } else {
+                                console.warn("[useAuthPolling] meResponse not authenticated after approval, retrying in 500ms:", meResponse.data)
+                                setTimeout(async () => {
+                                    try {
+                                        const retry = await api.get("/auth/me")
+                                        if (retry.data.authenticated && retry.data.user) {
+                                            queryClient.setQueryData(["auth", "me"], retry.data)
+                                            const slug = retry.data.user.business_slug
+                                            window.location.href = `/${slug}/dashboard`
+                                        } else {
+                                            window.location.href = "/login"
+                                        }
+                                    } catch {
+                                        window.location.href = "/login"
+                                    }
+                                }, 500)
                             }
-                        } catch {
+                        } catch (err) {
+                            console.error("[useAuthPolling] Error fetching /auth/me after approval:", err)
                             window.location.href = "/login"
                         }
-                    }, 1000)
+                    }, 500)
                 }
             } else if (response.status === 202) {
                 const data = response.data
@@ -216,6 +236,9 @@ export function useAuthPolling(options: UseAuthPollingOptions = {}): UseAuthPoll
     const startPolling = useCallback((requestId: string) => {
         // Stop any existing polling
         stopPolling()
+
+        // Clear any previous unauthenticated cache to prevent reload race conditions
+        queryClient.removeQueries({ queryKey: ["auth", "me"] })
 
         // Reset state
         requestIdRef.current = requestId

@@ -3,14 +3,28 @@ import type { Persister, PersistedClient } from "@tanstack/react-query-persist-c
 
 /**
  * Creates an IndexedDB-backed persister for TanStack Query.
- * Stores the entire query cache on the local machine's disk so that
+ * Stores business and catalog queries on the local machine's disk so that
  * when DriveBase starts, queries resolve in <10ms directly from SSD
  * before silently revalidating in the background.
+ *
+ * CRITICAL: Auth queries (queryKey starting with 'auth') are NEVER persisted
+ * to prevent stale unauthenticated state loops across app reloads.
  */
-export function createIDBPersister(idbKey = "drivebase-cache-v1"): Persister {
+export function createIDBPersister(idbKey = "drivebase-cache-v2"): Persister {
+    // Clean up legacy v1 cache if present in user storage
+    if (typeof window !== "undefined") {
+        del("drivebase-cache-v1").catch(() => {})
+    }
+
     return {
         persistClient: async (persistClient: PersistedClient) => {
             try {
+                // Ensure auth queries are strictly stripped from disk storage
+                if (persistClient?.clientState?.queries) {
+                    persistClient.clientState.queries = persistClient.clientState.queries.filter(
+                        (q: any) => q.queryKey?.[0] !== "auth"
+                    )
+                }
                 await set(idbKey, persistClient)
             } catch (error) {
                 console.warn("[DriveBase Cache] Failed to write cache to IndexedDB:", error)
@@ -18,7 +32,14 @@ export function createIDBPersister(idbKey = "drivebase-cache-v1"): Persister {
         },
         restoreClient: async (): Promise<PersistedClient | undefined> => {
             try {
-                return await get<PersistedClient>(idbKey)
+                const client = await get<PersistedClient>(idbKey)
+                if (client?.clientState?.queries) {
+                    // Strip out any auth queries that may have been previously cached
+                    client.clientState.queries = client.clientState.queries.filter(
+                        (q: any) => q.queryKey?.[0] !== "auth"
+                    )
+                }
+                return client
             } catch (error) {
                 console.warn("[DriveBase Cache] Failed to restore cache from IndexedDB:", error)
                 return undefined

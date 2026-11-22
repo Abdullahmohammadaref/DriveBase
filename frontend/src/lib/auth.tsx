@@ -83,7 +83,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return response.data
         },
         retry: false,
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        staleTime: (query) => (query.state.data?.authenticated ? 2 * 60 * 1000 : 0),
+        gcTime: 5 * 60 * 1000,
     })
 
     // Logout mutation
