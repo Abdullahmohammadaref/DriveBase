@@ -11,6 +11,7 @@ import {
   Save,
   FileCheck2,
   Sparkles,
+  Zap,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTransactionChoices } from "@/hooks/useTransactions"
@@ -18,6 +19,7 @@ import {
   useStarMoneySync,
   DEFAULT_STARMONEY_WATCH_DIR,
   type StarMoneyBankMapping,
+  type UnmappedExport,
 } from "@/hooks/useStarMoneySync"
 import {
   isTauri,
@@ -31,15 +33,18 @@ export default function StarMoneySyncSettingsCard() {
   const {
     watchDir,
     mappings,
+    unmappedExports,
     isScanning,
     isSyncing,
     lastSyncSummary,
     saveConfig,
     scanDirectory,
+    bindNewAccount,
   } = useStarMoneySync()
 
   const [localDir, setLocalDir] = useState<string>(DEFAULT_STARMONEY_WATCH_DIR)
   const [localMappings, setLocalMappings] = useState<StarMoneyBankMapping[]>([])
+  const [selectedUnmappedMethod, setSelectedUnmappedMethod] = useState<string>("")
   const [dirExists, setDirExists] = useState<boolean>(true)
   const [feedback, setFeedback] = useState<{
     type: "success" | "error"
@@ -47,6 +52,38 @@ export default function StarMoneySyncSettingsCard() {
   } | null>(null)
 
   const paymentMethods = choices?.method_choices || []
+
+  // Auto-select payment method if unmapped export filename matches known bank name
+  const currentUnmapped = unmappedExports[0]
+  useEffect(() => {
+    if (!currentUnmapped || !paymentMethods.length) return
+    const fileName = currentUnmapped.file.name.toLowerCase()
+    const autoMatch = paymentMethods.find((pm) => {
+      const pmLabel = pm.label.toLowerCase()
+      return fileName.includes(pmLabel)
+    })
+    if (autoMatch) {
+      setSelectedUnmappedMethod(autoMatch.value)
+    } else if (!selectedUnmappedMethod) {
+      setSelectedUnmappedMethod(paymentMethods[0].value)
+    }
+  }, [currentUnmapped?.file.name, paymentMethods])
+
+  const handleLinkFromSettings = async (unmapped: UnmappedExport) => {
+    const methodVal = selectedUnmappedMethod || (paymentMethods[0]?.value ?? "")
+    if (!methodVal) return
+    const found = paymentMethods.find((m) => m.value === methodVal)
+    const pmId = parseInt(methodVal)
+    const pmName = found ? found.label : "Bank"
+
+    await bindNewAccount(unmapped.suggestedAccount, pmId, pmName)
+    setSelectedUnmappedMethod("")
+    setFeedback({
+      type: "success",
+      message: t("settings.linkedBankSuccess", `Linked ${unmapped.suggestedAccount} to ${pmName}.`),
+    })
+    setTimeout(() => setFeedback(null), 3000)
+  }
 
   // Initialize local state when hook data loads
   useEffect(() => {
@@ -281,6 +318,53 @@ export default function StarMoneySyncSettingsCard() {
               <AlertCircle className="h-4 w-4 shrink-0" />
             )}
             <span>{feedback.message}</span>
+          </div>
+        )}
+
+        {/* Unmapped Bank Account Detected */}
+        {unmappedExports.length > 0 && (
+          <div className="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-xs animate-in slide-in-from-top-1">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="h-8 w-8 rounded-full bg-amber-100 dark:bg-amber-900/60 flex items-center justify-center text-amber-700 dark:text-amber-300 shrink-0">
+                <AlertCircle className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-amber-900 dark:text-amber-100 flex items-center gap-1.5">
+                  <span>{t("transactions.unmappedExportTitle", "New Bank Account Detected")}</span>
+                  {unmappedExports.length > 1 && (
+                    <span className="text-[10px] font-normal px-1.5 py-0.2 rounded bg-amber-200/60 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200">
+                      (1 of {unmappedExports.length})
+                    </span>
+                  )}
+                </div>
+                <div className="text-[11px] text-amber-700 dark:text-amber-300">
+                  {t("transactions.unmappedExportDesc", "Found export file '{{name}}'. Select which bank this belongs to:", {
+                    name: unmappedExports[0].file.name,
+                  })}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <select
+                value={selectedUnmappedMethod || (paymentMethods[0]?.value ?? "")}
+                onChange={(e) => setSelectedUnmappedMethod(e.target.value)}
+                className="h-8 px-2.5 text-xs bg-background border border-border rounded-md text-foreground font-medium shadow-xs"
+              >
+                {paymentMethods.map((pm) => (
+                  <option key={pm.value} value={pm.value}>
+                    {pm.label}
+                  </option>
+                ))}
+              </select>
+              <Button
+                size="sm"
+                className="h-8 px-3 text-xs bg-amber-600 hover:bg-amber-700 text-white font-medium cursor-pointer shadow-xs gap-1"
+                onClick={() => handleLinkFromSettings(unmappedExports[0])}
+              >
+                <Zap className="h-3.5 w-3.5" />
+                {t("settings.linkAndAddMapping", "Link & Add Bank")}
+              </Button>
+            </div>
           </div>
         )}
 

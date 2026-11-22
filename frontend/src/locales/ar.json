@@ -303,6 +303,8 @@
         "noMappings": "لا توجد تعيينات بنكية تم تكوينها.",
         "noMappingsTitle": "لم يتم ربط أي حسابات بنكية بعد",
         "noMappingsDesc": "عند تصدير ملف من StarMoney إلى المجلد الخاص بك، سيسألك DriveBase تلقائيًا في صفحة المعاملات عن البنك الذي ينتمي إليه ويتذكره.",
+        "linkAndAddMapping": "ربط وإضافة البنك",
+        "linkedBankSuccess": "تم ربط {{account}} بـ {{bank}}.",
         "noFileFound": "لا يوجد ملف تصدير في المجلد"
     },
     "activityLogs": {

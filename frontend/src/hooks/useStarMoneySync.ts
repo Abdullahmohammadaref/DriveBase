@@ -74,10 +74,14 @@ export function useStarMoneySync() {
   const [lastSyncResults, setLastSyncResults] = useState<SyncResult[]>([])
 
   const isSyncingRef = useRef(false)
+  const watchDirRef = useRef(watchDir)
+  watchDirRef.current = watchDir
+  const mappingsRef = useRef(mappings)
+  mappingsRef.current = mappings
 
   // 1. Load config from desktop storage
   const loadConfig = useCallback(async (): Promise<StarMoneySyncConfig> => {
-    if (!isTauri() || !user) {
+    if (!isTauri()) {
       setIsLoadingConfig(false)
       return { watch_dir: DEFAULT_STARMONEY_WATCH_DIR, mappings: [] }
     }
@@ -140,7 +144,7 @@ export function useStarMoneySync() {
       setIsLoadingConfig(false)
       return { watch_dir: DEFAULT_STARMONEY_WATCH_DIR, mappings: [] }
     }
-  }, [user])
+  }, [])
 
   // 2. Save entire config
   const saveConfig = useCallback(
@@ -162,20 +166,24 @@ export function useStarMoneySync() {
   // 3. Scan directory and match files with mappings
   const scanDirectory = useCallback(
     async (
-      dir: string = watchDir,
-      currentMappings: StarMoneyBankMapping[] = mappings
+      dir?: string,
+      currentMappings?: StarMoneyBankMapping[]
     ) => {
-      if (!isTauri() || !dir) return
+      if (!isTauri()) return
+      const targetDir = dir || watchDirRef.current
+      const targetMappings = currentMappings || mappingsRef.current
+      if (!targetDir) return
+
       setIsScanning(true)
       try {
-        const files: ScannedExportFile[] = await scanStarMoneyDir(dir)
+        const files: ScannedExportFile[] = await scanStarMoneyDir(targetDir)
         setScannedFiles(files)
 
         const matchedFilePaths = new Set<string>()
         const detected: DetectedExport[] = []
 
         // For each mapped bank, find the newest matching file in the directory
-        const updatedMappings = currentMappings.map((m) => {
+        const updatedMappings = targetMappings.map((m) => {
           const patternList = (m.patterns || "")
             .split(/[,;\s]+/)
             .map((p) => p.trim().toLowerCase())
@@ -232,7 +240,7 @@ export function useStarMoneySync() {
         setIsScanning(false)
       }
     },
-    [watchDir, mappings]
+    []
   )
 
   // Initial load
@@ -240,7 +248,26 @@ export function useStarMoneySync() {
     void loadConfig().then((cfg) => {
       void scanDirectory(cfg.watch_dir, cfg.mappings)
     })
-  }, [loadConfig])
+  }, [loadConfig, scanDirectory])
+
+  // Real-time automatic polling: check folder every 3 seconds while app is open
+  useEffect(() => {
+    if (!isTauri()) return
+    const timer = setInterval(() => {
+      void scanDirectory()
+    }, 3000)
+    return () => clearInterval(timer)
+  }, [scanDirectory])
+
+  // Window focus listener: immediately re-scan whenever user returns to DriveBase
+  useEffect(() => {
+    if (!isTauri()) return
+    const onFocus = () => {
+      void scanDirectory()
+    }
+    window.addEventListener("focus", onFocus)
+    return () => window.removeEventListener("focus", onFocus)
+  }, [scanDirectory])
 
   // 4. Synchronize a specific export file
   const syncExport = useCallback(

@@ -303,6 +303,8 @@
         "noMappings": "Yapılandırılmış banka eşlemesi yok.",
         "noMappingsTitle": "Henüz Bağlı Banka Hesabı Yok",
         "noMappingsDesc": "StarMoney'den klasörünüze bir dosya aktardığınızda, DriveBase İşlemler sayfasında otomatik olarak hangi bankaya ait olduğunu soracak ve bunu hatırlayacaktır.",
+        "linkAndAddMapping": "Bağla ve Banka Ekle",
+        "linkedBankSuccess": "{{account}} hesabı {{bank}} ile eşlendi.",
         "noFileFound": "Klasörde dışa aktarım yok"
     },
     "activityLogs": {

@@ -1422,6 +1422,8 @@
         "noMappings": "No bank mappings configured.",
         "noMappingsTitle": "No Bank Accounts Linked Yet",
         "noMappingsDesc": "When you export a file from StarMoney to your folder, DriveBase will automatically ask you which bank it belongs to on the Transactions page and remember it.",
+        "linkAndAddMapping": "Link & Add Bank",
+        "linkedBankSuccess": "Linked {{account}} to {{bank}}.",
         "noFileFound": "No export in folder"
     }
 }
