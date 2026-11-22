@@ -1026,30 +1026,36 @@ def import_transactions_csv(
             except UnicodeDecodeError:
                 csv_text = file_content.decode('cp1252')
     except Exception:
-        return 400, ErrorResponse(message="Please upload a valid CSV file (UTF-8 or ANSI/CP1252 encoded).")
+        return 400, ErrorResponse(detail="Please upload a valid CSV file (UTF-8 or ANSI/CP1252 encoded).")
     
     # Parse CSV with pandas (semicolon delimiter)
     try:
         data_table = pandas.read_csv(io.StringIO(csv_text), sep=';', dtype=str)
         data_table = data_table.reset_index(drop=True)
     except Exception as e:
-        return 400, ErrorResponse(message=f"Failed to parse CSV: {str(e)}")
+        return 400, ErrorResponse(detail=f"Failed to parse CSV: {str(e)}")
     
-    # Map expected German column names
-    column_mapping = {
-        'Buchungstag': 'date',
-        'Begünstigter/Absender - Name': 'from_or_to',
-        'Betrag': 'amount',
-        'Betrag - Währung': 'currency',
-        'Verwendungszweckzeile 1': 'description',
-    }
-    
-    # Validate required columns exist
-    missing_columns = [col for col in column_mapping.keys() if col not in data_table.columns]
-    if missing_columns:
+    # Dynamic column mapping to support all StarMoney formats (Standard Umsätze & Giro Individual / CAMT)
+    cols = {str(c).strip(): c for c in data_table.columns}
+
+    # 1. Date column
+    date_col = next((c for c in ['Buchungstag', 'Buchungsdatum', 'Valutadatum', 'Wertstellungsdatum', 'Datum'] if c in cols), None)
+
+    # 2. Amount column
+    amount_col = next((c for c in ['Betrag', 'Betrag (EUR)', 'Umsatz'] if c in cols), None)
+
+    # 3. Currency column
+    currency_col = next((c for c in ['Betrag - Währung', 'Währungbetrag', 'Währung', 'Currency'] if c in cols), None)
+
+    # 4. Counterparty column
+    from_or_to_col = next((c for c in ['Begünstigter/Absender - Name', 'Name', 'Payee', 'Remitter', 'Begünstigter', 'Absender'] if c in cols), None)
+
+    # 5. Description column
+    desc_col = next((c for c in ['Verwendungszweckzeile 1', 'Verwendungszweck', 'Buchungstext', 'Vorgang'] if c in cols), None)
+
+    if not date_col or not amount_col:
         return 400, ErrorResponse(
-            message=f"CSV file is invalid. Missing columns: {', '.join(missing_columns)}. "
-                    f"Expected StarMoney format with columns: {', '.join(column_mapping.keys())}"
+            detail=f"CSV file is missing essential transaction columns. Found columns: {', '.join(data_table.columns[:10])}. Expected at least Date ('Buchungstag' or 'Buchungsdatum') and Amount ('Betrag')."
         )
     
     # =========================================================================
@@ -1082,33 +1088,47 @@ def import_transactions_csv(
     # =========================================================================
     
     def parse_german_amount(amount_str: str) -> Decimal:
-        """Parse German currency format to Decimal."""
+        """Parse German / StarMoney currency format to Decimal."""
         if not amount_str or pandas.isna(amount_str):
             return Decimal('0')
         try:
-            amount_str = str(amount_str).strip()
-            is_negative = amount_str.startswith('-') or amount_str.startswith('–')
-            amount_str = amount_str.lstrip('-–')
-            amount_str = amount_str.replace('.', '')  # Remove thousand separator
-            amount_str = amount_str.replace(',', '.')  # Convert decimal separator
-            result = Decimal(amount_str)
+            s = str(amount_str).strip().strip('\'"')
+            is_negative = s.startswith('-') or s.startswith('–') or s.startswith('—')
+            s = s.lstrip('-–— ')
+            s = s.replace('€', '').replace('EUR', '').replace('$', '').strip()
+            if s.startswith('-') or s.startswith('–') or s.startswith('—'):
+                is_negative = True
+                s = s.lstrip('-–— ')
+            if '.' in s and ',' in s:
+                s = s.replace('.', '').replace(',', '.')
+            elif ',' in s:
+                s = s.replace(',', '.')
+            result = Decimal(s)
             return -result if is_negative else result
         except (InvalidOperation, ValueError):
             return Decimal('0')
     
     def parse_german_date(date_str: str) -> str:
-        """Parse German date format to ISO format."""
+        """Parse date format (YYYY-MM-DD or DD.MM.YYYY or DD/MM/YYYY) to ISO format."""
         if not date_str or pandas.isna(date_str):
             return None
         try:
-            date_str = str(date_str).strip()
-            parts = date_str.split('.')
-            if len(parts) != 3:
-                return None
-            day, month, year = parts
-            if len(year) == 2:
-                year = '20' + year if int(year) < 50 else '19' + year
-            return f"{year}-{int(month):02d}-{int(day):02d}"
+            s = str(date_str).strip().strip('\'"')
+            if '-' in s:
+                parts = s.split('-')
+                if len(parts) == 3:
+                    return f"{int(parts[0]):04d}-{int(parts[1]):02d}-{int(parts[2]):02d}"
+            if '.' in s:
+                parts = s.split('.')
+                if len(parts) == 3:
+                    year = '20' + parts[2] if len(parts[2]) == 2 and int(parts[2]) < 50 else parts[2]
+                    return f"{int(year):04d}-{int(parts[1]):02d}-{int(parts[0]):02d}"
+            if '/' in s:
+                parts = s.split('/')
+                if len(parts) == 3:
+                    year = '20' + parts[2] if len(parts[2]) == 2 and int(parts[2]) < 50 else parts[2]
+                    return f"{int(year):04d}-{int(parts[1]):02d}-{int(parts[0]):02d}"
+            return None
         except (ValueError, IndexError):
             return None
     
@@ -1160,12 +1180,31 @@ def import_transactions_csv(
     
     for index, row in data_table.iterrows():
         try:
-            # Extract values
-            date_str = row.get('Buchungstag', '')
-            from_or_to = row.get('Begünstigter/Absender - Name', '')
-            amount_str = row.get('Betrag', '')
-            currency_code = row.get('Betrag - Währung', 'EUR')
-            description = row.get('Verwendungszweckzeile 1', '')
+            # Extract values dynamically from resolved columns
+            date_str = row.get(date_col, '') if date_col else ''
+            
+            # Counterparty: try resolved column or common fallbacks
+            from_or_to = ''
+            if from_or_to_col and row.get(from_or_to_col):
+                from_or_to = row.get(from_or_to_col)
+            elif row.get('Name'):
+                from_or_to = row.get('Name')
+            elif row.get('Payee'):
+                from_or_to = row.get('Payee')
+            elif row.get('Remitter'):
+                from_or_to = row.get('Remitter')
+            
+            amount_str = row.get(amount_col, '') if amount_col else ''
+            currency_code = (row.get(currency_col) if currency_col else None) or 'EUR'
+            
+            # Description / Purpose: try resolved column or common fallbacks
+            description = ''
+            if desc_col and row.get(desc_col):
+                description = row.get(desc_col)
+            elif row.get('Verwendungszweck'):
+                description = row.get('Verwendungszweck')
+            elif row.get('Buchungstext'):
+                description = row.get('Buchungstext')
             
             # Parse values
             parsed_date = parse_german_date(date_str)
@@ -1271,7 +1310,7 @@ def import_transactions_csv(
                     
     except Exception as e:
         print(f"[IMPORT ERROR] Bulk operation failed: {str(e)}")
-        return 400, ErrorResponse(message=f"Failed to save transactions: {str(e)}")
+        return 400, ErrorResponse(detail=f"Failed to save transactions: {str(e)}")
     
     # Build result message
     parts = []
