@@ -603,6 +603,7 @@
         "import": "Importieren",
         "detectedExportTitle": "StarMoney-Export bereit",
         "detectedExportDesc": "Neue Banktransaktionen im Exportordner erkannt. Klicken Sie auf Importieren, um sie automatisch hinzuzufügen.",
+        "autoSyncing": "StarMoney-Banktransaktionen werden im Hintergrund importiert...",
         "unmappedExportTitle": "Neues Bankkonto erkannt",
         "unmappedExportDesc": "Exportdatei \"{{name}}\" gefunden. Wählen Sie aus, zu welcher Bank dies gehört:",
         "linkAndImport": "Verknüpfen & Importieren",
@@ -1424,6 +1425,8 @@
         "noMappingsDesc": "Wenn Sie eine Datei aus StarMoney in Ihren Ordner exportieren, fragt DriveBase auf der Transaktionsseite automatisch, zu welcher Bank sie gehört, und merkt sich dies.",
         "linkAndAddMapping": "Verknüpfen & Bank hinzufügen",
         "linkedBankSuccess": "{{account}} mit {{bank}} verknüpft.",
+        "autoImportTitle": "Automatische Hintergrund-Synchronisation (Zero-Click)",
+        "autoImportHelp": "Importiert neu erkannte Bank-Exportdateien automatisch in das Hauptbuch. Bei Deaktivierung zeigt DriveBase stattdessen eine Ein-Klick-Schaltfläche.",
         "noFileFound": "Kein Export im Ordner"
     }
 }

@@ -73,7 +73,9 @@ export function TransactionsPage() {
         mappings: starMoneyMappings,
         detectedExports,
         unmappedExports,
+        autoImport,
         isSyncing: isSyncingStarMoney,
+        lastSyncSummary,
         syncExport,
         syncAllDetected,
         bindNewAccount,
@@ -98,6 +100,16 @@ export function TransactionsPage() {
             setSelectedUnmappedMethod(paymentMethods[0].value)
         }
     }, [currentUnmapped?.file.name, paymentMethods])
+
+    // Surface auto-sync summary toast when background sync completes
+    useEffect(() => {
+        if (!lastSyncSummary) return
+        if (lastSyncSummary.includes("Imported") || lastSyncSummary.includes("transaction")) {
+            setSuccessMessage(lastSyncSummary)
+            const tId = setTimeout(() => setSuccessMessage(null), 6000)
+            return () => clearTimeout(tId)
+        }
+    }, [lastSyncSummary])
 
     const handleSyncStarMoney = async () => {
         const results = await syncAllDetected(true)
@@ -437,8 +449,30 @@ export function TransactionsPage() {
                 </div>
             )}
 
-            {/* StarMoney Auto-Detection Banner (Desktop Only) */}
-            {isDesktop && detectedExports.some((d) => d.isNew) && (
+            {/* StarMoney Auto-Importing State Banner (Desktop Only) */}
+            {isDesktop && isSyncingStarMoney && (
+                <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 flex items-center justify-between gap-3 shadow-xs animate-in slide-in-from-top-1">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        </div>
+                        <div className="min-w-0">
+                            <div className="text-xs font-semibold text-foreground">
+                                {t("transactions.autoSyncing", "Importing StarMoney bank transactions in background...")}
+                            </div>
+                            <div className="text-[11px] text-muted-foreground truncate">
+                                {detectedExports
+                                    .filter((d) => d.isNew)
+                                    .map((d) => `${d.mapping.payment_method_name} (${d.file.name})`)
+                                    .join(" • ")}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* StarMoney Manual Import Prompt (Shown ONLY when Auto-Import is disabled) */}
+            {isDesktop && !autoImport && !isSyncingStarMoney && detectedExports.some((d) => d.isNew) && (
                 <div className="rounded-lg border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 p-3 flex flex-wrap items-center justify-between gap-3 shadow-xs animate-in slide-in-from-top-1">
                     <div className="flex items-center gap-2.5 min-w-0">
                         <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/60 flex items-center justify-center text-emerald-700 dark:text-emerald-300 shrink-0">

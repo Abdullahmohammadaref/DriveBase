@@ -603,6 +603,7 @@
         "import": "Import",
         "detectedExportTitle": "StarMoney Export Ready",
         "detectedExportDesc": "New bank transactions detected in export folder. Click Import to add them automatically.",
+        "autoSyncing": "Importing StarMoney bank transactions in background...",
         "unmappedExportTitle": "New Bank Account Detected",
         "unmappedExportDesc": "Found export file \"{{name}}\". Select which bank this belongs to:",
         "linkAndImport": "Link & Import",
@@ -1424,6 +1425,8 @@
         "noMappingsDesc": "When you export a file from StarMoney to your folder, DriveBase will automatically ask you which bank it belongs to on the Transactions page and remember it.",
         "linkAndAddMapping": "Link & Add Bank",
         "linkedBankSuccess": "Linked {{account}} to {{bank}}.",
+        "autoImportTitle": "Automatic Background Import (Zero-Click)",
+        "autoImportHelp": "Automatically imports newly detected bank export files into the ledger without asking. When disabled, DriveBase shows a one-click import button instead.",
         "noFileFound": "No export in folder"
     }
 }

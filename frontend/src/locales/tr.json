@@ -155,6 +155,7 @@
         "import": "İçe Aktar",
         "detectedExportTitle": "StarMoney Dışa Aktarımı Hazır",
         "detectedExportDesc": "Dışa aktarma klasöründe yeni banka işlemleri algılandı. Otomatik olarak eklemek için İçe Aktar'a tıklayın.",
+        "autoSyncing": "StarMoney banka işlemleri arka planda içe aktarılıyor...",
         "unmappedExportTitle": "Yeni Banka Hesabı Algılandı",
         "unmappedExportDesc": "\"{{name}}\" dışa aktarma dosyası bulundu. Bunun hangi bankaya ait olduğunu seçin:",
         "linkAndImport": "Bağla ve İçe Aktar",
@@ -305,6 +306,8 @@
         "noMappingsDesc": "StarMoney'den klasörünüze bir dosya aktardığınızda, DriveBase İşlemler sayfasında otomatik olarak hangi bankaya ait olduğunu soracak ve bunu hatırlayacaktır.",
         "linkAndAddMapping": "Bağla ve Banka Ekle",
         "linkedBankSuccess": "{{account}} hesabı {{bank}} ile eşlendi.",
+        "autoImportTitle": "Otomatik Arka Plan İçe Aktarma (Tek Tıksız)",
+        "autoImportHelp": "Algılanan yeni banka dışa aktarma dosyalarını sormadan doğrudan deftere aktarır. Devre dışı bırakıldığında tek tıklamalı içe aktarma düğmesi gösterilir.",
         "noFileFound": "Klasörde dışa aktarım yok"
     },
     "activityLogs": {

@@ -34,6 +34,8 @@ export default function StarMoneySyncSettingsCard() {
     watchDir,
     mappings,
     unmappedExports,
+    autoImport,
+    setAutoImport,
     isScanning,
     isSyncing,
     lastSyncSummary,
@@ -112,6 +114,7 @@ export default function StarMoneySyncSettingsCard() {
         await saveConfig({
           watch_dir: picked,
           mappings: localMappings,
+          auto_import: autoImport,
         })
         setFeedback({
           type: "success",
@@ -140,18 +143,18 @@ export default function StarMoneySyncSettingsCard() {
     }
     const updated = [...localMappings, newEntry]
     setLocalMappings(updated)
-    void saveConfig({ watch_dir: localDir, mappings: updated })
+    void saveConfig({ watch_dir: localDir, mappings: updated, auto_import: autoImport })
   }
 
   const handleClearAll = () => {
     setLocalMappings([])
-    void saveConfig({ watch_dir: localDir, mappings: [] })
+    void saveConfig({ watch_dir: localDir, mappings: [], auto_import: autoImport })
   }
 
   const handleRemoveRow = (id: string) => {
     const updated = localMappings.filter((m) => m.id !== id)
     setLocalMappings(updated)
-    void saveConfig({ watch_dir: localDir, mappings: updated })
+    void saveConfig({ watch_dir: localDir, mappings: updated, auto_import: autoImport })
   }
 
   const handleMethodChange = (id: string, methodVal: string) => {
@@ -168,7 +171,7 @@ export default function StarMoneySyncSettingsCard() {
         : m
     )
     setLocalMappings(updated)
-    void saveConfig({ watch_dir: localDir, mappings: updated })
+    void saveConfig({ watch_dir: localDir, mappings: updated, auto_import: autoImport })
   }
 
   const handlePatternsChange = (id: string, newPatterns: string) => {
@@ -182,13 +185,14 @@ export default function StarMoneySyncSettingsCard() {
     const updated = localMappings.map((m) =>
       m.id === id ? { ...m, patterns: newPatterns } : m
     )
-    void saveConfig({ watch_dir: localDir, mappings: updated })
+    void saveConfig({ watch_dir: localDir, mappings: updated, auto_import: autoImport })
   }
 
   const handleManualSave = async () => {
     await saveConfig({
       watch_dir: localDir,
       mappings: localMappings,
+      auto_import: autoImport,
     })
     setFeedback({
       type: "success",
@@ -301,6 +305,39 @@ export default function StarMoneySyncSettingsCard() {
               "When you click Export in StarMoney, save to this folder. DriveBase automatically detects new transactions."
             )}
           </p>
+        </div>
+
+        {/* Autonomous Zero-Click Import Toggle */}
+        <div className="rounded-lg border border-border/60 bg-muted/10 p-4 flex items-center justify-between gap-4">
+          <div className="space-y-0.5">
+            <label className="text-xs font-semibold text-foreground flex items-center gap-1.5 cursor-pointer">
+              <Zap className="h-4 w-4 text-primary" />
+              {t("settings.autoImportTitle", "Automatic Background Import (Zero-Click)")}
+            </label>
+            <p className="text-[11px] text-muted-foreground">
+              {t(
+                "settings.autoImportHelp",
+                "Automatically imports newly detected bank export files into the ledger without asking. When disabled, DriveBase shows a one-click import button instead."
+              )}
+            </p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer shrink-0">
+            <input
+              type="checkbox"
+              checked={autoImport}
+              onChange={(e) => {
+                const val = e.target.checked
+                setAutoImport(val)
+                void saveConfig({
+                  watch_dir: localDir,
+                  mappings: localMappings,
+                  auto_import: val,
+                })
+              }}
+              className="sr-only peer"
+            />
+            <div className="w-9 h-5 bg-muted peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+          </label>
         </div>
 
         {/* Feedback Message */}

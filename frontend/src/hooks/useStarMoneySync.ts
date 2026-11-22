@@ -30,6 +30,7 @@ export interface StarMoneyBankMapping {
 export interface StarMoneySyncConfig {
   watch_dir: string
   mappings: StarMoneyBankMapping[]
+  auto_import?: boolean
 }
 
 export interface DetectedExport {
@@ -66,6 +67,7 @@ export function useStarMoneySync() {
   const [scannedFiles, setScannedFiles] = useState<ScannedExportFile[]>([])
   const [detectedExports, setDetectedExports] = useState<DetectedExport[]>([])
   const [unmappedExports, setUnmappedExports] = useState<UnmappedExport[]>([])
+  const [autoImport, setAutoImport] = useState<boolean>(true)
 
   const [isLoadingConfig, setIsLoadingConfig] = useState(true)
   const [isScanning, setIsScanning] = useState(false)
@@ -78,12 +80,17 @@ export function useStarMoneySync() {
   watchDirRef.current = watchDir
   const mappingsRef = useRef(mappings)
   mappingsRef.current = mappings
+  const autoImportRef = useRef(autoImport)
+  autoImportRef.current = autoImport
+  const detectedExportsRef = useRef(detectedExports)
+  detectedExportsRef.current = detectedExports
+  const syncAllDetectedRef = useRef<((force?: boolean, items?: DetectedExport[]) => Promise<SyncResult[]>) | null>(null)
 
   // 1. Load config from desktop storage
   const loadConfig = useCallback(async (): Promise<StarMoneySyncConfig> => {
     if (!isTauri()) {
       setIsLoadingConfig(false)
-      return { watch_dir: DEFAULT_STARMONEY_WATCH_DIR, mappings: [] }
+      return { watch_dir: DEFAULT_STARMONEY_WATCH_DIR, mappings: [], auto_import: true }
     }
     try {
       const jsonStr = await loadStarMoneySyncConfig()
@@ -96,11 +103,15 @@ export function useStarMoneySync() {
 
       let activeDir = DEFAULT_STARMONEY_WATCH_DIR
       let activeMappings: StarMoneyBankMapping[] = []
+      let activeAutoImport = true
 
-      // Handle both new { watch_dir, mappings } and legacy array format
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && parsed.watch_dir) {
+      // Handle both new { watch_dir, mappings, auto_import } and legacy array format
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
         activeDir = parsed.watch_dir || DEFAULT_STARMONEY_WATCH_DIR
         activeMappings = Array.isArray(parsed.mappings) ? parsed.mappings : []
+        if (parsed.auto_import !== undefined) {
+          activeAutoImport = Boolean(parsed.auto_import)
+        }
       } else if (Array.isArray(parsed) && parsed.length > 0) {
         // Migration from legacy array
         activeMappings = parsed.map((m: any) => ({
@@ -126,7 +137,7 @@ export function useStarMoneySync() {
       // If dummy rows were purged, persist the cleaned configuration
       if (activeMappings.length !== originalCount) {
         try {
-          await saveStarMoneySyncConfig(JSON.stringify({ watch_dir: activeDir, mappings: activeMappings }, null, 2))
+          await saveStarMoneySyncConfig(JSON.stringify({ watch_dir: activeDir, mappings: activeMappings, auto_import: activeAutoImport }, null, 2))
         } catch {
           // Ignore write error on load
         }
@@ -137,12 +148,14 @@ export function useStarMoneySync() {
 
       setWatchDir(activeDir)
       setMappings(activeMappings)
+      setAutoImport(activeAutoImport)
+      autoImportRef.current = activeAutoImport
       setIsLoadingConfig(false)
-      return { watch_dir: activeDir, mappings: activeMappings }
+      return { watch_dir: activeDir, mappings: activeMappings, auto_import: activeAutoImport }
     } catch (err) {
       console.warn("[StarMoneySync] Failed to load config:", err)
       setIsLoadingConfig(false)
-      return { watch_dir: DEFAULT_STARMONEY_WATCH_DIR, mappings: [] }
+      return { watch_dir: DEFAULT_STARMONEY_WATCH_DIR, mappings: [], auto_import: true }
     }
   }, [])
 
@@ -152,6 +165,10 @@ export function useStarMoneySync() {
       if (!isTauri()) return
       setWatchDir(newConfig.watch_dir)
       setMappings(newConfig.mappings)
+      if (newConfig.auto_import !== undefined) {
+        setAutoImport(newConfig.auto_import)
+        autoImportRef.current = newConfig.auto_import
+      }
       try {
         await saveStarMoneySyncConfig(JSON.stringify(newConfig, null, 2))
         // Re-scan with new configuration
@@ -220,6 +237,7 @@ export function useStarMoneySync() {
 
         setMappings(updatedMappings)
         setDetectedExports(detected)
+        detectedExportsRef.current = detected
 
         // Find unmapped files
         const unmapped: UnmappedExport[] = files
@@ -234,13 +252,22 @@ export function useStarMoneySync() {
           })
 
         setUnmappedExports(unmapped)
+
+        // ZERO-CLICK AUTO-IMPORT:
+        // Automatically import new exports for mapped banks without manual intervention
+        if (autoImportRef.current && !isSyncingRef.current && user) {
+          const newExports = detected.filter((d) => d.isNew)
+          if (newExports.length > 0 && syncAllDetectedRef.current) {
+            void syncAllDetectedRef.current(false, newExports)
+          }
+        }
       } catch (err) {
         console.error("[StarMoneySync] Scan error:", err)
       } finally {
         setIsScanning(false)
       }
     },
-    []
+    [user]
   )
 
   // Initial load
@@ -322,7 +349,8 @@ export function useStarMoneySync() {
         const resData = response.data || {}
 
         // Update mapping metadata
-        const updatedMappings = mappings.map((m) =>
+        const currentMappings = mappingsRef.current.length > 0 ? mappingsRef.current : mappings
+        const updatedMappings = currentMappings.map((m) =>
           m.id === mapping.id
             ? {
                 ...m,
@@ -334,8 +362,9 @@ export function useStarMoneySync() {
         )
 
         await saveConfig({
-          watch_dir: watchDir,
+          watch_dir: watchDirRef.current || watchDir,
           mappings: updatedMappings,
+          auto_import: autoImportRef.current,
         })
 
         // Refresh transactions list query cache
@@ -361,7 +390,11 @@ export function useStarMoneySync() {
           filePath: file.path,
           fileName: file.name,
           success: false,
-          error: err?.response?.data?.message || err?.message || "Sync failed",
+          error:
+            err?.response?.data?.detail ||
+            err?.response?.data?.message ||
+            err?.message ||
+            "Sync failed",
         }
       }
     },
@@ -370,7 +403,10 @@ export function useStarMoneySync() {
 
   // 5. Synchronize all detected exports that are new
   const syncAllDetected = useCallback(
-    async (force: boolean = false): Promise<SyncResult[]> => {
+    async (
+      force: boolean = false,
+      itemsToSync?: DetectedExport[]
+    ): Promise<SyncResult[]> => {
       if (!isTauri() || !user || isSyncingRef.current) return []
       isSyncingRef.current = true
       setIsSyncing(true)
@@ -378,8 +414,10 @@ export function useStarMoneySync() {
 
       try {
         const results: SyncResult[] = []
+        const targetList =
+          itemsToSync || (detectedExportsRef.current.length > 0 ? detectedExportsRef.current : detectedExports)
 
-        for (const item of detectedExports) {
+        for (const item of targetList) {
           if (force || item.isNew) {
             const res = await syncExport(item.mapping, item.file, force)
             results.push(res)
@@ -416,6 +454,10 @@ export function useStarMoneySync() {
     [detectedExports, syncExport, user]
   )
 
+  useEffect(() => {
+    syncAllDetectedRef.current = syncAllDetected
+  }, [syncAllDetected])
+
   // 6. Bind a newly discovered account number to a payment method
   const bindNewAccount = useCallback(
     async (
@@ -423,7 +465,8 @@ export function useStarMoneySync() {
       paymentMethodId: number,
       paymentMethodName: string
     ) => {
-      const existing = mappings.find(
+      const currentMappings = mappingsRef.current.length > 0 ? mappingsRef.current : mappings
+      const existing = currentMappings.find(
         (m) => m.payment_method_id === paymentMethodId
       )
 
@@ -437,7 +480,7 @@ export function useStarMoneySync() {
         if (!currentPats.includes(patternOrAccount.toLowerCase())) {
           currentPats.push(patternOrAccount.toLowerCase())
         }
-        updated = mappings.map((m) =>
+        updated = currentMappings.map((m) =>
           m.id === existing.id ? { ...m, patterns: currentPats.join(", ") } : m
         )
       } else {
@@ -448,12 +491,13 @@ export function useStarMoneySync() {
           payment_method_name: paymentMethodName,
           patterns: patternOrAccount.toLowerCase(),
         }
-        updated = [...mappings, newEntry]
+        updated = [...currentMappings, newEntry]
       }
 
       await saveConfig({
-        watch_dir: watchDir,
+        watch_dir: watchDirRef.current || watchDir,
         mappings: updated,
+        auto_import: autoImportRef.current,
       })
     },
     [mappings, watchDir, saveConfig]
@@ -467,6 +511,8 @@ export function useStarMoneySync() {
     scannedFiles,
     detectedExports,
     unmappedExports,
+    autoImport,
+    setAutoImport,
     isLoadingConfig,
     isScanning,
     isSyncing,
