@@ -1415,10 +1415,13 @@
         "bankMappingsTitle": "Bank Account Mappings & Patterns",
         "bankMappingsDesc": "Link each payment method to account numbers or filename patterns (e.g. \"sparkasse, 1076843790\").",
         "addBankMapping": "+ Add Another Bank",
+        "clearAllMappings": "Clear All",
         "paymentMethod": "Payment Method",
         "accountPatterns": "Account ID / Filename Patterns",
         "detectedFile": "Folder Status",
         "noMappings": "No bank mappings configured.",
+        "noMappingsTitle": "No Bank Accounts Linked Yet",
+        "noMappingsDesc": "When you export a file from StarMoney to your folder, DriveBase will automatically ask you which bank it belongs to on the Transactions page and remember it.",
         "noFileFound": "No export in folder"
     }
 }

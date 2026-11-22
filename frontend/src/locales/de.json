@@ -1415,10 +1415,13 @@
         "bankMappingsTitle": "Bankkonto-Zuordnungen & Muster",
         "bankMappingsDesc": "Verknüpfen Sie jede Zahlungsmethode mit Kontonummern oder Dateinamenmustern (z. B. \"sparkasse, 1076843790\").",
         "addBankMapping": "+ Weitere Bank hinzufügen",
+        "clearAllMappings": "Alle löschen",
         "paymentMethod": "Zahlungsmethode",
         "accountPatterns": "Konto-ID / Dateinamen-Muster",
         "detectedFile": "Ordnerstatus",
         "noMappings": "Keine Bankzuordnungen konfiguriert.",
+        "noMappingsTitle": "Noch keine Bankkonten verknüpft",
+        "noMappingsDesc": "Wenn Sie eine Datei aus StarMoney in Ihren Ordner exportieren, fragt DriveBase auf der Transaktionsseite automatisch, zu welcher Bank sie gehört, und merkt sich dies.",
         "noFileFound": "Kein Export im Ordner"
     }
 }

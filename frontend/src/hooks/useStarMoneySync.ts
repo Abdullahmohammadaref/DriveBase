@@ -103,10 +103,29 @@ export function useStarMoneySync() {
           id: m.id || crypto.randomUUID(),
           payment_method_id: m.payment_method_id || 1,
           payment_method_name: m.payment_method_name || "Bank",
-          patterns: m.payment_method_name?.toLowerCase() || "sparkasse",
+          patterns: m.patterns || "",
           last_synced_at: m.last_synced_at,
           last_file_modified: m.last_file_modified,
         }))
+      }
+
+      // Purge any dummy pre-filled entries created by earlier versions
+      const originalCount = activeMappings.length
+      activeMappings = activeMappings.filter((m) => {
+        const name = (m.payment_method_name || "").toLowerCase()
+        const pats = (m.patterns || "").trim().toLowerCase()
+        // If it was a prefilled default row where pattern equalled the method name with no sync history, drop it
+        const isDummyDefault = (pats === name || pats === "") && !m.last_synced_at && !m.last_file_modified
+        return !isDummyDefault
+      })
+
+      // If dummy rows were purged, persist the cleaned configuration
+      if (activeMappings.length !== originalCount) {
+        try {
+          await saveStarMoneySyncConfig(JSON.stringify({ watch_dir: activeDir, mappings: activeMappings }, null, 2))
+        } catch {
+          // Ignore write error on load
+        }
       }
 
       // Ensure the watch folder exists on disk

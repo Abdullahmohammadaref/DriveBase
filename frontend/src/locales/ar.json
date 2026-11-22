@@ -296,10 +296,13 @@
         "bankMappingsTitle": "ربط الحسابات البنكية والأنماط",
         "bankMappingsDesc": "اربط كل طريقة دفع بأرقام الحسابات أو أنماط أسماء الملفات (مثل \"sparkasse, 1076843790\").",
         "addBankMapping": "+ إضافة بنك آخر",
+        "clearAllMappings": "مسح الكل",
         "paymentMethod": "طريقة الدفع",
         "accountPatterns": "معرف الحساب / أنماط اسم الملف",
         "detectedFile": "حالة المجلد",
         "noMappings": "لا توجد تعيينات بنكية تم تكوينها.",
+        "noMappingsTitle": "لم يتم ربط أي حسابات بنكية بعد",
+        "noMappingsDesc": "عند تصدير ملف من StarMoney إلى المجلد الخاص بك، سيسألك DriveBase تلقائيًا في صفحة المعاملات عن البنك الذي ينتمي إليه ويتذكره.",
         "noFileFound": "لا يوجد ملف تصدير في المجلد"
     },
     "activityLogs": {

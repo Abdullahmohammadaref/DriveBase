@@ -296,10 +296,13 @@
         "bankMappingsTitle": "Banka Hesabı Eşlemeleri ve Desenleri",
         "bankMappingsDesc": "Her ödeme yöntemini hesap numaraları veya dosya adı kalıplarıyla bağlayın (örn. \"sparkasse, 1076843790\").",
         "addBankMapping": "+ Başka Bir Banka Ekle",
+        "clearAllMappings": "Tümünü Temizle",
         "paymentMethod": "Ödeme Yöntemi",
         "accountPatterns": "Hesap Kimliği / Dosya Adı Kalıpları",
         "detectedFile": "Klasör Durumu",
         "noMappings": "Yapılandırılmış banka eşlemesi yok.",
+        "noMappingsTitle": "Henüz Bağlı Banka Hesabı Yok",
+        "noMappingsDesc": "StarMoney'den klasörünüze bir dosya aktardığınızda, DriveBase İşlemler sayfasında otomatik olarak hangi bankaya ait olduğunu soracak ve bunu hatırlayacaktır.",
         "noFileFound": "Klasörde dışa aktarım yok"
     },
     "activityLogs": {

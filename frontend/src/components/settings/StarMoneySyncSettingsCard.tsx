@@ -57,26 +57,8 @@ export default function StarMoneySyncSettingsCard() {
   }, [watchDir])
 
   useEffect(() => {
-    if (mappings && mappings.length > 0) {
-      setLocalMappings(mappings)
-    } else if (paymentMethods.length > 0 && localMappings.length === 0) {
-      // Default pre-fill with detected banks (e.g. Sparkasse, Volksbank)
-      const defaults: StarMoneyBankMapping[] = paymentMethods.map((m) => {
-        const lower = m.label.toLowerCase()
-        return {
-          id: crypto.randomUUID(),
-          payment_method_id: parseInt(m.value),
-          payment_method_name: m.label,
-          patterns: lower.includes("sparkasse")
-            ? "sparkasse"
-            : lower.includes("volksbank")
-            ? "volksbank"
-            : lower,
-        }
-      })
-      setLocalMappings(defaults)
-    }
-  }, [mappings, paymentMethods])
+    setLocalMappings(mappings || [])
+  }, [mappings])
 
   // Only render inside the native Windows Desktop app
   if (!isTauri()) {
@@ -117,11 +99,16 @@ export default function StarMoneySyncSettingsCard() {
       id: crypto.randomUUID(),
       payment_method_id: firstMethod ? parseInt(firstMethod.value) : 1,
       payment_method_name: firstMethod ? firstMethod.label : "Bank Account",
-      patterns: firstMethod ? firstMethod.label.toLowerCase() : "",
+      patterns: "",
     }
     const updated = [...localMappings, newEntry]
     setLocalMappings(updated)
     void saveConfig({ watch_dir: localDir, mappings: updated })
+  }
+
+  const handleClearAll = () => {
+    setLocalMappings([])
+    void saveConfig({ watch_dir: localDir, mappings: [] })
   }
 
   const handleRemoveRow = (id: string) => {
@@ -139,7 +126,7 @@ export default function StarMoneySyncSettingsCard() {
             ...m,
             payment_method_id: methodId,
             payment_method_name: found ? found.label : m.payment_method_name,
-            patterns: m.patterns || (found ? found.label.toLowerCase() : ""),
+            patterns: m.patterns || "",
           }
         : m
     )
@@ -311,16 +298,29 @@ export default function StarMoneySyncSettingsCard() {
                 )}
               </p>
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleAddRow}
-              className="h-7 text-xs gap-1"
-            >
-              <Plus className="h-3 w-3" />
-              {t("settings.addBankMapping", "+ Add Another Bank")}
-            </Button>
+            <div className="flex items-center gap-2">
+              {localMappings.length > 0 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearAll}
+                  className="h-7 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                >
+                  {t("settings.clearAllMappings", "Clear All")}
+                </Button>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddRow}
+                className="h-7 text-xs gap-1"
+              >
+                <Plus className="h-3 w-3" />
+                {t("settings.addBankMapping", "+ Add Another Bank")}
+              </Button>
+            </div>
           </div>
 
           <div className="border border-border/80 rounded-lg overflow-hidden">
@@ -347,9 +347,20 @@ export default function StarMoneySyncSettingsCard() {
                   <tr>
                     <td
                       colSpan={4}
-                      className="py-4 text-center text-xs text-muted-foreground"
+                      className="py-8 px-4 text-center"
                     >
-                      {t("settings.noMappings", "No bank mappings configured.")}
+                      <div className="mx-auto w-10 h-10 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground mb-2">
+                        <Landmark className="h-5 w-5" />
+                      </div>
+                      <p className="text-xs font-semibold text-foreground">
+                        {t("settings.noMappingsTitle", "No Bank Accounts Linked Yet")}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground max-w-sm mx-auto mt-1">
+                        {t(
+                          "settings.noMappingsDesc",
+                          "When you export a file from StarMoney to your folder, DriveBase will automatically ask you which bank it belongs to on the Transactions page and remember it."
+                        )}
+                      </p>
                     </td>
                   </tr>
                 ) : (
