@@ -1,14 +1,14 @@
 {
-  "version": "1.0.10",
-  "notes": "DriveBase Release v1.0.10 - Autonomous zero-click StarMoney bank background import, backend multi-format Giro/CAMT parser, Pydantic error handler fix, and settings toggle",
-  "pub_date": "2026-11-22T04:22:00Z",
+  "version": "1.0.11",
+  "notes": "DriveBase Release v1.0.11 - Enhanced StarMoney bank matching with content-level account/IBAN inspection, accurate zero-file folder warning, and unmapped bank notifications",
+  "pub_date": "2026-11-23T16:42:00Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcG9uTWZJdGkwNWVVZTh6UExEbEUyMWpoZ3VkMlZKU3M3SDdJcXJhYWgrMVhucWlGZnhVY3lsMUtTUVdzTFFZSEZ0ZlBsMFRXSkE1Zi9MaGprc0tteFRXVytRakczR2cwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk1MzIxMzA4CWZpbGU6RHJpdmVCYXNlXzEuMC4xMF94NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjEwCjM3WDlMOEs2SGJ3aTlJOVNTVGxLV21iMkhNQjJiQWh4M2VHR25yWXRGT2xmRkdGNFFwRGVvMUlpWFQ4aFBnRTN1YUUwSWdTazJvaHRkVGxaMkgxOUJ3PT0K",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcG9uTWZJdGkwNVhYN2tGaUZBMFg4czRKdXhqMmN3YW1pWjljYU1ZRllwTzdiWFFyZU1aZHA3cHlvUWpoQ0pza2hYTmUyWStsN1JSM1NsL0RMRVNxNFFkaFpQQ0lZeEFBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk1NDUyMDk4CWZpbGU6RHJpdmVCYXNlXzEuMC4xMV94NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjExCjlKellET0hzaFQ5RndoS1FFdzBvajMxYldIRjV5cHRhOW96T3l1bGViV3EwQzBiMlZvbVcvSFUzdnNXYy8rSXY3THpUSUFxY2plbThNNHE2dkxVUEJRPT0K",
       "url": "https://a-car.duckdns.org/api/desktop/update"
     },
     "windows-x86_64-nsis": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcG9uTWZJdGkwNWVVZTh6UExEbEUyMWpoZ3VkMlZKU3M3SDdJcXJhYWgrMVhucWlGZnhVY3lsMUtTUVdzTFFZSEZ0ZlBsMFRXSkE1Zi9MaGprc0tteFRXVytRakczR2cwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk1MzIxMzA4CWZpbGU6RHJpdmVCYXNlXzEuMC4xMF94NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjEwCjM3WDlMOEs2SGJ3aTlJOVNTVGxLV21iMkhNQjJiQWh4M2VHR25yWXRGT2xmRkdGNFFwRGVvMUlpWFQ4aFBnRTN1YUUwSWdTazJvaHRkVGxaMkgxOUJ3PT0K",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcG9uTWZJdGkwNVhYN2tGaUZBMFg4czRKdXhqMmN3YW1pWjljYU1ZRllwTzdiWFFyZU1aZHA3cHlvUWpoQ0pza2hYTmUyWStsN1JSM1NsL0RMRVNxNFFkaFpQQ0lZeEFBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk1NDUyMDk4CWZpbGU6RHJpdmVCYXNlXzEuMC4xMV94NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjExCjlKellET0hzaFQ5RndoS1FFdzBvajMxYldIRjV5cHRhOW96T3l1bGViV3EwQzBiMlZvbVcvSFUzdnNXYy8rSXY3THpUSUFxY2plbThNNHE2dkxVUEJRPT0K",
       "url": "https://a-car.duckdns.org/api/desktop/update"
     }
   }

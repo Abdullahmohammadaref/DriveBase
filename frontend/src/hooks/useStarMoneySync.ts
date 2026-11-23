@@ -212,9 +212,11 @@ export function useStarMoneySync() {
           }
 
           // Find first matching file (files are already sorted newest first by Rust)
+          // Matches on filename patterns OR internal file content preview (e.g. account numbers/IBAN inside CSV)
           const matched = files.find((f) => {
             const lowerName = f.name.toLowerCase()
-            return patternList.some((pat) => lowerName.includes(pat))
+            const lowerPreview = (f.preview || "").toLowerCase()
+            return patternList.some((pat) => lowerName.includes(pat) || lowerPreview.includes(pat))
           })
 
           if (matched) {
@@ -243,11 +245,13 @@ export function useStarMoneySync() {
         const unmapped: UnmappedExport[] = files
           .filter((f) => !matchedFilePaths.has(f.path))
           .map((f) => {
-            // Try extracting account number prefix (e.g. 1076843790_EUR_...)
-            const m = f.name.match(/^([0-9]{6,16})/i)
+            // Try extracting account number prefix or IBAN from filename or content preview
+            const fromName = f.name.match(/^([0-9]{6,16})/i)
+            const fromPreview = (f.preview || "").match(/(?:DE[0-9]{20}|[0-9]{8,12})/i)
+            const account = fromName ? fromName[1] : (fromPreview ? fromPreview[0] : f.name.replace(/\.(csv|txt)$/i, ""))
             return {
               file: f,
-              suggestedAccount: m ? m[1] : f.name.replace(/\.(csv|txt)$/i, ""),
+              suggestedAccount: account,
             }
           })
 

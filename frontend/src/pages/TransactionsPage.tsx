@@ -70,12 +70,15 @@ export function TransactionsPage() {
     // StarMoney Desktop Auto-Sync & Directory Detection
     const {
         isDesktop,
+        watchDir,
         mappings: starMoneyMappings,
+        scannedFiles,
         detectedExports,
         unmappedExports,
         autoImport,
         isSyncing: isSyncingStarMoney,
         lastSyncSummary,
+        scanDirectory,
         syncExport,
         syncAllDetected,
         bindNewAccount,
@@ -112,6 +115,43 @@ export function TransactionsPage() {
     }, [lastSyncSummary])
 
     const handleSyncStarMoney = async () => {
+        setWarningMessage(null)
+        setSuccessMessage(null)
+
+        // Rescan folder to ensure immediate fresh state
+        await scanDirectory()
+
+        // 1. If folder has no files at all:
+        if (scannedFiles.length === 0) {
+            setWarningMessage(
+                t("transactions.noExportFilesFound", `No export files found in folder '{{dir}}'. Please place your StarMoney CSV file here to sync.`, {
+                    dir: watchDir,
+                })
+            )
+            setTimeout(() => setWarningMessage(null), 8000)
+            return
+        }
+
+        // 2. If folder has files, but none matched any bank mapping:
+        if (detectedExports.length === 0 && unmappedExports.length > 0) {
+            setWarningMessage(
+                t("transactions.unmappedFilesNotice", `Found file '{{name}}', but it is not linked to any bank account yet. Please select a bank from the prompt below to link and import it.`, {
+                    name: unmappedExports[0].file.name,
+                })
+            )
+            setTimeout(() => setWarningMessage(null), 8000)
+            return
+        }
+
+        // 3. If no mappings configured:
+        if (starMoneyMappings.length === 0) {
+            setWarningMessage(
+                t("transactions.noMappingsNotice", "No bank account mappings configured. Please configure your bank in Business Settings.")
+            )
+            setTimeout(() => setWarningMessage(null), 7000)
+            return
+        }
+
         const results = await syncAllDetected(true)
         const totalImported = results.reduce((acc, r) => acc + (r.imported || 0), 0)
         const failed = results.filter((r) => !r.success)
@@ -170,6 +210,7 @@ export function TransactionsPage() {
 
     // Success message state (e.g., after adding a new transaction)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
+    const [warningMessage, setWarningMessage] = useState<string | null>(null)
 
     // PDF export loading state
     const [pdfLoading, setPdfLoading] = useState(false)
@@ -443,6 +484,20 @@ export function TransactionsPage() {
                     <button
                         onClick={() => setSuccessMessage(null)}
                         className="ml-auto text-emerald-600 hover:text-emerald-800 dark:hover:text-emerald-300"
+                    >
+                        <X className="h-3.5 w-3.5" />
+                    </button>
+                </div>
+            )}
+
+            {/* Warning / Informational Message Banner */}
+            {warningMessage && (
+                <div className="flex items-center gap-2 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-800/40 px-3 py-2 text-amber-800 dark:text-amber-300 animate-in slide-in-from-top-2">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+                    <span className="text-xs font-medium">{warningMessage}</span>
+                    <button
+                        onClick={() => setWarningMessage(null)}
+                        className="ml-auto text-amber-600 hover:text-amber-800 dark:hover:text-amber-200"
                     >
                         <X className="h-3.5 w-3.5" />
                     </button>

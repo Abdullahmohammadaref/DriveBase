@@ -248,11 +248,25 @@ fn scan_starmoney_dir(dir_path: String) -> Result<Vec<serde_json::Value>, String
               .map(|n| n.to_string_lossy().to_string())
               .unwrap_or_default();
 
+            // Read preview (first 4KB) for content-based account matching
+            let preview = std::fs::File::open(&p)
+              .ok()
+              .and_then(|mut f| {
+                use std::io::Read;
+                let mut buf = vec![0u8; 4096];
+                let n = f.read(&mut buf).unwrap_or(0);
+                String::from_utf8(buf[..n].to_vec())
+                  .or_else(|_| String::from_utf8(buf[..n].iter().map(|&b| if b < 128 { b } else { b' ' }).collect()))
+                  .ok()
+              })
+              .unwrap_or_default();
+
             files.push(serde_json::json!({
               "name": file_name,
               "path": p.to_string_lossy().to_string(),
               "size_bytes": size_bytes,
               "last_modified": modified,
+              "preview": preview,
             }));
           }
         }

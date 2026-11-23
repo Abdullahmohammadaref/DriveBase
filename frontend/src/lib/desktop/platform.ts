@@ -260,6 +260,7 @@ export interface ScannedExportFile {
   path: string
   size_bytes: number
   last_modified: number
+  preview?: string
 }
 
 /**
