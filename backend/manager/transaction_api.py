@@ -1100,7 +1100,12 @@ def import_transactions_csv(
                 is_negative = True
                 s = s.lstrip('-–— ')
             if '.' in s and ',' in s:
-                s = s.replace('.', '').replace(',', '.')
+                if s.rfind(',') > s.rfind('.'):
+                    # German standard: 1.234,56 (dot thousands, comma decimal)
+                    s = s.replace('.', '').replace(',', '.')
+                else:
+                    # English / CAMT format: 1,234.56 (comma thousands, dot decimal)
+                    s = s.replace(',', '')
             elif ',' in s:
                 s = s.replace(',', '.')
             result = Decimal(s)
