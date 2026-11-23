@@ -162,7 +162,11 @@
         "unmappedExportTitle": "Yeni Banka Hesabı Algılandı",
         "unmappedExportDesc": "\"{{name}}\" dışa aktarma dosyası bulundu. Bunun hangi bankaya ait olduğunu seçin:",
         "linkAndImport": "Bağla ve İçe Aktar",
-        "bindSuccess": "{{bank}} bağlandı ve {{count}} işlem içe aktarıldı."
+        "bindSuccess": "{{bank}} bağlandı ve {{count}} işlem içe aktarıldı.",
+        "allFilesSynced": "Güncel",
+        "newExport": "Yeni",
+        "synced": "Senkronize",
+        "reSync": "Yeniden senkr."
     },
     "userManagement": {
         "title": "Kullanıcı Yönetimi",

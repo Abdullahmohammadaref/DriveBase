@@ -610,7 +610,11 @@
         "unmappedExportTitle": "New Bank Account Detected",
         "unmappedExportDesc": "Found export file \"{{name}}\". Select which bank this belongs to:",
         "linkAndImport": "Link & Import",
-        "bindSuccess": "Linked {{bank}} and imported {{count}} transaction(s)."
+        "bindSuccess": "Linked {{bank}} and imported {{count}} transaction(s).",
+        "allFilesSynced": "Up to date",
+        "newExport": "New",
+        "synced": "Synced",
+        "reSync": "Re-sync"
     },
     "userManagement": {
         "title": "User Management",

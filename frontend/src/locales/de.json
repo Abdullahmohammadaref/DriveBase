@@ -610,7 +610,11 @@
         "unmappedExportTitle": "Neues Bankkonto erkannt",
         "unmappedExportDesc": "Exportdatei \"{{name}}\" gefunden. Wählen Sie aus, zu welcher Bank dies gehört:",
         "linkAndImport": "Verknüpfen & Importieren",
-        "bindSuccess": "{{bank}} verknüpft und {{count}} Transaktion(en) importiert."
+        "bindSuccess": "{{bank}} verknüpft und {{count}} Transaktion(en) importiert.",
+        "allFilesSynced": "Aktuell",
+        "newExport": "Neu",
+        "synced": "Synchronisiert",
+        "reSync": "Erneut synchr."
     },
     "userManagement": {
         "title": "Benutzerverwaltung",

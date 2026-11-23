@@ -162,7 +162,11 @@
         "unmappedExportTitle": "تم اكتشاف حساب بنكي جديد",
         "unmappedExportDesc": "تم العثور على ملف التصدير \"{{name}}\". حدد البنك الذي ينتمي إليه هذا الملف:",
         "linkAndImport": "ربط واستيراد",
-        "bindSuccess": "تم ربط {{bank}} واستيراد {{count}} معاملة."
+        "bindSuccess": "تم ربط {{bank}} واستيراد {{count}} معاملة.",
+        "allFilesSynced": "محدث",
+        "newExport": "جديد",
+        "synced": "تمت المزامنة",
+        "reSync": "إعادة المزامنة"
     },
     "userManagement": {
         "title": "إدارة المستخدمين",

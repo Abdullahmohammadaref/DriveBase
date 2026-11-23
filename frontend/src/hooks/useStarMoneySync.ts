@@ -196,31 +196,33 @@ export function useStarMoneySync() {
         const files: ScannedExportFile[] = await scanStarMoneyDir(targetDir)
         setScannedFiles(files)
 
-        const matchedFilePaths = new Set<string>()
-        const detected: DetectedExport[] = []
-
-        // For each mapped bank, find the newest matching file in the directory
-        const updatedMappings = targetMappings.map((m) => {
+        // Helper to check if a file belongs to a configured bank mapping
+        const isFileMatchingMapping = (file: ScannedExportFile, m: StarMoneyBankMapping): boolean => {
           const patternList = (m.patterns || "")
             .split(/[,;\s]+/)
             .map((p) => p.trim().toLowerCase())
             .filter(Boolean)
 
-          // Also match on bank name itself
           if (m.payment_method_name) {
             patternList.push(m.payment_method_name.toLowerCase())
           }
 
+          if (patternList.length === 0) return false
+
+          const lowerName = file.name.toLowerCase()
+          const lowerPreview = (file.preview || "").toLowerCase()
+          return patternList.some((pat) => lowerName.includes(pat) || lowerPreview.includes(pat))
+        }
+
+        const detected: DetectedExport[] = []
+
+        // For each mapped bank, find the newest matching file in the directory
+        const updatedMappings = targetMappings.map((m) => {
           // Find first matching file (files are already sorted newest first by Rust)
           // Matches on filename patterns OR internal file content preview (e.g. account numbers/IBAN inside CSV)
-          const matched = files.find((f) => {
-            const lowerName = f.name.toLowerCase()
-            const lowerPreview = (f.preview || "").toLowerCase()
-            return patternList.some((pat) => lowerName.includes(pat) || lowerPreview.includes(pat))
-          })
+          const matched = files.find((f) => isFileMatchingMapping(f, m))
 
           if (matched) {
-            matchedFilePaths.add(matched.path)
             const isNew =
               !m.last_file_modified || matched.last_modified > m.last_file_modified
 
@@ -241,9 +243,10 @@ export function useStarMoneySync() {
         setDetectedExports(detected)
         detectedExportsRef.current = detected
 
-        // Find unmapped files
+        // Find unmapped files: only files that match NO configured bank mapping
+        // (historical/older files of already-configured banks are NOT unmapped)
         const unmapped: UnmappedExport[] = files
-          .filter((f) => !matchedFilePaths.has(f.path))
+          .filter((f) => !targetMappings.some((m) => isFileMatchingMapping(f, m)))
           .map((f) => {
             // Try extracting account number prefix or IBAN from filename or content preview
             const fromName = f.name.match(/^([0-9]{6,16})/i)

@@ -134,8 +134,17 @@ export function ImportTransactionsModal({
                                     <Landmark className="h-4 w-4 text-primary" />
                                     {t("transactions.configuredStarMoneyAccounts", "Detected StarMoney Exports")}
                                 </span>
-                                <span className="text-[11px] text-muted-foreground">
-                                    {t("transactions.autoSyncReady", "Ready to sync")}
+                                <span className="text-[11px] font-medium">
+                                    {detectedExports.some((d) => d.isNew) ? (
+                                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                                            {t("transactions.autoSyncReady", "Ready to sync")}
+                                        </span>
+                                    ) : (
+                                        <span className="text-muted-foreground flex items-center gap-1">
+                                            <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                                            {t("transactions.allFilesSynced", "Up to date")}
+                                        </span>
+                                    )}
                                 </span>
                             </div>
                             <div className="space-y-1.5">
@@ -145,8 +154,20 @@ export function ImportTransactionsModal({
                                         className="flex items-center justify-between gap-2 p-2 rounded-md bg-background border border-border/60 text-xs"
                                     >
                                         <div className="min-w-0 flex-1">
-                                            <div className="font-medium text-foreground truncate">
-                                                {item.mapping.payment_method_name}
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="font-medium text-foreground truncate">
+                                                    {item.mapping.payment_method_name}
+                                                </span>
+                                                {item.isNew ? (
+                                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                                                        {t("transactions.newExport", "New")}
+                                                    </span>
+                                                ) : (
+                                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-muted text-muted-foreground flex items-center gap-0.5">
+                                                        <CheckCircle2 className="h-2.5 w-2.5 text-emerald-600" />
+                                                        {t("transactions.synced", "Synced")}
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="text-[11px] text-muted-foreground font-mono truncate" title={item.file.path}>
                                                 {item.file.name}
@@ -155,8 +176,13 @@ export function ImportTransactionsModal({
                                         <Button
                                             type="button"
                                             size="sm"
-                                            variant="outline"
-                                            className="h-7 px-2.5 text-xs gap-1 shrink-0 border-primary/30 text-primary hover:bg-primary/5 cursor-pointer"
+                                            variant={item.isNew ? "outline" : "ghost"}
+                                            className={cn(
+                                                "h-7 px-2.5 text-xs gap-1 shrink-0 cursor-pointer",
+                                                item.isNew
+                                                    ? "border-primary/30 text-primary hover:bg-primary/5"
+                                                    : "text-muted-foreground hover:text-foreground"
+                                            )}
                                             disabled={syncingMappingId === item.mapping.id || isSyncing}
                                             onClick={async () => {
                                                 setSyncingMappingId(item.mapping.id)
@@ -192,7 +218,9 @@ export function ImportTransactionsModal({
                                             ) : (
                                                 <RefreshCw className="h-3 w-3" />
                                             )}
-                                            {t("transactions.syncNow", "Sync Now")}
+                                            {item.isNew
+                                                ? t("transactions.syncNow", "Sync Now")
+                                                : t("transactions.reSync", "Re-sync")}
                                         </Button>
                                     </div>
                                 ))}
