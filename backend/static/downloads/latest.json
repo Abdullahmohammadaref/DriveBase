@@ -1,14 +1,14 @@
 {
-  "version": "1.0.12",
-  "notes": "DriveBase Release v1.0.12 - Fixed StarMoney unmapped export false detection on historical bank files, and added sync status indicators in import modal",
-  "pub_date": "2026-11-23T18:27:00Z",
+  "version": "1.0.13",
+  "notes": "DriveBase Release v1.0.13 - Removed redundant StarMoney accounts section from manual CSV import modal",
+  "pub_date": "2026-11-24T06:23:00Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcG9uTWZJdGkwNVFjZlY5clVMSWhqK0VySVJIL3BJVDVaMEJnem9Oa1lSYTM1bUdKR0NXVnd5eTIwQlFFOVlwSk9SR3N2Um5QL2loVzdmeEtkMWdpcUtBK0xaOWtqY3dJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk1NDU4NDUwCWZpbGU6RHJpdmVCYXNlXzEuMC4xMl94NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjEyCm1NVHRzVzVwTW9iSkYxYm5BSk5DZDRkUXIwV1puUG5SMjJJOFF1RFU5SmlNRk5lR3FaTFp0RWFIMUcvQ3NaaXRtcTFMWTJGaGJlTGR5SzJsK0RhYkJ3PT0K",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcG9uTWZJdGkwNWV1NnJnOHhSVURCTEF5Z3UrSCtxMXVZNmpYTmpJNFA2WWdHWjNqamR2Nno2WmZjU3MweEkweHUvT2JtTnA0M2dxcEhDWUZzdnFoVjQ4V2luczRJMEFFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk1NTAxMzkzCWZpbGU6RHJpdmVCYXNlXzEuMC4xM194NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjEzCmZVSEZqUENCMU5mMFhONXBZTVo0dk1hVnNONC8zREJMd0E3TGJOeHV5cjd6eFJ1L3lmMDkrbzRTWFhEY1lWamZSdVNrcFN1eW15WnVqMXpMUHIyb0JnPT0K",
       "url": "https://a-car.duckdns.org/api/desktop/update"
     },
     "windows-x86_64-nsis": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcG9uTWZJdGkwNVFjZlY5clVMSWhqK0VySVJIL3BJVDVaMEJnem9Oa1lSYTM1bUdKR0NXVnd5eTIwQlFFOVlwSk9SR3N2Um5QL2loVzdmeEtkMWdpcUtBK0xaOWtqY3dJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk1NDU4NDUwCWZpbGU6RHJpdmVCYXNlXzEuMC4xMl94NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjEyCm1NVHRzVzVwTW9iSkYxYm5BSk5DZDRkUXIwV1puUG5SMjJJOFF1RFU5SmlNRk5lR3FaTFp0RWFIMUcvQ3NaaXRtcTFMWTJGaGJlTGR5SzJsK0RhYkJ3PT0K",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcG9uTWZJdGkwNWV1NnJnOHhSVURCTEF5Z3UrSCtxMXVZNmpYTmpJNFA2WWdHWjNqamR2Nno2WmZjU3MweEkweHUvT2JtTnA0M2dxcEhDWUZzdnFoVjQ4V2luczRJMEFFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk1NTAxMzkzCWZpbGU6RHJpdmVCYXNlXzEuMC4xM194NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjEzCmZVSEZqUENCMU5mMFhONXBZTVo0dk1hVnNONC8zREJMd0E3TGJOeHV5cjd6eFJ1L3lmMDkrbzRTWFhEY1lWamZSdVNrcFN1eW15WnVqMXpMUHIyb0JnPT0K",
       "url": "https://a-car.duckdns.org/api/desktop/update"
     }
   }
