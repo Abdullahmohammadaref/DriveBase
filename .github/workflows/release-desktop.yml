@@ -62,5 +62,7 @@ jobs:
           $bundlePath = Get-ChildItem -Path "frontend/src-tauri/target/release/bundle/nsis/*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
           if ($bundlePath) {
             Copy-Item -Path $bundlePath.FullName -Destination "frontend/src-tauri/target/release/bundle/nsis/DriveBase_Setup.exe"
-            gh release upload "v${{ github.ref_name || inputs.version }}" "frontend/src-tauri/target/release/bundle/nsis/DriveBase_Setup.exe" --clobber
+            $rawTag = "${{ github.ref_name || inputs.version }}"
+            $tag = if ($rawTag.StartsWith("v")) { $rawTag } else { "v$rawTag" }
+            gh release upload $tag "frontend/src-tauri/target/release/bundle/nsis/DriveBase_Setup.exe" --clobber
           }
