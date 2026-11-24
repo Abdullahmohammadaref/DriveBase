@@ -40,6 +40,15 @@ jobs:
         working-directory: ./frontend
         run: npm ci
 
+      - name: Clean Existing Release if Present
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $rawTag = "${{ github.ref_name || inputs.version }}"
+          $tag = if ($rawTag.StartsWith("v")) { $rawTag } else { "v$rawTag" }
+          gh release delete $tag --yes --cleanup-tag=false 2>$null || true
+
       - name: Build Tauri Desktop App
         uses: tauri-apps/tauri-action@v0
         env:
