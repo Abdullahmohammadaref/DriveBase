@@ -1,5 +1,5 @@
 import { useState, useRef } from "react"
-import { Upload, FileText, X, Loader2, Landmark, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react"
+import { Upload, FileText, X, Loader2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import {
     Dialog,
@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { DynamicSelect } from "@/components/ui/dynamic-select"
 import { useTransactionChoices, useImportTransactions } from "@/hooks/useTransactions"
-import { useStarMoneySync } from "@/hooks/useStarMoneySync"
 import { cn } from "@/lib/utils"
 
 interface ImportTransactionsModalProps {
@@ -29,12 +28,6 @@ export function ImportTransactionsModal({
     onOpenChange,
 }: ImportTransactionsModalProps) {
     const { t } = useTranslation()
-    const { isDesktop, mappings, detectedExports, isSyncing, syncExport } = useStarMoneySync()
-    const [syncingMappingId, setSyncingMappingId] = useState<string | null>(null)
-    const [starMoneyFeedback, setStarMoneyFeedback] = useState<{
-        type: "success" | "error"
-        message: string
-    } | null>(null)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [selectedMethod, setSelectedMethod] = useState<number | null>(null)
     const [isDragging, setIsDragging] = useState(false)
@@ -55,8 +48,6 @@ export function ImportTransactionsModal({
             setSelectedFile(null)
             setSelectedMethod(null)
             importMutation.reset()
-            setStarMoneyFeedback(null)
-            setSyncingMappingId(null)
         }
         onOpenChange(newOpen)
     }
@@ -126,146 +117,6 @@ export function ImportTransactionsModal({
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
-                    {/* StarMoney Configured Accounts (Desktop Only) */}
-                    {isDesktop && detectedExports.length > 0 && (
-                        <div className="rounded-lg border border-primary/20 bg-primary/5 p-3.5 space-y-2.5">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                                    <Landmark className="h-4 w-4 text-primary" />
-                                    {t("transactions.configuredStarMoneyAccounts", "Detected StarMoney Exports")}
-                                </span>
-                                <span className="text-[11px] font-medium">
-                                    {detectedExports.some((d) => d.isNew) ? (
-                                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                                            {t("transactions.autoSyncReady", "Ready to sync")}
-                                        </span>
-                                    ) : (
-                                        <span className="text-muted-foreground flex items-center gap-1">
-                                            <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                                            {t("transactions.allFilesSynced", "Up to date")}
-                                        </span>
-                                    )}
-                                </span>
-                            </div>
-                            <div className="space-y-1.5">
-                                {detectedExports.map((item) => (
-                                    <div
-                                        key={item.mapping.id}
-                                        className="flex items-center justify-between gap-2 p-2 rounded-md bg-background border border-border/60 text-xs"
-                                    >
-                                        <div className="min-w-0 flex-1">
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="font-medium text-foreground truncate">
-                                                    {item.mapping.payment_method_name}
-                                                </span>
-                                                {item.isNew ? (
-                                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                                                        {t("transactions.newExport", "New")}
-                                                    </span>
-                                                ) : (
-                                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-muted text-muted-foreground flex items-center gap-0.5">
-                                                        <CheckCircle2 className="h-2.5 w-2.5 text-emerald-600" />
-                                                        {t("transactions.synced", "Synced")}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="text-[11px] text-muted-foreground font-mono truncate" title={item.file.path}>
-                                                {item.file.name}
-                                            </div>
-                                        </div>
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            variant={item.isNew ? "outline" : "ghost"}
-                                            className={cn(
-                                                "h-7 px-2.5 text-xs gap-1 shrink-0 cursor-pointer",
-                                                item.isNew
-                                                    ? "border-primary/30 text-primary hover:bg-primary/5"
-                                                    : "text-muted-foreground hover:text-foreground"
-                                            )}
-                                            disabled={syncingMappingId === item.mapping.id || isSyncing}
-                                            onClick={async () => {
-                                                setSyncingMappingId(item.mapping.id)
-                                                setStarMoneyFeedback(null)
-                                                try {
-                                                    const res = await syncExport(item.mapping, item.file, true)
-                                                    if (res.success) {
-                                                        setStarMoneyFeedback({
-                                                            type: "success",
-                                                            message: t(
-                                                                "transactions.singleSyncSuccess",
-                                                                `Synced ${item.mapping.payment_method_name}: ${res.imported ?? 0} imported, ${res.duplicates ?? 0} duplicate(s).`,
-                                                                {
-                                                                    bank: item.mapping.payment_method_name,
-                                                                    imported: res.imported ?? 0,
-                                                                    duplicates: res.duplicates ?? 0,
-                                                                }
-                                                            ),
-                                                        })
-                                                    } else {
-                                                        setStarMoneyFeedback({
-                                                            type: "error",
-                                                            message: res.error || t("transactions.syncFailed", "Sync failed"),
-                                                        })
-                                                    }
-                                                } finally {
-                                                    setSyncingMappingId(null)
-                                                }
-                                            }}
-                                        >
-                                            {syncingMappingId === item.mapping.id ? (
-                                                <Loader2 className="h-3 w-3 animate-spin" />
-                                            ) : (
-                                                <RefreshCw className="h-3 w-3" />
-                                            )}
-                                            {item.isNew
-                                                ? t("transactions.syncNow", "Sync Now")
-                                                : t("transactions.reSync", "Re-sync")}
-                                        </Button>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {starMoneyFeedback && (
-                                <div
-                                    className={cn(
-                                        "flex items-center gap-1.5 text-xs p-2 rounded border",
-                                        starMoneyFeedback.type === "success"
-                                            ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-                                            : "bg-destructive/10 border-destructive/20 text-destructive"
-                                    )}
-                                >
-                                    {starMoneyFeedback.type === "success" ? (
-                                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                                    ) : (
-                                        <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                                    )}
-                                    <span>{starMoneyFeedback.message}</span>
-                                </div>
-                            )}
-
-                            <div className="relative py-1 flex items-center">
-                                <div className="flex-grow border-t border-border/60" />
-                                <span className="flex-shrink mx-2 text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
-                                    {t("transactions.orUploadManually", "or upload manually")}
-                                </span>
-                                <div className="flex-grow border-t border-border/60" />
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Missing File Warning / Fallback Notice (Desktop Only) */}
-                    {isDesktop && mappings.length > 0 && detectedExports.length === 0 && (
-                        <div className="flex items-start gap-2 p-2.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-400">
-                            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                            <div className="space-y-0.5">
-                                <p className="font-medium">{t("transactions.fileNotFoundNotice", "No export files detected in export folder:")}</p>
-                                <p className="text-[11px] text-muted-foreground">
-                                    {t("transactions.fileNotFoundFallbackHint", "Please choose the CSV file manually below or update the folder in Business Settings.")}
-                                </p>
-                            </div>
-                        </div>
-                    )}
                     {/* File Drop Zone */}
                     <div className="space-y-2">
                         <Label>{t("transactions.csvFile", "CSV File")}</Label>
