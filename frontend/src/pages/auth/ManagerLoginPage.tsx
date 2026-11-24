@@ -53,7 +53,20 @@ export function ManagerLoginPage() {
                 setError(response.data.message || "Login failed")
             }
         } catch (err: any) {
-            setError(err.response?.data?.detail || "An unexpected error occurred")
+            const rawDetail = err.response?.data?.detail || err.response?.data?.message
+            let detail: string
+            if (typeof rawDetail === "string") {
+                detail = rawDetail
+            } else if (Array.isArray(rawDetail)) {
+                detail = rawDetail.map((d: any) => (typeof d === "string" ? d : d.msg || JSON.stringify(d))).join(", ")
+            } else if (rawDetail && typeof rawDetail === "object") {
+                detail = JSON.stringify(rawDetail)
+            } else if (err.message === "Network Error") {
+                detail = t("auth.networkError", "Network connection error. Unable to reach server.")
+            } else {
+                detail = t("auth.unexpectedError", "An unexpected error occurred")
+            }
+            setError(detail)
         } finally {
             setIsLoading(false)
         }

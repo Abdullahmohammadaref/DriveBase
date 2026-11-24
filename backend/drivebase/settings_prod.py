@@ -13,11 +13,17 @@ SECRET_KEY = os.environ['SECRET_KEY']  # Must be set — fail loudly if missing
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
-# Whitelist Tauri desktop origins alongside production domain
+# Whitelist Tauri desktop origins and local development origins alongside production domain
 TAURI_ORIGINS = [
     'http://tauri.localhost',
     'https://tauri.localhost',
     'tauri://localhost',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
 ]
 
 CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')
@@ -28,6 +34,10 @@ CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SAMESITE = 'None'
+
+# Session longevity settings (30 days) and rolling expiration so active sessions don't expire prematurely
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # 30 days
+SESSION_SAVE_EVERY_REQUEST = True
 
 # --- WhiteNoise for static files ---
 MIDDLEWARE = [

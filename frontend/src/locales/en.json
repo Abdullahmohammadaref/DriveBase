@@ -177,6 +177,8 @@
         "downloadDesktopApp": "Download Desktop App"
     },
     "auth": {
+        "networkError": "Network connection error. Unable to reach server.",
+        "unexpectedError": "An unexpected error occurred",
         "welcomeBack": "Welcome Back",
         "selectLoginType": "Select Login Type",
         "signInToManage": "Select your login type to continue",

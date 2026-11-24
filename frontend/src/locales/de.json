@@ -177,6 +177,8 @@
         "downloadDesktopApp": "Desktop-App herunterladen"
     },
     "auth": {
+        "networkError": "Netzwerkverbindungsfehler. Server nicht erreichbar.",
+        "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten",
         "welcomeBack": "Willkommen zurück",
         "selectLoginType": "Anmeldetyp auswählen",
         "signInToManage": "Wählen Sie Ihren Anmeldetyp",
